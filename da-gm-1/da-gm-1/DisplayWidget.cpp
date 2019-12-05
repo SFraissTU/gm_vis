@@ -1,4 +1,7 @@
 #include "DisplayWidget.h"
+
+#include <memory>
+
 #include "math.h"
 #include "PointCloudLoader.h"
 

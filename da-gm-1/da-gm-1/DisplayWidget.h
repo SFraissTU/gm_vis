@@ -1,4 +1,6 @@
 #pragma once
+#include <memory>
+
 #include <qopenglwidget.h>
 #include <qopenglfunctions.h>
 #include <qopenglvertexarrayobject.h>
