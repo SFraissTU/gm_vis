@@ -3,7 +3,7 @@
 #include <qtextstream.h>
 #include <qdebug.h>
 
-std::vector<QVector3D> PointCloudLoader::readPCDfromOFF(QString path, bool switchYandZ)
+std::unique_ptr<PointCloud> PointCloudLoader::readPCDfromOFF(QString path, bool switchYandZ)
 {
 	QFile file(path);
 	if (file.open(QIODevice::ReadOnly)) {
@@ -21,7 +21,7 @@ std::vector<QVector3D> PointCloudLoader::readPCDfromOFF(QString path, bool switc
 			qDebug() << "Could not read amount of points in file " << path << "\n";
 			return {};
 		}
-		std::vector<QVector3D> result;
+		point_list result;
 		result.reserve(amount);
 		while (!in.atEnd() && result.size() != amount) {
 			line = in.readLine();
@@ -55,10 +55,10 @@ std::vector<QVector3D> PointCloudLoader::readPCDfromOFF(QString path, bool switc
 		if (result.size() != amount) {
 			qDebug() << "Number of points invalid in file " << path << "\n";
 		}
-		return result;
+		return std::move(std::make_unique<PointCloud>(result));	//ToDo: is move necessary?
 	}
 	else {
 		qDebug() << "Could not open file: " << path << "\n";
-		return {};
+		return nullptr;
 	}
 }

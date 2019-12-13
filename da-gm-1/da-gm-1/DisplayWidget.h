@@ -1,4 +1,5 @@
 #pragma once
+#include "PointCloud.h"
 #include <qopenglwidget.h>
 #include <qopenglfunctions.h>
 #include <qopenglvertexarrayobject.h>
@@ -17,6 +18,8 @@ public:
 	QSize minimumSizeHint() const override;
 	QSize sizeHint() const override;
 
+	void setPointCloud(PointCloud* pointcloud);
+
 public slots:
 	void cleanup();
 
@@ -32,25 +35,37 @@ protected slots:
 	void messageLogged(const QOpenGLDebugMessage& msg);
 
 private:
-	std::vector<QVector3D> pointcloud;
-
-	QOpenGLVertexArrayObject m_vao;
-	QOpenGLBuffer m_vbo;
-	std::unique_ptr<QOpenGLShaderProgram> m_program;
+	//Debug Logger
 	std::unique_ptr<QOpenGLDebugLogger> m_debugLogger;
+	bool initialized = false;
+
+	//Data to display
+	PointCloud* pointcloud;
+
+	//Buffers
+	QOpenGLVertexArrayObject m_pc_vao;
+	QOpenGLBuffer m_pc_vbo;
+
+	//Shader
+	std::unique_ptr<QOpenGLShaderProgram> m_program;
+
+	//Locations
 	int m_projMatrixLoc;
 	int m_mvMatrixLoc;
 	int m_lightPosLoc;
 
+	//Matrices (TODO)
 	QMatrix4x4 m_proj;
 	QMatrix4x4 m_view;
 	QMatrix4x4 m_world;
 
+	//Control stuff
 	float m_xRot = 180.0f;
 	float m_yRot = 0;
 	float m_zRot = 0;
 	float m_radius = 40.0f;
 	QPoint m_lastPos;
 
+	//Help function: Moves angle to value between 0 and 360
 	static float normalizeAngle(float angle);
 };

@@ -1,9 +1,8 @@
 #pragma once
-#include <vector>
-#include <qvector3d.h>
+#include "PointCloud.h"
 #include <qstring.h>
 
 class PointCloudLoader {
 public:
-	static std::vector<QVector3D> readPCDfromOFF(QString path, bool switchYandZ);
+	static std::unique_ptr<PointCloud> readPCDfromOFF(QString path, bool switchYandZ);
 };

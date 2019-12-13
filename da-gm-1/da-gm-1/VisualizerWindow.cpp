@@ -5,22 +5,10 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 {
 	ui.setupUi(this);
 
-	/*QSurfaceFormat format;
-	format.setMajorVersion(4);
-	format.setMinorVersion(6);
-	format.setProfile(QSurfaceFormat::CoreProfile);
-	format.setOption(QSurfaceFormat::DebugContext);
-	QOpenGLContext* context = new QOpenGLContext;
-	context->setFormat(format);
-	context->create();
-	QOpenGLContext::setShareContext(context);*/
+	//pointcloud = PointCloudLoader::readPCDfromOFF("data/chair_0002.off", true);
+	//pointcloud = PointCloudLoader::readPCDfromOFF("data/chair_0048.off", true);
+	//pointcloud = PointCloudLoader::readPCDfromOFF("data/chair_0084.off", true);
+	pointcloud = PointCloudLoader::readPCDfromOFF("data/chair_0129.off", true);
 
-	/*QOpenGLDebugLogger* logger = new QOpenGLDebugLogger(this);
-	logger->initialize();
-	connect(logger, &QOpenGLDebugLogger::messageLogged, this, &VisualizerWindow::glMessageLogged);*/
-}/*
-
-void VisualizerWindow::glMessageLogged(const QOpenGLDebugMessage& debugMessage)
-{
-	qDebug() << debugMessage;
-}*/
+	ui.openGLWidget->setPointCloud(pointcloud.get());
+}

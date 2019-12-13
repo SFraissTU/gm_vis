@@ -1,5 +1,7 @@
 #pragma once
 
+#include "PointCloud.h"
+#include "PointCloudLoader.h"
 #include <QtWidgets/QMainWindow>
 #include "ui_VisualizerWindow.h"
 
@@ -15,4 +17,5 @@ public:
 
 private:
 	Ui::VisualizerWindowClass ui;
+	std::unique_ptr<PointCloud> pointcloud;
 };

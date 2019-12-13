@@ -110,6 +110,7 @@
     <None Include="..\shaders\dummy.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="PointCloud.h" />
     <ClInclude Include="PointCloudLoader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

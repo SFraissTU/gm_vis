@@ -25,10 +25,28 @@ QSize DisplayWidget::sizeHint() const {
 	return QSize(500, 500);
 }
 
+void DisplayWidget::setPointCloud(PointCloud* pointcloud)
+{
+	this->pointcloud = pointcloud;
+	if (!initialized) {
+		return;	//We'll try again later
+	}
+	if (!m_pc_vao.isCreated()) {
+		m_pc_vao.create();
+	}
+	QOpenGLVertexArrayObject::Binder vaoBinder(&m_pc_vao);
+	m_pc_vbo.create();
+	m_pc_vbo.bind();
+	m_pc_vbo.allocate(pointcloud->getData(), pointcloud->getDataSize());
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pointcloud->getSinglePointSize(), 0);
+	m_pc_vbo.release();
+}
+
 void DisplayWidget::cleanup() {
 	if (m_program.get() == nullptr) return;
 	makeCurrent();
-	m_vbo.destroy();
+	m_pc_vbo.destroy();
 	m_program.reset();
 	m_debugLogger.reset();
 	doneCurrent();
@@ -37,12 +55,11 @@ void DisplayWidget::cleanup() {
 void DisplayWidget::initializeGL() {
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &DisplayWidget::cleanup);
 
-	//pointcloud = PointCloudLoader::readPCDfromOFF("data/chair_0002.off", true);
-	//pointcloud = PointCloudLoader::readPCDfromOFF("data/chair_0048.off", true);
-	//pointcloud = PointCloudLoader::readPCDfromOFF("data/chair_0084.off", true);
-	pointcloud = PointCloudLoader::readPCDfromOFF("data/chair_0129.off", true);
-
 	initializeOpenGLFunctions();
+	initialized = true;
+	if (pointcloud) {
+		setPointCloud(pointcloud);//If it has been set before initialization, try again
+	}
 
 #if _DEBUG
 	m_debugLogger = std::make_unique<QOpenGLDebugLogger>(this);
@@ -66,16 +83,6 @@ void DisplayWidget::initializeGL() {
 	m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
 	m_lightPosLoc = m_program->uniformLocation("lightPos");
 
-	m_vao.create();
-	QOpenGLVertexArrayObject::Binder vaoBinder(&m_vao);
-	m_vbo.create();
-	m_vbo.bind();
-	//float data[9] = { 0.1f, 0.1f, 0.1f, -0.2f, -0.1f, -0.1f, 0.3f, -0.2f, -0.1f };
-	m_vbo.allocate(pointcloud.data(), pointcloud.size() * sizeof(QVector3D));
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(QVector3D), 0);
-	m_vbo.release();
-
 	m_program->setUniformValue(m_lightPosLoc, QVector3D(0, 0, 2));
 	
 	m_program->release();
@@ -87,6 +94,10 @@ void DisplayWidget::paintGL()
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_CULL_FACE);
 
+	if (!m_pc_vao.isCreated()) {
+		return;
+	}
+
 	m_world.setToIdentity();
 	m_world.rotate(180.0f - (m_xRot), 1, 0, 0);
 	m_world.rotate(m_yRot, 0, 1, 0);
@@ -95,12 +106,12 @@ void DisplayWidget::paintGL()
 	m_view.setToIdentity();
 	m_view.translate(0, 0, -m_radius);
 
-	QOpenGLVertexArrayObject::Binder vaoBinder(&m_vao);
+	QOpenGLVertexArrayObject::Binder vaoBinder(&m_pc_vao);
 	m_program->bind();
 	m_program->setUniformValue(m_projMatrixLoc, m_proj);
 	m_program->setUniformValue(m_mvMatrixLoc, m_view * m_world);
 	
-	glDrawArrays(GL_POINTS, 0, pointcloud.size());
+	glDrawArrays(GL_POINTS, 0, pointcloud->getPointCount());
 	m_program->release();
 }
 
