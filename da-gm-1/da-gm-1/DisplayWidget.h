@@ -1,6 +1,5 @@
 #pragma once
 
-#include "PointCloud.h"
 #include <memory>
 #include <qopenglwidget.h>
 #include <qopenglfunctions.h>
@@ -9,6 +8,8 @@
 #include <qopenglshaderprogram.h>
 #include <qopengldebug.h>
 #include <qevent.h>
+#include "PointCloud.h"
+#include "Camera.h"
 
 class DisplayWidget : public QOpenGLWidget, private QOpenGLFunctions {
 	Q_OBJECT
@@ -31,7 +32,6 @@ protected:
 	void resizeGL(int width, int height) override;
 	void mousePressEvent(QMouseEvent* event) override;
 	void mouseMoveEvent(QMouseEvent* event) override;
-	void wheelEvent(QWheelEvent* event) override;
 
 protected slots:
 	void messageLogged(const QOpenGLDebugMessage& msg);
@@ -39,10 +39,10 @@ protected slots:
 private:
 	//Debug Logger
 	std::unique_ptr<QOpenGLDebugLogger> m_debugLogger;
-	bool initialized = false;
+	bool m_initialized = false;
 
 	//Data to display
-	PointCloud* pointcloud;
+	PointCloud* m_pointcloud;
 
 	//Buffers
 	QOpenGLVertexArrayObject m_pc_vao;
@@ -53,21 +53,11 @@ private:
 
 	//Locations
 	int m_projMatrixLoc;
-	int m_mvMatrixLoc;
+	int m_viewMatrixLoc;
 	int m_lightPosLoc;
 
 	//Matrices (TODO)
-	QMatrix4x4 m_proj;
-	QMatrix4x4 m_view;
-	QMatrix4x4 m_world;
-
-	//Control stuff
-	float m_xRot = 180.0f;
-	float m_yRot = 0;
-	float m_zRot = 0;
-	float m_radius = 40.0f;
+	std::unique_ptr<Camera> m_camera;
 	QPoint m_lastPos;
 
-	//Help function: Moves angle to value between 0 and 360
-	static float normalizeAngle(float angle);
 };

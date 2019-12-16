@@ -14,6 +14,7 @@ DisplayWidget::DisplayWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	format.setOption(QSurfaceFormat::DebugContext);
 	setFormat(format);
+	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width()) / height(), 0.01f, 1000.0f);
 }
 
 DisplayWidget::~DisplayWidget() {
@@ -30,8 +31,8 @@ QSize DisplayWidget::sizeHint() const {
 
 void DisplayWidget::setPointCloud(PointCloud* pointcloud)
 {
-	this->pointcloud = pointcloud;
-	if (!initialized) {
+	this->m_pointcloud = pointcloud;
+	if (!m_initialized) {
 		return;	//We'll try again later
 	}
 	if (!m_pc_vao.isCreated()) {
@@ -59,9 +60,9 @@ void DisplayWidget::initializeGL() {
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &DisplayWidget::cleanup);
 
 	initializeOpenGLFunctions();
-	initialized = true;
-	if (pointcloud) {
-		setPointCloud(pointcloud);//If it has been set before initialization, try again
+	m_initialized = true;
+	if (m_pointcloud) {
+		setPointCloud(m_pointcloud);//If it has been set before initialization, try again
 	}
 
 #if _DEBUG
@@ -83,7 +84,7 @@ void DisplayWidget::initializeGL() {
 
 	m_program->bind();
 	m_projMatrixLoc = m_program->uniformLocation("projMatrix");
-	m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
+	m_viewMatrixLoc = m_program->uniformLocation("viewMatrix");
 	m_lightPosLoc = m_program->uniformLocation("lightPos");
 
 	m_program->setUniformValue(m_lightPosLoc, QVector3D(0, 0, 2));
@@ -100,28 +101,19 @@ void DisplayWidget::paintGL()
 	if (!m_pc_vao.isCreated()) {
 		return;
 	}
-
-	m_world.setToIdentity();
-	m_world.rotate(180.0f - (m_xRot), 1, 0, 0);
-	m_world.rotate(m_yRot, 0, 1, 0);
-	m_world.rotate(m_zRot, 0, 0, 1);
-
-	m_view.setToIdentity();
-	m_view.translate(0, 0, -m_radius);
-
+	
 	QOpenGLVertexArrayObject::Binder vaoBinder(&m_pc_vao);
 	m_program->bind();
-	m_program->setUniformValue(m_projMatrixLoc, m_proj);
-	m_program->setUniformValue(m_mvMatrixLoc, m_view * m_world);
+	m_program->setUniformValue(m_projMatrixLoc, m_camera->getProjMatrix());
+	m_program->setUniformValue(m_viewMatrixLoc, m_camera->getViewMatrix());
 	
-	glDrawArrays(GL_POINTS, 0, pointcloud->getPointCount());
+	glDrawArrays(GL_POINTS, 0, m_pointcloud->getPointCount());
 	m_program->release();
 }
 
 void DisplayWidget::resizeGL(int width, int height)
 {
-	m_proj.setToIdentity();
-	m_proj.perspective(60.0f, GLfloat(width) / height, 0.01f, 1000.0f);
+	m_camera->setAspectRatio(GLfloat(width) / height);
 }
 
 void DisplayWidget::mousePressEvent(QMouseEvent* event)
@@ -134,30 +126,24 @@ void DisplayWidget::mouseMoveEvent(QMouseEvent* event)
 	int dx = event->x() - m_lastPos.x();
 	int dy = event->y() - m_lastPos.y();
 
+	bool refresh = false;
 	if (event->buttons() & Qt::LeftButton) {
-		
-		m_xRot = normalizeAngle(m_xRot + 2 * dy);
-		m_yRot = normalizeAngle(m_yRot + 2 * dx);
-		update();
+		m_camera->rotateX(2 * dy);
+		m_camera->rotateY(2 * dx);
+		refresh = true;
 	}
-	m_lastPos = event->pos();
-}
-
-void DisplayWidget::wheelEvent(QWheelEvent* event)
-{
-	QPoint delta = event->angleDelta();
-	m_radius -= delta.y() * 0.5;
-	m_radius = std::max(0.5f, m_radius);
-	update();
-}
-
-float DisplayWidget::normalizeAngle(float angle)
-{
-	while (angle < 0)
-		angle += 360.f;
-	while (angle > 360.f)
-		angle -= 360.f;
-	return angle;
+	if (event->buttons() & Qt::MiddleButton) {
+		m_camera->zoom(- 2 * dy);
+		refresh = true;
+	}
+	if (event->buttons() & Qt::RightButton) {
+		m_camera->translateAlongScreen(dx, dy);
+		refresh = true;
+	}
+	if (refresh) {
+		update();
+		m_lastPos = event->pos();
+	}
 }
 
 //This function is copied from http://www.trentreed.net/blog/qt5-opengl-part-5-debug-logging/

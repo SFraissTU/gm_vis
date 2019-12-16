@@ -13,8 +13,8 @@ class VisualizerWindow : public QMainWindow
 public:
 	VisualizerWindow(QWidget *parent = Q_NULLPTR);
 
-public:
-	void glMessageLogged(const QOpenGLDebugMessage& debugMessage);
+public slots:
+	void loadPointcloudAction();
 
 private:
 	Ui::VisualizerWindowClass ui;
