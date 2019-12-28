@@ -31,7 +31,6 @@ private:
 	//Locations
 	int m_projMatrixLoc;
 	int m_viewMatrixLoc;
-	int m_lightPosLoc;
 	int m_colorLoc;
 	int m_circlesLoc;
 };

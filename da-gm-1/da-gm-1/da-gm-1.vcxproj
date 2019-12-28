@@ -67,6 +67,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <AdditionalIncludeDirectories>$(SolutionDir)include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -90,6 +91,7 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DisplayWidget.cpp" />
+    <ClCompile Include="GMIsoellipsoidRenderer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="DataLoader.cpp" />
     <ClCompile Include="PointCloudRenderer.cpp" />
@@ -110,12 +112,15 @@
   <ItemGroup>
     <None Include="..\shaders\pointcloud.frag" />
     <None Include="..\shaders\pointcloud.vert" />
+    <None Include="isoell.frag" />
+    <None Include="isoell.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DisplaySettings.h" />
     <ClInclude Include="Gaussian.h" />
     <ClInclude Include="GaussianMixture.h" />
+    <ClInclude Include="GMIsoellipsoidRenderer.h" />
     <ClInclude Include="PointCloud.h" />
     <ClInclude Include="DataLoader.h" />
     <ClInclude Include="PointCloudRenderer.h" />

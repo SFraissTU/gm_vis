@@ -17,7 +17,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 void VisualizerWindow::loadPointcloudAction() {
 	QString filename = QFileDialog::getOpenFileName(this, "Load Pointcloud", QString(), "*.off");
 	if (!filename.isNull()) {
-		auto newPC = DataLoader::readPCDfromOFF(filename, true);
+		auto newPC = DataLoader::readPCDfromOFF(filename, false);
 		if (newPC) {
 			pointcloud = std::move(newPC);
 			ui.openGLWidget->setPointCloud(pointcloud.get());
@@ -29,7 +29,7 @@ void VisualizerWindow::loadMixtureAction()
 {
 	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", QString(), "*.ply");
 	if (!filename.isNull()) {
-		auto newGauss = DataLoader::readGMfromPLY(filename, true);
+		auto newGauss = DataLoader::readGMfromPLY(filename, false);
 		//TODO: Files are not correctly read
 		if (newGauss) {
 			//successfull... store and pass to Widget

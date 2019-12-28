@@ -5,7 +5,6 @@ PointCloudRenderer::PointCloudRenderer(QOpenGLFunctions_4_0_Core* gl, DisplaySet
 	m_program = std::make_unique<QOpenGLShaderProgram>();
 	m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/pointcloud.vert");
 	m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/pointcloud.frag");
-	//m_program->bindAttributeLocation("in_vertex", 0);
 	m_program->link();
 
 	m_program->bind();
@@ -20,12 +19,12 @@ PointCloudRenderer::PointCloudRenderer(QOpenGLFunctions_4_0_Core* gl, DisplaySet
 	m_program->release();
 
 	m_pc_vao.create();
-	m_pc_vbo.create();
 	m_pc_vao.bind();
+	m_pc_vbo.create();
 	m_pc_vbo.bind();
 	m_pc_vbo.allocate(nullptr, 0);
 	m_gl->glEnableVertexAttribArray(0);
-	m_gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	m_gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(point_item), 0);
 	m_pc_vbo.release();
 	m_pc_vao.release();
 }
