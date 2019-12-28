@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "math.h"
-#include "PointCloudLoader.h"
 
 //Partialy used this: https://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/hellogl2?h=5.13
 
@@ -29,30 +28,21 @@ QSize DisplayWidget::sizeHint() const {
 	return QSize(500, 500);
 }
 
+//should only be called after initialization!
 void DisplayWidget::setPointCloud(PointCloud* pointcloud)
 {
-	this->m_pointcloud = pointcloud;
-	if (!m_initialized) {
-		return;	//We'll try again later
-	}
-	if (!m_pc_vao.isCreated()) {
-		m_pc_vao.create();
-	}
-	QOpenGLVertexArrayObject::Binder vaoBinder(&m_pc_vao);
-	m_pc_vbo.create();
-	m_pc_vbo.bind();
-	m_pc_vbo.allocate(pointcloud->getData(), pointcloud->getDataSize());
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, pointcloud->getSinglePointSize(), 0);
-	m_pc_vbo.release();
+	m_pointcloudRenderer->setPointCloud(pointcloud);
+	update();
 }
 
 void DisplayWidget::cleanup() {
-	if (m_program.get() == nullptr) return;
 	makeCurrent();
-	m_pc_vbo.destroy();
-	m_program.reset();
-	m_debugLogger.reset();
+	//This could be called several times, so make sure things are not deleted already
+	if (m_pointcloudRenderer.get()) {
+		m_pointcloudRenderer->cleanup();
+		m_pointcloudRenderer.reset();
+		m_debugLogger.reset();
+	}
 	doneCurrent();
 }
 
@@ -60,10 +50,6 @@ void DisplayWidget::initializeGL() {
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &DisplayWidget::cleanup);
 
 	initializeOpenGLFunctions();
-	m_initialized = true;
-	if (m_pointcloud) {
-		setPointCloud(m_pointcloud);//If it has been set before initialization, try again
-	}
 
 #if _DEBUG
 	m_debugLogger = std::make_unique<QOpenGLDebugLogger>(this);
@@ -74,22 +60,10 @@ void DisplayWidget::initializeGL() {
 	}
 #endif
 
-	glClearColor(0, 0, 0, 1);
+	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_0_Core*>(this), &m_settings, m_camera.get());
 
-	m_program = std::make_unique<QOpenGLShaderProgram>();
-	m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/dummy.vert");
-	m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/dummy.frag");
-	//m_program->bindAttributeLocation("in_vertex", 0);
-	m_program->link();
-
-	m_program->bind();
-	m_projMatrixLoc = m_program->uniformLocation("projMatrix");
-	m_viewMatrixLoc = m_program->uniformLocation("viewMatrix");
-	m_lightPosLoc = m_program->uniformLocation("lightPos");
-
-	m_program->setUniformValue(m_lightPosLoc, QVector3D(0, 0, 2));
-	
-	m_program->release();
+	auto background = m_settings.backgroundColor;
+	glClearColor(background.redF(), background.blueF(), background.greenF(), 1);
 }
 
 void DisplayWidget::paintGL()
@@ -98,17 +72,7 @@ void DisplayWidget::paintGL()
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_CULL_FACE);
 
-	if (!m_pc_vao.isCreated()) {
-		return;
-	}
-	
-	QOpenGLVertexArrayObject::Binder vaoBinder(&m_pc_vao);
-	m_program->bind();
-	m_program->setUniformValue(m_projMatrixLoc, m_camera->getProjMatrix());
-	m_program->setUniformValue(m_viewMatrixLoc, m_camera->getViewMatrix());
-	
-	glDrawArrays(GL_POINTS, 0, m_pointcloud->getPointCount());
-	m_program->release();
+	m_pointcloudRenderer->render();
 }
 
 void DisplayWidget::resizeGL(int width, int height)
@@ -200,7 +164,7 @@ void DisplayWidget::messageLogged(const QOpenGLDebugMessage& msg) {
 		CASE(GroupPopType);
 	}
 #undef CASE
-
+	
 	error += ")";
 	qDebug() << qPrintable(error) << "\n" << qPrintable(msg.message()) << "\n";
 }

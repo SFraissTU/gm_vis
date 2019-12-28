@@ -41,6 +41,7 @@
      <string>File</string>
     </property>
     <addaction name="loadPointcloudAction"/>
+    <addaction name="loadMixtureAction"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -56,6 +57,11 @@
   <action name="loadPointcloudAction">
    <property name="text">
     <string>Load Pointcloud</string>
+   </property>
+  </action>
+  <action name="loadMixtureAction">
+   <property name="text">
+    <string>Load Mixture</string>
    </property>
   </action>
  </widget>

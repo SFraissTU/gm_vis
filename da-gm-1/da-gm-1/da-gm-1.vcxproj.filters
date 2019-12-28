@@ -8,10 +8,13 @@
     <ClCompile Include="DisplayWidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PointCloudLoader.cpp">
+    <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
+    <ClCompile Include="DataLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PointCloudRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,21 +62,33 @@
     </QtRcc>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\shaders\dummy.frag">
+    <None Include="..\shaders\pointcloud.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\shaders\dummy.vert">
+    <None Include="..\shaders\pointcloud.frag">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PointCloudLoader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PointCloud.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DisplaySettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Gaussian.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DataLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GaussianMixture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointCloudRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

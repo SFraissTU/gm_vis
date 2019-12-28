@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PointCloud.h"
-#include "PointCloudLoader.h"
+#include "DataLoader.h"
 #include <memory>
 #include <QtWidgets/QMainWindow>
 #include "ui_VisualizerWindow.h"
@@ -15,6 +15,7 @@ public:
 
 public slots:
 	void loadPointcloudAction();
+	void loadMixtureAction();
 
 private:
 	Ui::VisualizerWindowClass ui;

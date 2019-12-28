@@ -91,7 +91,8 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DisplayWidget.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PointCloudLoader.cpp" />
+    <ClCompile Include="DataLoader.cpp" />
+    <ClCompile Include="PointCloudRenderer.cpp" />
     <ClCompile Include="VisualizerWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -107,13 +108,17 @@
     <QtMoc Include="DisplayWidget.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\shaders\dummy.frag" />
-    <None Include="..\shaders\dummy.vert" />
+    <None Include="..\shaders\pointcloud.frag" />
+    <None Include="..\shaders\pointcloud.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="DisplaySettings.h" />
+    <ClInclude Include="Gaussian.h" />
+    <ClInclude Include="GaussianMixture.h" />
     <ClInclude Include="PointCloud.h" />
-    <ClInclude Include="PointCloudLoader.h" />
+    <ClInclude Include="DataLoader.h" />
+    <ClInclude Include="PointCloudRenderer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

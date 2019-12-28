@@ -1,9 +1,9 @@
 #pragma once
-#include <vector>
-#include <qvector3d.h>
+#include <QVector>
+#include <QVector3D>
 
 using point_item = QVector3D;
-using point_list = std::vector<point_item>;
+using point_list = QVector<point_item>;
 
 class PointCloud {
 private:

@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <qopenglwidget.h>
-#include <qopenglfunctions.h>
+#include <QOpenGLFunctions_4_0_Core>
 #include <qopenglvertexarrayobject.h>
 #include <qopenglbuffer.h>
 #include <qopenglshaderprogram.h>
@@ -10,17 +10,20 @@
 #include <qevent.h>
 #include "PointCloud.h"
 #include "Camera.h"
+#include "DisplaySettings.h"
+#include "PointCloudRenderer.h"
 
-class DisplayWidget : public QOpenGLWidget, private QOpenGLFunctions {
+class DisplayWidget : public QOpenGLWidget, private QOpenGLFunctions_4_0_Core {
 	Q_OBJECT
 
 public:
-	DisplayWidget(QWidget* parent = nullptr);
+	DisplayWidget(QWidget* parent);
 	~DisplayWidget();
 
 	QSize minimumSizeHint() const override;
 	QSize sizeHint() const override;
 
+	//should only be called after initialization!
 	void setPointCloud(PointCloud* pointcloud);
 
 public slots:
@@ -39,22 +42,12 @@ protected slots:
 private:
 	//Debug Logger
 	std::unique_ptr<QOpenGLDebugLogger> m_debugLogger;
-	bool m_initialized = false;
 
-	//Data to display
-	PointCloud* m_pointcloud;
+	//Settings
+	DisplaySettings m_settings;
 
-	//Buffers
-	QOpenGLVertexArrayObject m_pc_vao;
-	QOpenGLBuffer m_pc_vbo;
-
-	//Shader
-	std::unique_ptr<QOpenGLShaderProgram> m_program;
-
-	//Locations
-	int m_projMatrixLoc;
-	int m_viewMatrixLoc;
-	int m_lightPosLoc;
+	//Renderers
+	std::unique_ptr<PointCloudRenderer> m_pointcloudRenderer;
 
 	//Matrices (TODO)
 	std::unique_ptr<Camera> m_camera;
