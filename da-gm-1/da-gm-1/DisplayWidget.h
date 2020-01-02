@@ -12,6 +12,7 @@
 #include "Camera.h"
 #include "DisplaySettings.h"
 #include "PointCloudRenderer.h"
+#include "GMIsoellipsoidRenderer.h"
 
 class DisplayWidget : public QOpenGLWidget, private QOpenGLFunctions_4_0_Core {
 	Q_OBJECT
@@ -25,6 +26,7 @@ public:
 
 	//should only be called after initialization!
 	void setPointCloud(PointCloud* pointcloud);
+	void setGaussianMixture(GaussianMixture* mixture);
 
 public slots:
 	void cleanup();
@@ -48,6 +50,7 @@ private:
 
 	//Renderers
 	std::unique_ptr<PointCloudRenderer> m_pointcloudRenderer;
+	std::unique_ptr<GMIsoellipsoidRenderer> m_isoellipsoidRenderer;
 
 	//Matrices (TODO)
 	std::unique_ptr<Camera> m_camera;

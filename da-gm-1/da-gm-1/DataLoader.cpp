@@ -78,7 +78,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 			qDebug() << "Invalid format in file " << file.fileName() << "\n";
 			return {};
 		}
-		std::unique_ptr<GaussianMixture> mixture;
+		std::unique_ptr<GaussianMixture> mixture = std::make_unique<GaussianMixture>();
 		int remainingGaussians = 0;
 		QList<QString> properties;
 		QList<QString> supportedProperties = {"x", "y", "z", "covxx", "covxy", "covxz", "covyy", "covyz", "covzz", "weight"};
@@ -143,7 +143,8 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 		}
 		while (remainingGaussians > 0 && !in.atEnd()) {
 			line = in.readLine();
-			QStringList words = line.split(" ");
+			QStringList words = line.split("  ");
+			words.removeAll(QString(""));
 			if (words.length() != properties.length()) {
 				qDebug() << "Not every property was given for an entry in ply file " << file.fileName() << "\n.";
 				return {};

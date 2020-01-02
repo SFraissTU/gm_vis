@@ -71,10 +71,10 @@
     <None Include="..\shaders\pointcloud.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="isoell.vert">
+    <None Include="..\shaders\isoell.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="isoell.frag">
+    <None Include="..\shaders\isoell.frag">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
@@ -101,6 +101,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GMIsoellipsoidRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Helper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

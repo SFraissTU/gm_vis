@@ -110,10 +110,10 @@
     <QtMoc Include="DisplayWidget.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\shaders\isoell.frag" />
+    <None Include="..\shaders\isoell.vert" />
     <None Include="..\shaders\pointcloud.frag" />
     <None Include="..\shaders\pointcloud.vert" />
-    <None Include="isoell.frag" />
-    <None Include="isoell.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -121,6 +121,7 @@
     <ClInclude Include="Gaussian.h" />
     <ClInclude Include="GaussianMixture.h" />
     <ClInclude Include="GMIsoellipsoidRenderer.h" />
+    <ClInclude Include="Helper.h" />
     <ClInclude Include="PointCloud.h" />
     <ClInclude Include="DataLoader.h" />
     <ClInclude Include="PointCloudRenderer.h" />

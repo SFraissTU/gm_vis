@@ -17,7 +17,7 @@ public:
 	}
 
 	const Gaussian* operator[](int index) {
-		if (index >= gaussians.size() || index <= 0) {
+		if (index >= gaussians.size() || index < 0) {
 			return nullptr;
 		}
 		else {

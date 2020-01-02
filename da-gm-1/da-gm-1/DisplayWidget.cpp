@@ -35,12 +35,20 @@ void DisplayWidget::setPointCloud(PointCloud* pointcloud)
 	update();
 }
 
+void DisplayWidget::setGaussianMixture(GaussianMixture* mixture)
+{
+	m_isoellipsoidRenderer->setMixture(mixture);
+	update();
+}
+
 void DisplayWidget::cleanup() {
 	makeCurrent();
 	//This could be called several times, so make sure things are not deleted already
 	if (m_pointcloudRenderer.get()) {
 		m_pointcloudRenderer->cleanup();
 		m_pointcloudRenderer.reset();
+		m_isoellipsoidRenderer->cleanup();
+		m_isoellipsoidRenderer.reset();
 		m_debugLogger.reset();
 	}
 	doneCurrent();
@@ -61,6 +69,7 @@ void DisplayWidget::initializeGL() {
 #endif
 
 	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_0_Core*>(this), &m_settings, m_camera.get());
+	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_0_Core*>(this), &m_settings, m_camera.get());
 
 	auto background = m_settings.backgroundColor;
 	glClearColor(background.redF(), background.blueF(), background.greenF(), 1);
@@ -73,6 +82,7 @@ void DisplayWidget::paintGL()
 	//glEnable(GL_CULL_FACE);
 
 	m_pointcloudRenderer->render();
+	m_isoellipsoidRenderer->render();
 }
 
 void DisplayWidget::resizeGL(int width, int height)

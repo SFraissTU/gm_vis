@@ -20,4 +20,5 @@ public slots:
 private:
 	Ui::VisualizerWindowClass ui;
 	std::unique_ptr<PointCloud> pointcloud;
+	std::unique_ptr<GaussianMixture> mixture;
 };

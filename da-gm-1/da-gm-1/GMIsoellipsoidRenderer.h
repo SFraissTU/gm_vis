@@ -21,12 +21,18 @@ private:
 	Camera* m_camera;
 	GaussianMixture* m_mixture = nullptr;
 
+	//Geometry Data per Sphere
+	QVector<QVector3D> m_geoVertices;
+	QVector<QVector3D> m_geoNormals;
+	QVector<GLuint> m_geoIndices;
+
 	//Buffers
 	QOpenGLVertexArrayObject m_gm_vao;
-	QOpenGLBuffer m_pos_vbo;
-	QOpenGLBuffer m_norm_vbo;
-	QOpenGLBuffer m_transf_vbo;
-	QOpenGLBuffer m_normtr_vbo;
+	QOpenGLBuffer m_pos_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+	QOpenGLBuffer m_norm_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+	QOpenGLBuffer m_indices_vbo = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+	QOpenGLBuffer m_transf_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+	QOpenGLBuffer m_normtr_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 
 	//Shader
 	std::unique_ptr<QOpenGLShaderProgram> m_program;
