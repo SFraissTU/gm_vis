@@ -98,7 +98,7 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 	for (int i = 0; i < n; ++i) {
 		const Gaussian* gauss = (*mixture)[i];
 
-		/*Eigen::Matrix3f cov = Eigen::Matrix3f();
+		Eigen::Matrix3f cov = Eigen::Matrix3f();
 		cov(0, 0) = gauss->covxx;
 		cov(0, 1) = gauss->covxy;
 		cov(0, 2) = gauss->covxz;
@@ -109,11 +109,29 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 		cov(2, 1) = gauss->covyz;
 		cov(2, 2) = gauss->covzz;
 		Eigen::EigenSolver<Eigen::Matrix3Xf> eigensolver;
-		eigensolver.compute(cov, true);*/
-		//Get Eigenvectors and Eigenvalues and compute transformation matrix from there
-
-
-		transforms[i].translate(QVector3D(gauss->x, gauss->y, gauss->z));
+		eigensolver.compute(cov, true);
+		Eigen::VectorXf eigen_values = eigensolver.eigenvalues().real();
+		Eigen::MatrixXf eigen_vectors = eigensolver.eigenvectors().real();
+		float l0 = sqrt(eigen_values(0));
+		float l1 = sqrt(eigen_values(1));
+		float l2 = sqrt(eigen_values(2));
+		transforms[i] = QMatrix4x4(
+			l0 * eigen_vectors(0, 0), l1 * eigen_vectors(0, 1), l2 * eigen_vectors(0, 2), gauss->x,
+			l0 * eigen_vectors(1, 0), l1 * eigen_vectors(1, 1), l2 * eigen_vectors(1, 2), gauss->y,
+			l0 * eigen_vectors(2, 0), l1 * eigen_vectors(2, 1), l2 * eigen_vectors(2, 2), gauss->z,
+			0, 0, 0, 1
+		);
+		if (transforms[i].determinant() < 0) {
+			//Switch two rows so that determinant becomes positive
+			//otherwise face ordering might switch
+			transforms[i] = transforms[i] * QMatrix4x4(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
+			//QVector4D temprow = transforms[i].row(0);
+			//transforms[i].setRow(0, transforms[i].row(1));
+			//transforms[i].setRow(1, temprow);
+			//transforms[i](0, 3) = gauss->x;	//last column has to stay the same. shouldn't affect det.
+			//transforms[i](1, 3) = gauss->y;
+		}
+		//transforms[i].translate(QVector3D(gauss->x, gauss->y, gauss->z));
 		normalTransfs[i] = transforms[i].inverted().transposed();
 	}
 
