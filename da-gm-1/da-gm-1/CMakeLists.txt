@@ -16,6 +16,7 @@ endif()
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 include_directories(.)
+include_directories(../include)
 
 add_executable(visualizer
     VisualizerWindow.ui
@@ -23,10 +24,21 @@ add_executable(visualizer
     VisualizerWindow.h
     VisualizerWindow.cpp
     main.cpp
-    PointCloudLoader.h
-    PointCloudLoader.cpp
+    DataLoader.h
+    DataLoader.cpp
     DisplayWidget.h
     DisplayWidget.cpp
+    Camera.h
+    Camera.cpp
+    DisplaySettings.h
+    Gaussian.h
+    GaussianMixture.h
+    GMIsoellipsoidRenderer.h
+    GMIsoellipsoidRenderer.cpp
+    Helper.h
+    PointCloud.h
+    PointCloudRenderer.h
+    PointCloudRenderer.cpp
 )
 
 target_link_libraries(visualizer Qt5::Widgets)
