@@ -20,6 +20,12 @@
     <ClCompile Include="GMIsoellipsoidRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GMDensityRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GaussianMixture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Resource Files">
@@ -77,6 +83,9 @@
     <None Include="..\shaders\isoell.frag">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\shaders\density.comp">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PointCloud.h">
@@ -104,6 +113,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Helper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GMDensityRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

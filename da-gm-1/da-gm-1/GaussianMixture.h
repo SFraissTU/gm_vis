@@ -16,6 +16,8 @@ public:
 		return gaussians.size();
 	}
 
+	double sample(double x, double y, double z);
+
 	const Gaussian* operator[](int index) {
 		if (index >= gaussians.size() || index < 0) {
 			return nullptr;

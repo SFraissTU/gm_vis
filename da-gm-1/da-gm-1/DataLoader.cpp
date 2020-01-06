@@ -153,7 +153,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 			for (int i = 0; i < words.length(); ++i) {
 				if (!properties[i].isNull()) {
 					bool ok;
-					float val = words[i].toFloat(&ok);
+					double val = words[i].toDouble(&ok);
 					if (!ok) {
 						qDebug() << "A value could not be transformed into a float in ply file " << file.fileName() << "\n.";
 						return {};
@@ -224,6 +224,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 					}
 				}
 			}
+			newGaussian.finalizeInitialization();
 			mixture->addGaussian(newGaussian);
 			--remainingGaussians;
 		}

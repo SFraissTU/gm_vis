@@ -91,6 +91,8 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DisplayWidget.cpp" />
+    <ClCompile Include="GaussianMixture.cpp" />
+    <ClCompile Include="GMDensityRenderer.cpp" />
     <ClCompile Include="GMIsoellipsoidRenderer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="DataLoader.cpp" />
@@ -110,6 +112,7 @@
     <QtMoc Include="DisplayWidget.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\shaders\density.comp" />
     <None Include="..\shaders\isoell.frag" />
     <None Include="..\shaders\isoell.vert" />
     <None Include="..\shaders\pointcloud.frag" />
@@ -120,6 +123,7 @@
     <ClInclude Include="DisplaySettings.h" />
     <ClInclude Include="Gaussian.h" />
     <ClInclude Include="GaussianMixture.h" />
+    <ClInclude Include="GMDensityRenderer.h" />
     <ClInclude Include="GMIsoellipsoidRenderer.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="PointCloud.h" />

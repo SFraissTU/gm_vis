@@ -2,7 +2,7 @@
 #include "Helper.h"
 #include <Eigen/Eigenvalues>
 
-GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_0_Core* gl, DisplaySettings* settings, Camera* camera) : m_gl(gl), m_settings(settings), m_camera(camera)
+GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera) : m_gl(gl), m_settings(settings), m_camera(camera)
 {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
 	m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/isoell.vert");
@@ -10,8 +10,8 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_0_Core* gl, Di
 	m_program->link();
 
 	m_program->bind();
-	m_projMatrixLoc = m_program->uniformLocation("projMatrix");
-	m_viewMatrixLoc = m_program->uniformLocation("viewMatrix");
+	m_locProjMatrix = m_program->uniformLocation("projMatrix");
+	m_locViewMatrix = m_program->uniformLocation("viewMatrix");
 	m_lightDirLoc = m_program->uniformLocation("lightDir");
 	m_surfaceColorLoc = m_program->uniformLocation("surfaceColor");
 	
@@ -122,14 +122,9 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 			0, 0, 0, 1
 		);
 		if (transforms[i].determinant() < 0) {
-			//Switch two rows so that determinant becomes positive
+			//Mirror object so that determinant becomes positive
 			//otherwise face ordering might switch
 			transforms[i] = transforms[i] * QMatrix4x4(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
-			//QVector4D temprow = transforms[i].row(0);
-			//transforms[i].setRow(0, transforms[i].row(1));
-			//transforms[i].setRow(1, temprow);
-			//transforms[i](0, 3) = gauss->x;	//last column has to stay the same. shouldn't affect det.
-			//transforms[i](1, 3) = gauss->y;
 		}
 		//transforms[i].translate(QVector3D(gauss->x, gauss->y, gauss->z));
 		normalTransfs[i] = transforms[i].inverted().transposed();
@@ -153,8 +148,8 @@ void GMIsoellipsoidRenderer::render()
 	m_program->bind();
 	m_program->setUniformValue(m_surfaceColorLoc, m_settings->ellipsoidColor);
 	m_program->setUniformValue(m_lightDirLoc, m_settings->lightDirection);
-	m_program->setUniformValue(m_projMatrixLoc, m_camera->getProjMatrix());
-	m_program->setUniformValue(m_viewMatrixLoc, m_camera->getViewMatrix());
+	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
+	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
 	//m_gl->glDrawArraysInstanced(GL_TRIANGLES, 0, m_geoVertices.count(), 3);
 	//m_gl->glDrawArrays(GL_TRIANGLES, 0, m_geoVertices.count());
 	//m_gl->glDrawElements(GL_TRIANGLES, m_geoIndices.count(), GL_UNSIGNED_INT, nullptr);

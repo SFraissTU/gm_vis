@@ -2,7 +2,7 @@
 #include "GaussianMixture.h"
 #include "DisplaySettings.h"
 #include "Camera.h"
-#include <QOpenGLFunctions_4_0_Core>
+#include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
@@ -10,13 +10,13 @@
 class GMIsoellipsoidRenderer {
 
 public:
-	GMIsoellipsoidRenderer(QOpenGLFunctions_4_0_Core* gl, DisplaySettings* settings, Camera* camera);
+	GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera);
 	void setMixture(GaussianMixture* mixture);
 	void render();
 	void cleanup();
 
 private:
-	QOpenGLFunctions_4_0_Core* m_gl;
+	QOpenGLFunctions_4_5_Core* m_gl;
 	DisplaySettings* m_settings;
 	Camera* m_camera;
 	GaussianMixture* m_mixture = nullptr;
@@ -38,8 +38,8 @@ private:
 	std::unique_ptr<QOpenGLShaderProgram> m_program;
 
 	//Locations
-	int m_projMatrixLoc;
-	int m_viewMatrixLoc;
+	int m_locProjMatrix;
+	int m_locViewMatrix;
 	int m_lightDirLoc;
 	int m_surfaceColorLoc;
 };

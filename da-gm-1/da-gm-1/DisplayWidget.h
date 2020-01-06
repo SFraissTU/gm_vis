@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <qopenglwidget.h>
-#include <QOpenGLFunctions_4_0_Core>
+#include <QOpenGLFunctions_4_5_Core>
 #include <qopenglvertexarrayobject.h>
 #include <qopenglbuffer.h>
 #include <qopenglshaderprogram.h>
@@ -13,8 +13,9 @@
 #include "DisplaySettings.h"
 #include "PointCloudRenderer.h"
 #include "GMIsoellipsoidRenderer.h"
+#include "GMDensityRenderer.h"
 
-class DisplayWidget : public QOpenGLWidget, private QOpenGLFunctions_4_0_Core {
+class DisplayWidget : public QOpenGLWidget, private QOpenGLFunctions_4_5_Core {
 	Q_OBJECT
 
 public:
@@ -51,6 +52,7 @@ private:
 	//Renderers
 	std::unique_ptr<PointCloudRenderer> m_pointcloudRenderer;
 	std::unique_ptr<GMIsoellipsoidRenderer> m_isoellipsoidRenderer;
+	std::unique_ptr<GMDensityRenderer> m_densityRenderer;
 
 	//Matrices (TODO)
 	std::unique_ptr<Camera> m_camera;

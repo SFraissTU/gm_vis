@@ -1,0 +1,16 @@
+#version 430
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+layout(rgba32f, binding = 0) uniform image2D img_output;
+
+uniform int width;
+uniform int height;
+uniform sampler3D density;
+
+void main() {
+	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	//vec4 pixel = vec4(float(pixel_coords.x)/width, float(pixel_coords.y)/height, 0.0, 1.0);
+	float samp = texture(density, vec3(float(pixel_coords.x)/width, float(pixel_coords.y)/height, 0.0)).r;
+	vec4 pixel = vec4(samp, samp, samp, 1.0f);
+
+	imageStore(img_output, pixel_coords, pixel);
+}

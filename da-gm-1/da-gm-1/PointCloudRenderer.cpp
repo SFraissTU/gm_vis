@@ -1,6 +1,6 @@
 #include "PointCloudRenderer.h"
 
-PointCloudRenderer::PointCloudRenderer(QOpenGLFunctions_4_0_Core* gl, DisplaySettings* settings, Camera* camera) : m_gl(gl), m_settings(settings), m_camera(camera)
+PointCloudRenderer::PointCloudRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera) : m_gl(gl), m_settings(settings), m_camera(camera)
 {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
 	m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/pointcloud.vert");
@@ -8,8 +8,8 @@ PointCloudRenderer::PointCloudRenderer(QOpenGLFunctions_4_0_Core* gl, DisplaySet
 	m_program->link();
 
 	m_program->bind();
-	m_projMatrixLoc = m_program->uniformLocation("projMatrix");
-	m_viewMatrixLoc = m_program->uniformLocation("viewMatrix");
+	m_locProjMatrix = m_program->uniformLocation("projMatrix");
+	m_locViewMatrix = m_program->uniformLocation("viewMatrix");
 	//m_lightPosLoc = m_program->uniformLocation("lightPos");
 	m_colorLoc = m_program->uniformLocation("pointcloudColor");
 	m_circlesLoc = m_program->uniformLocation("circles");
@@ -54,8 +54,8 @@ void PointCloudRenderer::render()
 	m_program->bind();
 	m_program->setUniformValue(m_colorLoc, m_settings->pointcloudColor);
 	m_program->setUniformValue(m_circlesLoc, m_settings->circles);
-	m_program->setUniformValue(m_projMatrixLoc, m_camera->getProjMatrix());
-	m_program->setUniformValue(m_viewMatrixLoc, m_camera->getViewMatrix());
+	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
+	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
 	m_gl->glPointSize(m_settings->pointSize);
 
 	m_gl->glDrawArrays(GL_POINTS, 0, m_pointcloud->getPointCount());

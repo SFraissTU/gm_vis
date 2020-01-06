@@ -38,6 +38,7 @@ void DisplayWidget::setPointCloud(PointCloud* pointcloud)
 void DisplayWidget::setGaussianMixture(GaussianMixture* mixture)
 {
 	m_isoellipsoidRenderer->setMixture(mixture);
+	m_densityRenderer->setMixture(mixture);
 	update();
 }
 
@@ -49,6 +50,8 @@ void DisplayWidget::cleanup() {
 		m_pointcloudRenderer.reset();
 		m_isoellipsoidRenderer->cleanup();
 		m_isoellipsoidRenderer.reset();
+		m_densityRenderer->cleanup();
+		m_densityRenderer.reset();
 		m_debugLogger.reset();
 	}
 	doneCurrent();
@@ -68,8 +71,9 @@ void DisplayWidget::initializeGL() {
 	}
 #endif
 
-	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_0_Core*>(this), &m_settings, m_camera.get());
-	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_0_Core*>(this), &m_settings, m_camera.get());
+	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get());
+	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get());
+	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height());
 
 	auto background = m_settings.backgroundColor;
 	glClearColor(background.redF(), background.blueF(), background.greenF(), 1);
@@ -82,13 +86,15 @@ void DisplayWidget::paintGL()
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-	m_pointcloudRenderer->render();
-	m_isoellipsoidRenderer->render();
+	//m_pointcloudRenderer->render();
+	//m_isoellipsoidRenderer->render();
+	m_densityRenderer->render();
 }
 
 void DisplayWidget::resizeGL(int width, int height)
 {
 	m_camera->setAspectRatio(GLfloat(width) / height);
+	m_densityRenderer->setSize(width, height);
 }
 
 void DisplayWidget::mousePressEvent(QMouseEvent* event)
