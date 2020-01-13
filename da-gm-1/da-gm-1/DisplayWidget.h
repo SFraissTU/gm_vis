@@ -13,7 +13,8 @@
 #include "DisplaySettings.h"
 #include "PointCloudRenderer.h"
 #include "GMIsoellipsoidRenderer.h"
-#include "GMDensityRenderer.h"
+#include "GMDensityRendererTexSampled.h"
+#include "GMDensityRendererDirectSampled.h"
 
 class DisplayWidget : public QOpenGLWidget, private QOpenGLFunctions_4_5_Core {
 	Q_OBJECT
@@ -52,7 +53,8 @@ private:
 	//Renderers
 	std::unique_ptr<PointCloudRenderer> m_pointcloudRenderer;
 	std::unique_ptr<GMIsoellipsoidRenderer> m_isoellipsoidRenderer;
-	std::unique_ptr<GMDensityRenderer> m_densityRenderer;
+	std::unique_ptr<GMDensityRendererTexSampled> m_densityRendererTexSampled;
+	std::unique_ptr<GMDensityRendererDirectSampled> m_densityRendererDirectSampled;
 
 	//Matrices (TODO)
 	std::unique_ptr<Camera> m_camera;

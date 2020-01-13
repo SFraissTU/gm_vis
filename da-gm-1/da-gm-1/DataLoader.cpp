@@ -79,6 +79,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 			return {};
 		}
 		std::unique_ptr<GaussianMixture> mixture = std::make_unique<GaussianMixture>();
+		int numberOfGaussians = 0;
 		int remainingGaussians = 0;
 		QList<QString> properties;
 		QList<QString> supportedProperties = {"x", "y", "z", "covxx", "covxy", "covxz", "covyy", "covyz", "covzz", "weight"};
@@ -109,6 +110,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 					qDebug() << "Invalid number of components given in ply file " << file.fileName() << ".\n";
 					return {};
 				}
+				numberOfGaussians = number;
 				remainingGaussians = number;
 			}
 			else if (type == "property") {
@@ -232,6 +234,11 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 			qDebug() << "End of file was reached before all Gaussians were read in file " << file.fileName() << ".\n";
 			return {};
 		}
+		//Check sum of pis
+		/*double sumpi = 0;
+		for (int i = 0; i < mixture->numberOfGaussians(); ++i) {
+			sumpi += (*mixture)[i]->pi / mixture->numberOfGaussians();
+		}*/
 		return std::move(mixture);
 	}
 	else {

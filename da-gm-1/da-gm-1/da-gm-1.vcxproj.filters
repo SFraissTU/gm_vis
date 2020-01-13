@@ -20,10 +20,13 @@
     <ClCompile Include="GMIsoellipsoidRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GMDensityRenderer.cpp">
+    <ClCompile Include="GaussianMixture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GaussianMixture.cpp">
+    <ClCompile Include="GMDensityRendererTexSampled.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GMDensityRendererDirectSampled.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -86,6 +89,9 @@
     <None Include="..\shaders\density.comp">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\shaders\density_notex.comp">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PointCloud.h">
@@ -115,7 +121,10 @@
     <ClInclude Include="Helper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GMDensityRenderer.h">
+    <ClInclude Include="GMDensityRendererTexSampled.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GMDensityRendererDirectSampled.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

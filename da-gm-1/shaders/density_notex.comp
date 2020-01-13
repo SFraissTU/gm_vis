@@ -2,10 +2,19 @@
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform image2D img_output;
 
-uniform int width;
-uniform int height;
-uniform sampler3D density;
-uniform mat4 invViewMatrix;
+layout(location=1) uniform int width;
+layout(location=2) uniform int height;
+layout(location=3) uniform mat4 invViewMatrix;
+
+struct Gaussian {
+	vec4 mu_amplitude;
+	mat4 invsigma;
+};
+
+layout(std430, binding=0) buffer GaussianMixture {
+	int amount;
+	Gaussian gaussians[];
+} mixture;
 
 void main() {
 	//This assumes a fixed fov of 90°. Should rather use the projection matrix
@@ -38,11 +47,18 @@ void main() {
 //	}
 	//Alpha Blending
 	for (int i = 600; i > 0; --i) {
-		samplingPoint = origin + i*0.25f*direction;
+		samplingPoint = origin + i*1.0f*direction;
 		vec3 texcoords = samplingPoint / 20.0f + vec3(0.5f);
-		float alpha = texture(density, texcoords).r;
-		sum = sum*(1-alpha) + alpha;//maybe alpha^2
-		//sum += alpha;
+		float alpha = 0;
+		for (int j = 0; j < mixture.amount && j <= 8; j++) {
+			Gaussian gauss = mixture.gaussians[j];
+			vec3 relpos = samplingPoint - gauss.mu_amplitude.xyz;
+			float ex = exp(-0.5 * dot(relpos*mat3(gauss.invsigma),relpos));
+			alpha += gauss.mu_amplitude.w * ex;
+		}
+		//float alpha = texture(density, texcoords).r;
+		//sum = sum*(1-alpha) + alpha;//maybe alpha^2
+		sum += alpha;
 	}
 
 	sum = clamp(sum, 0.0f, 1.0f);
@@ -52,6 +68,9 @@ void main() {
 	vec4 pixel = 0.9*vec4(sum, sum, sum, 1.0f) + 0.2*vec4(abs(direction), 1.0f);
 	//vec4 pixel = 0.9*vec4(col, 1.0f) + 0.2*vec4(abs(direction), 1.0f);
 	//vec4 pixel = vec4(sum,sum,sum,1.0f);
+	//pixel.gb = vec2(0);
+	//pixel.rgb = vec3(mixture.gaussians[0].invsigma[0].rgb);
+	//pixel.rgb = vec3(mixture.gaussians[1].mu_amplitude.rgb);
 
 	imageStore(img_output, pixel_coords, pixel);
 }

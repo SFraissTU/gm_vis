@@ -16,9 +16,9 @@ public:
 		return gaussians.size();
 	}
 
-	double sample(double x, double y, double z);
+	double sample(double x, double y, double z) const;
 
-	const Gaussian* operator[](int index) {
+	const Gaussian* operator[](int index) const {
 		if (index >= gaussians.size() || index < 0) {
 			return nullptr;
 		}
@@ -26,4 +26,6 @@ public:
 			return &gaussians[index];
 		}
 	}
+
+	std::shared_ptr<char[]> gpuData(size_t& arrsize) const;
 };

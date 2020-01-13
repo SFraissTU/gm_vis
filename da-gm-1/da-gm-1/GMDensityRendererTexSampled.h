@@ -9,9 +9,9 @@
 #include <QOpenGLTexture>
 #include <QOpenGLFrameBufferObject>
 
-class GMDensityRenderer {
+class GMDensityRendererTexSampled {
 public:
-	GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height);
+	GMDensityRendererTexSampled(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height);
 	void setMixture(GaussianMixture* mixture);
 	void setSize(int width, int height);
 	void render();
@@ -32,6 +32,7 @@ private:
 	GLuint m_locVolume;
 	GLuint m_locProjMatrix;
 	GLuint m_locViewMatrix;
+	GLuint m_locInvViewMatrix;
 	GLuint m_locWidth;
 	GLuint m_locHeight;
 
