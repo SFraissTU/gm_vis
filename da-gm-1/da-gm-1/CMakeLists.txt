@@ -33,8 +33,13 @@ add_executable(visualizer
     DisplaySettings.h
     Gaussian.h
     GaussianMixture.h
+    GaussianMixture.cpp
     GMIsoellipsoidRenderer.h
     GMIsoellipsoidRenderer.cpp
+    GMDensityRendererDirectSampled.h
+    GMDensityRendererDirectSampled.cpp
+    GMDensityRendererTexSampled.h
+    GMDensityRendererTexSampled.cpp
     Helper.h
     PointCloud.h
     PointCloudRenderer.h

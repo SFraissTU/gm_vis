@@ -39,7 +39,7 @@ void DisplayWidget::setGaussianMixture(GaussianMixture* mixture)
 {
 	m_isoellipsoidRenderer->setMixture(mixture);
 	//m_densityRendererTexSampled->setMixture(mixture);
-	m_densityRendererDirectSampled->setMixture(mixture);
+	//m_densityRendererDirectSampled->setMixture(mixture);
 	update();
 }
 
@@ -91,7 +91,7 @@ void DisplayWidget::paintGL()
 	m_pointcloudRenderer->render();
 	m_isoellipsoidRenderer->render();
 	//m_densityRendererTexSampled->render();
-	m_densityRendererDirectSampled->render();
+	//m_densityRendererDirectSampled->render();
 }
 
 void DisplayWidget::resizeGL(int width, int height)

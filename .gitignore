@@ -19,6 +19,7 @@ bld/
 [Oo]bj/
 [Ll]og/
 da-gm-1/da-gm-1/build
+da-gm-1/da-gm-1/out
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
