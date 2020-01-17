@@ -36,10 +36,11 @@ private:
 	GLuint m_locWidth;
 	GLuint m_locHeight;
 	GLuint m_locGaussTex;
+	GLuint m_locTransferTex;
 
 	GLuint m_mixtureSsbo;
 	GLuint m_gaussTexture;
-
+	GLuint m_transferTexture;
 	GLuint m_outtex;
 	GLuint m_fbo;
 

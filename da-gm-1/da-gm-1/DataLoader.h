@@ -13,4 +13,6 @@ public:
 
 	static std::unique_ptr<GaussianMixture> readGMfromPLY(QFile& file, bool convertCoordinateSystem);
 	static std::unique_ptr<GaussianMixture> readGMfromPLY(QString& path, bool convertCoordinateSystem);
+
+	static QVector<QVector3D> readTransferFunction(QString& path);
 };

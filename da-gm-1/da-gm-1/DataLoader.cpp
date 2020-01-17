@@ -2,6 +2,7 @@
 #include <qfile.h>
 #include <qtextstream.h>
 #include <qdebug.h>
+#include <QColor>
 
 std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(QFile& file, bool convertCoordinateSystem)
 {
@@ -248,4 +249,23 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QString& path, bool c
 {
 	QFile file(path);
 	return readGMfromPLY(file, convertCoordinateSystem);
+}
+
+QVector<QVector3D> DataLoader::readTransferFunction(QString& path)
+{
+	QVector<QVector3D> result;
+	QFile file(path);
+	if (file.open(QIODevice::ReadOnly)) {
+		QTextStream in(&file);
+		while (!in.atEnd()) {
+			QString line = in.readLine();
+			QStringList vals = line.split(",");
+			if (vals.length() != 3) {
+				continue;
+			}
+			QVector3D c = QVector3D(vals[0].toFloat(), vals[1].toFloat(), vals[2].toFloat());
+			result.push_back(c);
+		}
+	}
+	return result;
 }

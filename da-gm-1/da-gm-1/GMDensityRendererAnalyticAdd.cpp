@@ -1,4 +1,5 @@
 #include "GMDensityRendererAnalyticAdd.h"
+#include "DataLoader.h"
 #include <math.h>
 
 GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera) {
@@ -15,6 +16,7 @@ GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_
 	m_locWidth = m_program->uniformLocation("width");
 	m_locHeight = m_program->uniformLocation("height");
 	m_locGaussTex = m_program->uniformLocation("gaussTex");
+	m_locTransferTex = m_program->uniformLocation("transferTex");
 
 	m_program->release();
 
@@ -45,7 +47,15 @@ GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, 1001, 0, GL_RED, GL_FLOAT, gaussdata);
 	delete gaussdata;
-	//ToDo: Check if gaussdata is correct and include this in DisplayWidget
+	
+	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
+	gl->glGenTextures(1, &m_transferTexture);
+	gl->glBindTexture(GL_TEXTURE_1D, m_transferTexture);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
 
 	gl->glCreateFramebuffers(1, &m_fbo);
 	gl->glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
@@ -88,6 +98,12 @@ void GMDensityRendererAnalyticAdd::render()
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindImageTexture(0, m_outtex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 	m_program->setUniformValue(m_locOuttex, 0);
+	m_gl->glActiveTexture(GL_TEXTURE1);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_gaussTexture);
+	m_program->setUniformValue(m_locGaussTex, 1);
+	m_gl->glActiveTexture(GL_TEXTURE2);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_transferTexture);
+	m_program->setUniformValue(m_locTransferTex, 2);
 
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_mixtureSsbo);
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_locMixture, m_mixtureSsbo);

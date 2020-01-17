@@ -6,6 +6,7 @@ layout(location=1) uniform int width;
 layout(location=2) uniform int height;
 layout(location=3) uniform mat4 invViewMatrix;
 layout(location=4) uniform sampler1D gaussTex;
+layout(location=5) uniform sampler1D transferTex;
 
 struct Gaussian {
 	vec4 mu_amplitude;
@@ -53,18 +54,20 @@ void main() {
 		//float amp = gauss.mu_amplitude.w * sqrt2pi * sig * exp(-0.5*dot(pivec*inv, pivec));
 		float amp = gauss.mu_amplitude.w * exp(-0.5*dot(pivec*inv, pivec));
 		sum += amp * texture(gaussTex, mu / sig).r;
-		sum = amp;
 	}
 	//sum *= 0.00001f;
 	//sum = pow(sum, 4);
 	//sum = pow(sum, 1/3.0) / 100;
 	//sum = log(log(sum+1)+1) / 10.0f;
 	//sum = 10*sqrt(sum/100);
-	sum = clamp(sum, 0.0f, 1.0f);
+	sum = sum / 10.0f;
+	vec3 color = texture(transferTex, sum).rgb;
+	//sum = clamp(sum, 0.0f, 1.0f);
 
 	//float samp = texture(density, vec3(pixel_uv.x, pixel_uv.y, 0.5)).r;
 	//vec4 pixel = vec4(samp, samp, samp, 1.0f);
-	vec4 pixel = 0.9*vec4(sum, sum, sum, 1.0f) + 0.2*vec4(abs(direction), 1.0f);
+	vec4 pixel = vec4(0.9*color + 0.2*abs(direction), 1.0f);
+	//vec4 pixel = 0.9*vec4(sum, sum, sum, 1.0f) + 0.2*vec4(abs(direction), 1.0f);
 	//vec4 pixel = 0.9*vec4(col, 1.0f) + 0.2*vec4(abs(direction), 1.0f);
 	//vec4 pixel = vec4(sum,sum,sum,1.0f);
 	//pixel.gb = vec2(0);
