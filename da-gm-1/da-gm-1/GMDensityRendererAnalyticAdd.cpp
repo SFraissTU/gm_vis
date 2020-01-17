@@ -2,7 +2,7 @@
 #include "DataLoader.h"
 #include <math.h>
 
-GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera) {
+GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo(ScreenFBO(gl, width, height, false)) {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
 	m_program->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_analyticadd.comp");
 	m_program->link();
@@ -17,19 +17,11 @@ GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_
 	m_locHeight = m_program->uniformLocation("height");
 	m_locGaussTex = m_program->uniformLocation("gaussTex");
 	m_locTransferTex = m_program->uniformLocation("transferTex");
+	m_locDepthTex = m_program->uniformLocation("depthTex");
 
 	m_program->release();
 
-	m_screenWidth = width;
-	m_screenHeight = height;
-
-	gl->glGenTextures(1, &m_outtex);
-	gl->glBindTexture(GL_TEXTURE_2D, m_outtex);
-	gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_fboWidth, m_fboHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
+	m_fbo.attachColorTexture();
 
 	double factor = 1.0 / sqrt(0.5);
 	float* gaussdata = new float[1001];
@@ -56,12 +48,7 @@ GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
-
-	gl->glCreateFramebuffers(1, &m_fbo);
-	gl->glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-	gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_outtex, 0);
-	gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+	
 	gl->glCreateBuffers(1, &m_mixtureSsbo);
 }
 
@@ -78,25 +65,24 @@ void GMDensityRendererAnalyticAdd::setMixture(GaussianMixture* mixture)
 
 void GMDensityRendererAnalyticAdd::setSize(int width, int height)
 {
-	if (width > m_fboWidth || height > m_fboHeight) {
-		m_fboWidth = std::max(m_fboWidth, width);
-		m_fboHeight = std::max(m_fboHeight, height);
-		m_gl->glBindTexture(GL_TEXTURE_2D, m_outtex);
-		m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_fboWidth, m_fboHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
-	}
-	m_screenWidth = width;
-	m_screenHeight = height;
+	m_fbo.setSize(width, height);
 }
 
-void GMDensityRendererAnalyticAdd::render()
+void GMDensityRendererAnalyticAdd::render(GLuint depthTexture)
 {
 	if (!m_mixture) {
 		return;
 	}
 
+	/*m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, depthTexture);
+
+	m_gl->glBlitFramebuffer(0, 0, m_fbo.getWidth(), m_fbo.getHeight(), 0, 0, m_fbo.getWidth(), m_fbo.getHeight(),
+		GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	return;*/
+
 	m_program->bind();
 	m_gl->glActiveTexture(GL_TEXTURE0);
-	m_gl->glBindImageTexture(0, m_outtex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+	m_gl->glBindImageTexture(0, m_fbo.getColorTexture(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 	m_program->setUniformValue(m_locOuttex, 0);
 	m_gl->glActiveTexture(GL_TEXTURE1);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_gaussTexture);
@@ -104,20 +90,25 @@ void GMDensityRendererAnalyticAdd::render()
 	m_gl->glActiveTexture(GL_TEXTURE2);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_transferTexture);
 	m_program->setUniformValue(m_locTransferTex, 2);
+	m_gl->glActiveTexture(GL_TEXTURE3);
+	m_gl->glBindTexture(GL_TEXTURE_2D, depthTexture);
+	m_program->setUniformValue(m_locDepthTex, 3);
 
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_mixtureSsbo);
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_locMixture, m_mixtureSsbo);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-	m_program->setUniformValue(m_locWidth, m_screenWidth);
-	m_program->setUniformValue(m_locHeight, m_screenHeight);
+	int screenWidth = m_fbo.getWidth();
+	int screenHeight = m_fbo.getHeight();
+	m_program->setUniformValue(m_locWidth, screenWidth);
+	m_program->setUniformValue(m_locHeight, screenHeight);
 	m_program->setUniformValue(m_locInvViewMatrix, m_camera->getViewMatrix().inverted());
-	m_gl->glDispatchCompute(ceil(m_screenWidth / 32.0f), ceil(m_screenHeight / 32.0), 1);
+	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-	m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
+	m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo.getID());
 
-	m_gl->glBlitFramebuffer(0, 0, m_screenWidth, m_screenHeight, 0, 0, m_screenWidth, m_screenHeight,
+	m_gl->glBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight,
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 
@@ -128,9 +119,7 @@ void GMDensityRendererAnalyticAdd::render()
 
 void GMDensityRendererAnalyticAdd::cleanup()
 {
-	m_gl->glDeleteFramebuffers(1, &m_fbo);
-	m_gl->glDeleteTextures(1, &m_outtex);
-	//ToDo: VolTex
+	m_fbo.cleanup();
 	m_program.reset();
 }
 

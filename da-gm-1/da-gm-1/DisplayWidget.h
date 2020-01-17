@@ -58,6 +58,8 @@ private:
 	std::unique_ptr<GMDensityRendererDirectSampled> m_densityRendererDirectSampled;
 	std::unique_ptr<GMDensityRendererAnalyticAdd> m_densityRendererAnalyticAdd;
 
+	std::unique_ptr<ScreenFBO> m_fboIntermediate;
+
 	//Matrices (TODO)
 	std::unique_ptr<Camera> m_camera;
 	QPoint m_lastPos;

@@ -46,6 +46,8 @@ add_executable(visualizer
     PointCloud.h
     PointCloudRenderer.h
     PointCloudRenderer.cpp
+    ScreenFBO.h
+    ScreenFBO.cpp
 )
 
 target_link_libraries(visualizer Qt5::Widgets)

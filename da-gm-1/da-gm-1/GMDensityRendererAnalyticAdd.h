@@ -2,6 +2,7 @@
 #include "GaussianMixture.h"
 #include "DisplaySettings.h"
 #include "Camera.h"
+#include "ScreenFBO.h"
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
@@ -14,7 +15,7 @@ public:
 	GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height);
 	void setMixture(GaussianMixture* mixture);
 	void setSize(int width, int height);
-	void render();
+	void render(GLuint depthTexture);
 	void cleanup();
 
 private:
@@ -23,10 +24,7 @@ private:
 	Camera* m_camera;
 	GaussianMixture* m_mixture = nullptr;
 
-	int m_fboWidth = 3000;
-	int m_fboHeight = 3000;
-	int m_screenWidth;
-	int m_screenHeight;
+	ScreenFBO m_fbo;
 
 	GLuint m_locOuttex;
 	GLuint m_locMixture;
@@ -37,12 +35,11 @@ private:
 	GLuint m_locHeight;
 	GLuint m_locGaussTex;
 	GLuint m_locTransferTex;
+	GLuint m_locDepthTex;
 
 	GLuint m_mixtureSsbo;
 	GLuint m_gaussTexture;
 	GLuint m_transferTexture;
-	GLuint m_outtex;
-	GLuint m_fbo;
 
 	std::unique_ptr<QOpenGLShaderProgram> m_program;
 };

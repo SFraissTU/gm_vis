@@ -63,6 +63,9 @@ void DisplayWidget::initializeGL() {
 	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &DisplayWidget::cleanup);
 
 	initializeOpenGLFunctions();
+	m_fboIntermediate = std::make_unique<ScreenFBO>(static_cast<QOpenGLFunctions_4_5_Core*>(this), width(), height(), true);
+	m_fboIntermediate->attachColorTexture();
+	m_fboIntermediate->attachDepthTexture();
 
 #if _DEBUG
 	m_debugLogger = std::make_unique<QOpenGLDebugLogger>(this);
@@ -85,6 +88,10 @@ void DisplayWidget::initializeGL() {
 
 void DisplayWidget::paintGL()
 {
+	GLint defaultFbo = 0;
+	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);
+	//First pass: Render classicaly into texture
+	glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -92,9 +99,12 @@ void DisplayWidget::paintGL()
 
 	m_pointcloudRenderer->render();
 	m_isoellipsoidRenderer->render();
+
+	//Second pass: Pass old depth texture to ray marcher and render on screen
+	glBindFramebuffer(GL_FRAMEBUFFER, defaultFbo);
 	//m_densityRendererTexSampled->render();
 	//m_densityRendererDirectSampled->render();
-	m_densityRendererAnalyticAdd->render();
+	m_densityRendererAnalyticAdd->render(m_fboIntermediate->getDepthTexture());
 }
 
 void DisplayWidget::resizeGL(int width, int height)
@@ -103,6 +113,7 @@ void DisplayWidget::resizeGL(int width, int height)
 	m_densityRendererTexSampled->setSize(width, height);
 	m_densityRendererDirectSampled->setSize(width, height);
 	m_densityRendererAnalyticAdd->setSize(width, height);
+	m_fboIntermediate->setSize(width, height);
 }
 
 void DisplayWidget::mousePressEvent(QMouseEvent* event)
