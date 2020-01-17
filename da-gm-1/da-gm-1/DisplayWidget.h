@@ -15,6 +15,7 @@
 #include "GMIsoellipsoidRenderer.h"
 #include "GMDensityRendererTexSampled.h"
 #include "GMDensityRendererDirectSampled.h"
+#include "GMDensityRendererAnalyticAdd.h"
 
 class DisplayWidget : public QOpenGLWidget, private QOpenGLFunctions_4_5_Core {
 	Q_OBJECT
@@ -55,6 +56,7 @@ private:
 	std::unique_ptr<GMIsoellipsoidRenderer> m_isoellipsoidRenderer;
 	std::unique_ptr<GMDensityRendererTexSampled> m_densityRendererTexSampled;
 	std::unique_ptr<GMDensityRendererDirectSampled> m_densityRendererDirectSampled;
+	std::unique_ptr<GMDensityRendererAnalyticAdd> m_densityRendererAnalyticAdd;
 
 	//Matrices (TODO)
 	std::unique_ptr<Camera> m_camera;

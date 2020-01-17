@@ -1,7 +1,9 @@
 ply
 format ascii 1.0
 comment mixture 1.0
-element component 3
+comment gms exported Gaussian mixture ply file
+comment (c) Reinhold Preiner
+element component 1
 property float x
 property float y
 property float z
@@ -12,7 +14,8 @@ property float covyy
 property float covyz
 property float covzz
 property float weight
+property float nvx
+property float nvy
+property float nvz
 end_header
-0  0  0  50  1  0  50  -0.4  0.1  1
-0  3  5  50  1  0  50  -0.4  0.1  1
-5  0  0  50  1  0  50  -0.4  0.1  1
+29.2459  13.8828  -3.06583  8.1e-005  0  0  8.1e-005  0  8.1e-005  0.999999  0.001  0  0  

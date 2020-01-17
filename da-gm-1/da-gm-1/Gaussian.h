@@ -27,7 +27,6 @@ struct Gaussian {
 	double covyz;
 	double covzz;
 	double weight;
-	double pi;
 
 	GaussianGPU gpudata;
 
@@ -48,19 +47,14 @@ public:
 		inversecovariance = covariancematrix.inverse();
 		factor = 1.0f / (sqrt(covariancematrix.determinant())) * GAUSS_PI_FACTOR;
 		mu = Eigen::Vector3d(x, y, z);
-		//pi = weight / factor;
-		pi = weight;
 		float covdata[16] = { (float)covxx, (float)covxy, (float)covxz, 0, (float)covxy, (float)covyy, (float)covyz, 0, (float)covxz, (float)covyz, (float)covzz, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
-		gpudata = { QVector4D((float)mu.x(), (float)mu.y(), (float)mu.z(), float(pi * factor)), QMatrix4x4(covdata) };
+		gpudata = { QVector4D((float)mu.x(), (float)mu.y(), (float)mu.z(), float(weight * factor)), QMatrix4x4(covdata) };
 	}
 
 	double sample(double x, double y, double z) const {
 		Eigen::Vector3d relpos = Eigen::Vector3d(x - this->x, y - this->y, z - this->z);
 		double ex = std::exp(-0.5 * (relpos.transpose() * inversecovariance * relpos).x());
-		float val = factor * pi * ex;
-		if (val > 0.1) {
-			qDebug() << "";
-		}
+		float val = factor * weight * ex;
 		return val;
 	}
 };

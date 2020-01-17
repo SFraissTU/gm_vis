@@ -28,4 +28,6 @@ public:
 	}
 
 	std::shared_ptr<char[]> gpuData(size_t& arrsize) const;
+
+	void normalize();
 };

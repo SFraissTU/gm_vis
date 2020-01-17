@@ -4,6 +4,7 @@ layout(rgba32f, binding = 0) uniform image2D img_output;
 
 uniform int width;
 uniform int height;
+uniform float volextent;
 uniform sampler3D density;
 uniform mat4 invViewMatrix;
 
@@ -39,8 +40,8 @@ void main() {
 	//Alpha Blending
 	for (int i = 600; i > 0; --i) {
 		samplingPoint = origin + i*0.25f*direction;
-		vec3 texcoords = samplingPoint / 20.0f + vec3(0.5f);
-		float alpha = texture(density, texcoords).r;
+		vec3 texcoords = samplingPoint / volextent + vec3(0.5f);
+		float alpha = texture(density, texcoords).r * 100;
 		sum = sum*(1-alpha) + alpha;//maybe alpha^2
 		//sum += alpha;
 	}

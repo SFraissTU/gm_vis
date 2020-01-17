@@ -1,20 +1,20 @@
-#include "GMDensityRendererTexSampled.h"
+#include "GMDensityRendererAnalyticAdd.h"
 #include <math.h>
 
-GMDensityRendererTexSampled::GMDensityRendererTexSampled(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera) {
+GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera) {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
-	m_program->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density.comp");
+	m_program->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_analyticadd.comp");
 	m_program->link();
 
 	m_program->bind();
 	m_locOuttex = m_program->uniformLocation("outtex");
-	m_locVolume = m_program->uniformLocation("density");
-	m_locVolExtent = m_program->uniformLocation("volextent");
+	m_locMixture = 0;
 	m_locProjMatrix = m_program->uniformLocation("projMatrix");
 	m_locViewMatrix = m_program->uniformLocation("viewMatrix");
 	m_locInvViewMatrix = m_program->uniformLocation("invViewMatrix");
 	m_locWidth = m_program->uniformLocation("width");
 	m_locHeight = m_program->uniformLocation("height");
+	m_locGaussTex = m_program->uniformLocation("gaussTex");
 
 	m_program->release();
 
@@ -29,53 +29,44 @@ GMDensityRendererTexSampled::GMDensityRendererTexSampled(QOpenGLFunctions_4_5_Co
 	gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_fboWidth, m_fboHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
 
+	double factor = 1.0 / sqrt(0.5);
+	float* gaussdata = new float[1001];
+	gaussdata[0] = 0;
+	gaussdata[1000] = 1;
+	for (int i = 1; i < 1000; ++i) {
+		double t = (i - 500) / 100.0;
+		gaussdata[i] = 0.5 * erfc(-t / factor);
+	}
+	gl->glGenTextures(1, &m_gaussTexture);
+	gl->glBindTexture(GL_TEXTURE_1D, m_gaussTexture);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, 1001, 0, GL_RED, GL_FLOAT, gaussdata);
+	delete gaussdata;
+	//ToDo: Check if gaussdata is correct and include this in DisplayWidget
+
 	gl->glCreateFramebuffers(1, &m_fbo);
 	gl->glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 	gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_outtex, 0);
 	gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	
-	gl->glGenTextures(1, &m_volumetex);
-	gl->glBindTexture(GL_TEXTURE_3D, m_volumetex);
-	const GLfloat border[3] = { 0,0,0 };
-	gl->glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, &border[0]);
-	gl->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	gl->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	gl->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-	gl->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	gl->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	gl->glTexImage3D(GL_TEXTURE_3D, 0, GL_R16, 1, 1, 1, 0, GL_RED, GL_FLOAT, nullptr);
+
+	gl->glCreateBuffers(1, &m_mixtureSsbo);
 }
 
-void GMDensityRendererTexSampled::setMixture(GaussianMixture* mixture)
+void GMDensityRendererAnalyticAdd::setMixture(GaussianMixture* mixture)
 {
 	m_mixture = mixture;
-	//Sample Volume
-	//For now we just sample a fixed size Grid in 0.5-Steps. Later this should be chosen wiselier
-	m_gl->glBindTexture(GL_TEXTURE_3D, m_volumetex);
+	size_t arrsize;
+	std::shared_ptr<char[]> gpudata = mixture->gpuData(arrsize);
 
-	//k = x
-	//j = y
-	//i = z
-	float max = 0;
-	float* samples = new float[m_sampleaxiscount * m_sampleaxiscount * m_sampleaxiscount];
-	for (int i = 0; i < m_sampleaxiscount; ++i) {
-		for (int j = 0; j < m_sampleaxiscount; ++j) {
-			for (int k = 0; k < m_sampleaxiscount; ++k) {
-				//samples[i * 400 + j * 20 + k] = 1.0f;// (float(k) / 20.0f)* (float(i) / 20.0f)* (float(j) / 20.0f);
-				float val = mixture->sample(m_volumeextent * (double(k)/m_sampleaxiscount - 0.5f),
-					m_volumeextent * (double(j) / m_sampleaxiscount - 0.5f),
-					m_volumeextent * (double(i) / m_sampleaxiscount - 0.5f));
-				//float val = 0.03 - std::sqrt(std::pow(k-10,2) + std::pow(j-10,2) + std::pow(i-10,2)) / 1000.0;
-				samples[i * m_sampleaxiscount*m_sampleaxiscount + j * m_sampleaxiscount + k] = val;
-				if (val > max) max = val;
-			}
-		}
-	}
-
-	m_gl->glTexImage3D(GL_TEXTURE_3D, 0, GL_R16, m_sampleaxiscount, m_sampleaxiscount, m_sampleaxiscount, 0, GL_RED, GL_FLOAT, samples);
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_mixtureSsbo);
+	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, arrsize, gpudata.get(), GL_STATIC_DRAW);
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void GMDensityRendererTexSampled::setSize(int width, int height)
+void GMDensityRendererAnalyticAdd::setSize(int width, int height)
 {
 	if (width > m_fboWidth || height > m_fboHeight) {
 		m_fboWidth = std::max(m_fboWidth, width);
@@ -87,7 +78,7 @@ void GMDensityRendererTexSampled::setSize(int width, int height)
 	m_screenHeight = height;
 }
 
-void GMDensityRendererTexSampled::render()
+void GMDensityRendererAnalyticAdd::render()
 {
 	if (!m_mixture) {
 		return;
@@ -97,10 +88,11 @@ void GMDensityRendererTexSampled::render()
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindImageTexture(0, m_outtex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 	m_program->setUniformValue(m_locOuttex, 0);
-	m_gl->glActiveTexture(GL_TEXTURE1);
-	m_gl->glBindTexture(GL_TEXTURE_3D, m_volumetex);
-	m_program->setUniformValue(m_locVolume, 1);
-	m_program->setUniformValue(m_locVolExtent, m_volumeextent);
+
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_mixtureSsbo);
+	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_locMixture, m_mixtureSsbo);
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 	m_program->setUniformValue(m_locWidth, m_screenWidth);
 	m_program->setUniformValue(m_locHeight, m_screenHeight);
 	m_program->setUniformValue(m_locInvViewMatrix, m_camera->getViewMatrix().inverted());
@@ -118,7 +110,7 @@ void GMDensityRendererTexSampled::render()
 	//TODO
 }
 
-void GMDensityRendererTexSampled::cleanup()
+void GMDensityRendererAnalyticAdd::cleanup()
 {
 	m_gl->glDeleteFramebuffers(1, &m_fbo);
 	m_gl->glDeleteTextures(1, &m_outtex);

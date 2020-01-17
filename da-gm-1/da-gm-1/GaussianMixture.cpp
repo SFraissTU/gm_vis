@@ -32,3 +32,16 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize) const
 	}
 	return std::shared_ptr<char[]>(result);
 }
+
+void GaussianMixture::normalize()
+{
+	double sum = 0.0f;
+	for (int i = 0; i < gaussians.size(); ++i) {
+		sum += gaussians[i].weight;
+	}
+	double factor = 1.0 / sum;
+	for (int i = 0; i < gaussians.size(); ++i) {
+		gaussians[i].weight *= factor;
+		gaussians[i].gpudata.mu_amplitude.setW(gaussians[i].gpudata.mu_amplitude.w() * factor);
+	}
+}

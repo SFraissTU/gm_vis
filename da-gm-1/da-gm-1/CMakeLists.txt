@@ -40,6 +40,8 @@ add_executable(visualizer
     GMDensityRendererDirectSampled.cpp
     GMDensityRendererTexSampled.h
     GMDensityRendererTexSampled.cpp
+    GMDensityRendererAnalyticAdd.h
+    GMDensityRendererAnalyticAdd.cpp
     Helper.h
     PointCloud.h
     PointCloudRenderer.h

@@ -234,11 +234,8 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 			qDebug() << "End of file was reached before all Gaussians were read in file " << file.fileName() << ".\n";
 			return {};
 		}
-		//Check sum of pis
-		/*double sumpi = 0;
-		for (int i = 0; i < mixture->numberOfGaussians(); ++i) {
-			sumpi += (*mixture)[i]->pi / mixture->numberOfGaussians();
-		}*/
+		//The weights are multiplied by the amount of points, so we have to normalize them
+		mixture->normalize();
 		return std::move(mixture);
 	}
 	else {

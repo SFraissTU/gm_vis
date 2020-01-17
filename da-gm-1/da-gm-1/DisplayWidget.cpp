@@ -40,6 +40,7 @@ void DisplayWidget::setGaussianMixture(GaussianMixture* mixture)
 	m_isoellipsoidRenderer->setMixture(mixture);
 	//m_densityRendererTexSampled->setMixture(mixture);
 	//m_densityRendererDirectSampled->setMixture(mixture);
+	m_densityRendererAnalyticAdd->setMixture(mixture);
 	update();
 }
 
@@ -76,6 +77,7 @@ void DisplayWidget::initializeGL() {
 	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get());
 	m_densityRendererTexSampled = std::make_unique<GMDensityRendererTexSampled>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height());
 	m_densityRendererDirectSampled = std::make_unique<GMDensityRendererDirectSampled>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height());
+	m_densityRendererAnalyticAdd = std::make_unique<GMDensityRendererAnalyticAdd>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height());
 
 	auto background = m_settings.backgroundColor;
 	glClearColor(background.redF(), background.blueF(), background.greenF(), 1);
@@ -92,6 +94,7 @@ void DisplayWidget::paintGL()
 	m_isoellipsoidRenderer->render();
 	//m_densityRendererTexSampled->render();
 	//m_densityRendererDirectSampled->render();
+	m_densityRendererAnalyticAdd->render();
 }
 
 void DisplayWidget::resizeGL(int width, int height)
@@ -99,6 +102,7 @@ void DisplayWidget::resizeGL(int width, int height)
 	m_camera->setAspectRatio(GLfloat(width) / height);
 	m_densityRendererTexSampled->setSize(width, height);
 	m_densityRendererDirectSampled->setSize(width, height);
+	m_densityRendererAnalyticAdd->setSize(width, height);
 }
 
 void DisplayWidget::mousePressEvent(QMouseEvent* event)
