@@ -41,14 +41,14 @@ struct Helper {
 			vertices.push_back(position);
 			normals.push_back(position.normalized());
 			if (j > 0) {
-				indices.push_back(0);
-				indices.push_back(j);
 				indices.push_back(j + 1);
+				indices.push_back(j);
+				indices.push_back(0);
 			}
 		}
-		indices.push_back(0);
-		indices.push_back(m);
 		indices.push_back(1);
+		indices.push_back(m);
+		indices.push_back(0);
 
 		//second to n-1th row
 		for (int i = 1; i < n - 1; i++) {
@@ -100,13 +100,13 @@ struct Helper {
 
 		//Last row
 		for (int j = 0; j < m - 1; j++) {
-			indices.push_back(lastone - m + j);
-			indices.push_back(lastone);
 			indices.push_back(lastone - m + j + 1);
+			indices.push_back(lastone);
+			indices.push_back(lastone - m + j);
 		}
-		indices.push_back(lastone - 1);
-		indices.push_back(lastone);
 		indices.push_back(lastone - m);
+		indices.push_back(lastone);
+		indices.push_back(lastone - 1);
 	}
 
 };

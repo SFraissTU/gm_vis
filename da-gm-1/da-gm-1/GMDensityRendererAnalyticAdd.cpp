@@ -17,7 +17,8 @@ GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_
 	m_locHeight = m_program->uniformLocation("height");
 	m_locGaussTex = m_program->uniformLocation("gaussTex");
 	m_locTransferTex = m_program->uniformLocation("transferTex");
-	m_locDepthTex = m_program->uniformLocation("depthTex");
+	m_locModelTex = m_program->uniformLocation("modelTex");
+	m_locBlend = m_program->uniformLocation("blend");
 
 	m_program->release();
 
@@ -92,7 +93,7 @@ void GMDensityRendererAnalyticAdd::render(GLuint depthTexture)
 	m_program->setUniformValue(m_locTransferTex, 2);
 	m_gl->glActiveTexture(GL_TEXTURE3);
 	m_gl->glBindTexture(GL_TEXTURE_2D, depthTexture);
-	m_program->setUniformValue(m_locDepthTex, 3);
+	m_program->setUniformValue(m_locModelTex, 3);
 
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_mixtureSsbo);
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_locMixture, m_mixtureSsbo);
@@ -103,6 +104,7 @@ void GMDensityRendererAnalyticAdd::render(GLuint depthTexture)
 	m_program->setUniformValue(m_locWidth, screenWidth);
 	m_program->setUniformValue(m_locHeight, screenHeight);
 	m_program->setUniformValue(m_locInvViewMatrix, m_camera->getViewMatrix().inverted());
+	m_program->setUniformValue(m_locBlend, m_settings->rendermodeblending);
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 

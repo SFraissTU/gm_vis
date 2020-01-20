@@ -47,7 +47,10 @@ public:
 		inversecovariance = covariancematrix.inverse();
 		factor = 1.0f / (sqrt(covariancematrix.determinant())) * GAUSS_PI_FACTOR;
 		mu = Eigen::Vector3d(x, y, z);
-		float covdata[16] = { (float)covxx, (float)covxy, (float)covxz, 0, (float)covxy, (float)covyy, (float)covyz, 0, (float)covxz, (float)covyz, (float)covzz, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
+		float covdata[16] = { (float)inversecovariance(0,0), (float)inversecovariance(0,1), (float)inversecovariance(0,2), 0, 
+			(float)inversecovariance(1,0), (float)inversecovariance(1,1), (float)inversecovariance(1,2), 0, 
+			(float)inversecovariance(2,0), (float)inversecovariance(2,1), (float)inversecovariance(2,2), 0, 
+			0.0f, 0.0f, 0.0f, 1.0f };
 		gpudata = { QVector4D((float)mu.x(), (float)mu.y(), (float)mu.z(), float(weight * factor)), QMatrix4x4(covdata) };
 	}
 

@@ -35,7 +35,8 @@ private:
 	GLuint m_locHeight;
 	GLuint m_locGaussTex;
 	GLuint m_locTransferTex;
-	GLuint m_locDepthTex;
+	GLuint m_locModelTex;
+	GLuint m_locBlend;
 
 	GLuint m_mixtureSsbo;
 	GLuint m_gaussTexture;

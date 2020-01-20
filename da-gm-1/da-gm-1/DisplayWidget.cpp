@@ -14,6 +14,7 @@ DisplayWidget::DisplayWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	format.setOption(QSurfaceFormat::DebugContext);
 	setFormat(format);
 	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width()) / height(), 0.01f, 1000.0f);
+	setFocusPolicy(Qt::StrongFocus);
 }
 
 DisplayWidget::~DisplayWidget() {
@@ -104,7 +105,7 @@ void DisplayWidget::paintGL()
 	glBindFramebuffer(GL_FRAMEBUFFER, defaultFbo);
 	//m_densityRendererTexSampled->render();
 	//m_densityRendererDirectSampled->render();
-	m_densityRendererAnalyticAdd->render(m_fboIntermediate->getDepthTexture());
+	m_densityRendererAnalyticAdd->render(m_fboIntermediate->getColorTexture());
 }
 
 void DisplayWidget::resizeGL(int width, int height)
@@ -143,6 +144,22 @@ void DisplayWidget::mouseMoveEvent(QMouseEvent* event)
 	if (refresh) {
 		update();
 		m_lastPos = event->pos();
+	}
+}
+
+void DisplayWidget::keyReleaseEvent(QKeyEvent* event)
+{
+	if (event->key() == Qt::Key::Key_1) {
+		m_settings.rendermodeblending = 0;
+		update();
+	}
+	else if (event->key() == Qt::Key::Key_2) {
+		m_settings.rendermodeblending = 0.5;
+		update();
+	}
+	else if (event->key() == Qt::Key::Key_3) {
+		m_settings.rendermodeblending = 1;
+		update();
 	}
 }
 
