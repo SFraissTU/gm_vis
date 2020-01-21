@@ -1,17 +1,16 @@
-#include "GMDensityRendererAnalyticAdd.h"
+#include "GMDensityRenderer.h"
 #include "DataLoader.h"
 #include <math.h>
 
-GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo(ScreenFBO(gl, width, height, false)) {
+GMDensityRenderer::GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo(ScreenFBO(gl, width, height, false)) {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
-	m_program->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_analyticadd.comp");
+	m_program->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density.comp");
 	m_program->link();
 
 	m_program->bind();
 	m_locOuttex = m_program->uniformLocation("outtex");
 	m_locMixture = 0;
 	m_locProjMatrix = m_program->uniformLocation("projMatrix");
-	m_locViewMatrix = m_program->uniformLocation("viewMatrix");
 	m_locInvViewMatrix = m_program->uniformLocation("invViewMatrix");
 	m_locWidth = m_program->uniformLocation("width");
 	m_locHeight = m_program->uniformLocation("height");
@@ -53,7 +52,7 @@ GMDensityRendererAnalyticAdd::GMDensityRendererAnalyticAdd(QOpenGLFunctions_4_5_
 	gl->glCreateBuffers(1, &m_mixtureSsbo);
 }
 
-void GMDensityRendererAnalyticAdd::setMixture(GaussianMixture* mixture)
+void GMDensityRenderer::setMixture(GaussianMixture* mixture)
 {
 	m_mixture = mixture;
 	size_t arrsize;
@@ -64,12 +63,12 @@ void GMDensityRendererAnalyticAdd::setMixture(GaussianMixture* mixture)
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void GMDensityRendererAnalyticAdd::setSize(int width, int height)
+void GMDensityRenderer::setSize(int width, int height)
 {
 	m_fbo.setSize(width, height);
 }
 
-void GMDensityRendererAnalyticAdd::render(GLuint depthTexture)
+void GMDensityRenderer::render(GLuint depthTexture)
 {
 	if (!m_mixture) {
 		return;
@@ -119,7 +118,7 @@ void GMDensityRendererAnalyticAdd::render(GLuint depthTexture)
 	//TODO
 }
 
-void GMDensityRendererAnalyticAdd::cleanup()
+void GMDensityRenderer::cleanup()
 {
 	m_fbo.cleanup();
 	m_program.reset();

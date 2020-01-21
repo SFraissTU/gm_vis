@@ -39,9 +39,7 @@ void DisplayWidget::setPointCloud(PointCloud* pointcloud)
 void DisplayWidget::setGaussianMixture(GaussianMixture* mixture)
 {
 	m_isoellipsoidRenderer->setMixture(mixture);
-	//m_densityRendererTexSampled->setMixture(mixture);
-	//m_densityRendererDirectSampled->setMixture(mixture);
-	m_densityRendererAnalyticAdd->setMixture(mixture);
+	m_densityRenderer->setMixture(mixture);
 	update();
 }
 
@@ -53,8 +51,8 @@ void DisplayWidget::cleanup() {
 		m_pointcloudRenderer.reset();
 		m_isoellipsoidRenderer->cleanup();
 		m_isoellipsoidRenderer.reset();
-		m_densityRendererTexSampled->cleanup();
-		m_densityRendererTexSampled.reset();
+		m_densityRenderer->cleanup();
+		m_densityRenderer.reset();
 		m_debugLogger.reset();
 	}
 	doneCurrent();
@@ -79,9 +77,7 @@ void DisplayWidget::initializeGL() {
 
 	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get());
 	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get());
-	m_densityRendererTexSampled = std::make_unique<GMDensityRendererTexSampled>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height());
-	m_densityRendererDirectSampled = std::make_unique<GMDensityRendererDirectSampled>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height());
-	m_densityRendererAnalyticAdd = std::make_unique<GMDensityRendererAnalyticAdd>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height());
+	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height());
 
 	auto background = m_settings.backgroundColor;
 	glClearColor(background.redF(), background.blueF(), background.greenF(), 1);
@@ -91,29 +87,36 @@ void DisplayWidget::paintGL()
 {
 	GLint defaultFbo = 0;
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);
-	//First pass: Render classicaly into texture
-	glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
 
-	m_pointcloudRenderer->render();
-	m_isoellipsoidRenderer->render();
+	//Only render points and ellipsoids if blending mode requires it
+	if (m_settings.rendermodeblending < 1.0f) {
+		//Only set FBO if we will render volume later on
+		if (m_settings.rendermodeblending > 0.0f) {
+			//First pass: Render classicaly into texture
+			glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
+		}
 
-	//Second pass: Pass old depth texture to ray marcher and render on screen
-	glBindFramebuffer(GL_FRAMEBUFFER, defaultFbo);
-	//m_densityRendererTexSampled->render();
-	//m_densityRendererDirectSampled->render();
-	m_densityRendererAnalyticAdd->render(m_fboIntermediate->getColorTexture());
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+
+		m_pointcloudRenderer->render();
+		m_isoellipsoidRenderer->render();
+	}
+
+	//Render volume if necessary
+	if (m_settings.rendermodeblending > 0.0f) {
+		//Second pass: Pass old depth texture to ray marcher and render on screen
+		glBindFramebuffer(GL_FRAMEBUFFER, defaultFbo);
+		m_densityRenderer->render(m_fboIntermediate->getColorTexture());
+	}
 }
 
 void DisplayWidget::resizeGL(int width, int height)
 {
 	m_camera->setAspectRatio(GLfloat(width) / height);
-	m_densityRendererTexSampled->setSize(width, height);
-	m_densityRendererDirectSampled->setSize(width, height);
-	m_densityRendererAnalyticAdd->setSize(width, height);
+	m_densityRenderer->setSize(width, height);
 	m_fboIntermediate->setSize(width, height);
 }
 

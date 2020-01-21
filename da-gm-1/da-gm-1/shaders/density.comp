@@ -2,11 +2,25 @@
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform image2D img_output;
 
-uniform int width;
-uniform int height;
-uniform float volextent;
-uniform sampler3D density;
-uniform mat4 invViewMatrix;
+layout(location=1) uniform int width;
+layout(location=2) uniform int height;
+layout(location=3) uniform mat4 invViewMatrix;
+layout(location=4) uniform sampler1D gaussTex;
+layout(location=5) uniform sampler1D transferTex;
+layout(location=6) uniform sampler2D modelTex;
+layout(location=7) uniform float blend;
+
+struct Gaussian {
+	vec4 mu_amplitude;
+	mat4 invsigma;
+};
+
+layout(std430, binding=0) buffer GaussianMixture {
+	int amount;
+	Gaussian gaussians[];
+} mixture;
+
+#define PI 3.1415926538
 
 void main() {
 	//This assumes a fixed fov of 90°. Should rather use the projection matrix
@@ -25,34 +39,64 @@ void main() {
 	origin = vec3(vp1);
 	direction = vec3(normalize(vp2 - vp1));
 
-	float sum = 0;
+	//convert system
+	origin = vec3(origin.x, -origin.z, origin.y);
+	direction = vec3(direction.x, -direction.z, direction.y);
+
 	vec3 samplingPoint = origin + direction;
-	//float diskr = pow(2*dot(direction,origin),2) - 4*dot(direction,direction)*(dot(origin,origin)-16);
-	//if (diskr >= 0) {
-		//sum = 1;
-	//}
-	//Additive Blending
-//	for (int i = 0; i < 600; i++) {
-//		vec3 texcoords = samplingPoint / 20.0f + vec3(0.5f);
-//		sum += texture(density, texcoords).r*5.0f;// * (1.0f - i/100.0f);
-//		samplingPoint += direction * 0.25f;
-//	}
-	//Alpha Blending
-	for (int i = 600; i > 0; --i) {
-		samplingPoint = origin + i*0.25f*direction;
-		vec3 texcoords = samplingPoint / volextent + vec3(0.5f);
-		float alpha = texture(density, texcoords).r * 100;
-		sum = sum*(1-alpha) + alpha;//maybe alpha^2
-		//sum += alpha;
+
+	//ToDo: Eigentlich wird hier nirgends das Koordinatensystem transformiert
+
+	//float sqrt2pi = sqrt(2*PI);
+	float sum = 0;
+	for (int i = 0; i < mixture.amount; i++) {
+		Gaussian gauss = mixture.gaussians[i];
+		mat3 inv = mat3(gauss.invsigma);
+		vec3 rs = direction*inv;
+		float sig2 = 1.0 / dot(rs, direction);
+		float mu = dot(rs, gauss.mu_amplitude.xyz-origin) * sig2;
+		float sig = sqrt(sig2);
+		vec3 pivec = origin + mu*direction - gauss.mu_amplitude.xyz;
+		//float amp = gauss.mu_amplitude.w * sqrt2pi * sig * exp(-0.5*dot(pivec*inv, pivec));
+		float amp = gauss.mu_amplitude.w * exp(-0.5*dot(pivec*inv, pivec));
+		sum += amp * texture(gaussTex, mu / sig).r;
 	}
 
-	sum = clamp(sum, 0.0f, 1.0f);
+	//sum *= 0.00001f;
+	//sum = pow(sum, 4);
+	//sum = pow(sum, 1/3.0) / 100;
+	//sum = log(log(sum+1)+1) / 10.0f;
+	//sum = 10*sqrt(sum/100);
+	sum = sum * 100;
+	vec3 color = texture(transferTex, sum).rgb;
+	//sum = clamp(sum, 0.0f, 1.0f);
+
+//	float sum = 0;
+//	float sumaha = 0;
+//	for (int j = 0; j < mixture.amount; j++) {
+//		Gaussian gauss = mixture.gaussians[j];
+//		vec3 relpos = vec3(10 * d.x * aspectRatio, 10 * d.y, 0) - gauss.mu_amplitude.xyz;
+//		float ex = exp(-0.5 * dot(relpos*mat3(gauss.invsigma),relpos));
+//		sum += ex;//gauss.mu_amplitude.w * ex;
+//		sumaha += sqrt(dot(relpos*mat3(gauss.invsigma),relpos));
+//	}
+//	vec3 color = vec3(sumaha);
+	//vec3 color = texture(transferTex, sum).rgb;
+	//Gaussian gauss = mixture.gaussians[0];
+	//vec3 color = mat3(gauss.invsigma)[0] / 200.0;
+	vec4 pixel = vec4(color, 1.0f);
 
 	//float samp = texture(density, vec3(pixel_uv.x, pixel_uv.y, 0.5)).r;
 	//vec4 pixel = vec4(samp, samp, samp, 1.0f);
-	vec4 pixel = 0.9*vec4(sum, sum, sum, 1.0f) + 0.2*vec4(abs(direction), 1.0f);
+	//vec4 pixel = vec4(0.9*color + 0.2*abs(direction), 1.0f);
+	//vec4 pixel = 0.9*vec4(sum, sum, sum, 1.0f) + 0.2*vec4(abs(direction), 1.0f);
 	//vec4 pixel = 0.9*vec4(col, 1.0f) + 0.2*vec4(abs(direction), 1.0f);
 	//vec4 pixel = vec4(sum,sum,sum,1.0f);
+	//pixel.gb = vec2(0);
+	//pixel.rgb = vec3(mixture.gaussians[0].invsigma[0].rgb);
+	//pixel.rgb = vec3(mixture.gaussians[1].mu_amplitude.rgb);
+	pixel = blend * pixel + (1-blend) * vec4(texture(modelTex, pixel_uv).rgb, 1.0f);
+	//pixel = vec4(texture(depthTex, pixel_uv).rrr / 2.0f, 1.0f);
 
 	imageStore(img_output, pixel_coords, pixel);
 }
