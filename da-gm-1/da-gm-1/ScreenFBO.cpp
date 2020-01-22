@@ -41,8 +41,8 @@ void ScreenFBO::attachDepthTexture()
 void ScreenFBO::setSize(int width, int height)
 {
 	if (width > m_fboWidth || height > m_fboHeight || m_equalsize) {
-		m_fboWidth = std::max(m_fboWidth, width);
-		m_fboHeight = std::max(m_fboHeight, height);
+		m_fboWidth = width;
+		m_fboHeight = height;
 		if (m_colorTex != -1) {
 			m_gl->glBindTexture(GL_TEXTURE_2D, m_colorTex);
 			m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_fboWidth, m_fboHeight, 0, GL_RGBA, GL_FLOAT, nullptr);

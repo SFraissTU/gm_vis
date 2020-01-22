@@ -1,6 +1,7 @@
 #include "GMDensityRenderer.h"
 #include "DataLoader.h"
 #include <math.h>
+#include <QtMath>
 
 GMDensityRenderer::GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo(ScreenFBO(gl, width, height, false)) {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
@@ -14,6 +15,7 @@ GMDensityRenderer::GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySetti
 	m_locInvViewMatrix = m_program->uniformLocation("invViewMatrix");
 	m_locWidth = m_program->uniformLocation("width");
 	m_locHeight = m_program->uniformLocation("height");
+	m_locFov = m_program->uniformLocation("fov");
 	m_locGaussTex = m_program->uniformLocation("gaussTex");
 	m_locTransferTex = m_program->uniformLocation("transferTex");
 	m_locModelTex = m_program->uniformLocation("modelTex");
@@ -103,6 +105,7 @@ void GMDensityRenderer::render(GLuint depthTexture)
 	m_program->setUniformValue(m_locWidth, screenWidth);
 	m_program->setUniformValue(m_locHeight, screenHeight);
 	m_program->setUniformValue(m_locInvViewMatrix, m_camera->getViewMatrix().inverted());
+	m_program->setUniformValue(m_locFov, qDegreesToRadians(m_camera->getFoV()));
 	m_program->setUniformValue(m_locBlend, m_settings->rendermodeblending);
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

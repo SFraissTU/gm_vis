@@ -30,6 +30,7 @@ private:
 	GLuint m_locMixture;
 	GLuint m_locProjMatrix;
 	GLuint m_locInvViewMatrix;
+	GLuint m_locFov;
 	GLuint m_locWidth;
 	GLuint m_locHeight;
 	GLuint m_locGaussTex;

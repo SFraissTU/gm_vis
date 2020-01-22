@@ -5,10 +5,11 @@ layout(rgba32f, binding = 0) uniform image2D img_output;
 layout(location=1) uniform int width;
 layout(location=2) uniform int height;
 layout(location=3) uniform mat4 invViewMatrix;
-layout(location=4) uniform sampler1D gaussTex;
-layout(location=5) uniform sampler1D transferTex;
-layout(location=6) uniform sampler2D modelTex;
-layout(location=7) uniform float blend;
+layout(location=4) uniform float fov;
+layout(location=5) uniform sampler1D gaussTex;
+layout(location=6) uniform sampler1D transferTex;
+layout(location=7) uniform sampler2D modelTex;
+layout(location=8) uniform float blend;
 
 struct Gaussian {
 	vec4 mu_amplitude;
@@ -23,7 +24,6 @@ layout(std430, binding=0) buffer GaussianMixture {
 #define PI 3.1415926538
 
 void main() {
-	//This assumes a fixed fov of 90°. Should rather use the projection matrix
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 	vec2 pixel_center = vec2(pixel_coords) + vec2(0.5);
 	vec2 pixel_uv = pixel_center / vec2(width, height);
@@ -31,7 +31,7 @@ void main() {
 	float aspectRatio = float(width) / float(height);
 
 	vec3 origin = vec3(0, 0, 0.0);
-	vec3 direction = normalize(vec3(d.x * aspectRatio, d.y, -sqrt(3)));
+	vec3 direction = normalize(vec3(d.x * aspectRatio, d.y, -1/tan(fov/2.0)));
 	vec4 p1 = vec4(origin, 1.0);
 	vec4 p2 = vec4(origin + direction, 1.0);
 	vec4 vp1 = invViewMatrix * p1;
