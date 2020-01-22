@@ -29,6 +29,11 @@ QSize DisplayWidget::sizeHint() const {
 	return QSize(500, 500);
 }
 
+DisplaySettings* DisplayWidget::getSettings()
+{
+	return &m_settings;
+}
+
 //should only be called after initialization!
 void DisplayWidget::setPointCloud(PointCloud* pointcloud)
 {

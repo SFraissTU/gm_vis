@@ -12,4 +12,7 @@ public:
 	QColor ellipsoidColor = QColor(100, 100, 255);
 	QVector3D lightDirection = QVector3D(0.f, -0.7f, -1.0f).normalized();
 	float rendermodeblending = 1.0f;
+
+	float densitymin = 0.0f;
+	float densitymax = 0.01f;
 };

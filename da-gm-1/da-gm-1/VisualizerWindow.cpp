@@ -1,5 +1,6 @@
 #include "VisualizerWindow.h"
 #include <qfiledialog.h>
+#include <QDoubleValidator>
 
 VisualizerWindow::VisualizerWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -9,9 +10,9 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(loadPointcloudAction()));
 	connect(ui.loadMixtureAction, SIGNAL(triggered()), this, SLOT(loadMixtureAction()));
 
-	/*pointcloud = DataLoader::readPCDfromOFF("data/chair_0129.off", true);
-	
-	ui.openGLWidget->setPointCloud(pointcloud.get());*/
+	connect(ui.spin_scalemin, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
+	connect(ui.spin_scalemax, SIGNAL(valueChanged(double
+	)), this, SLOT(updateSettings()));
 }
 
 void VisualizerWindow::loadPointcloudAction() {
@@ -35,4 +36,12 @@ void VisualizerWindow::loadMixtureAction()
 			ui.openGLWidget->setGaussianMixture(mixture.get());
 		}
 	}
+}
+
+void VisualizerWindow::updateSettings()
+{
+	auto settings = ui.openGLWidget->getSettings();
+	settings->densitymin = ui.spin_scalemin->value();
+	settings->densitymax = ui.spin_scalemax->value();
+	ui.openGLWidget->update();
 }

@@ -20,6 +20,8 @@ GMDensityRenderer::GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySetti
 	m_locTransferTex = m_program->uniformLocation("transferTex");
 	m_locModelTex = m_program->uniformLocation("modelTex");
 	m_locBlend = m_program->uniformLocation("blend");
+	m_locDensityMin = m_program->uniformLocation("densitymin");
+	m_locDensityMax = m_program->uniformLocation("densitymax");
 
 	m_program->release();
 
@@ -107,6 +109,8 @@ void GMDensityRenderer::render(GLuint depthTexture)
 	m_program->setUniformValue(m_locInvViewMatrix, m_camera->getViewMatrix().inverted());
 	m_program->setUniformValue(m_locFov, qDegreesToRadians(m_camera->getFoV()));
 	m_program->setUniformValue(m_locBlend, m_settings->rendermodeblending);
+	m_program->setUniformValue(m_locDensityMin, m_settings->densitymin);
+	m_program->setUniformValue(m_locDensityMax, m_settings->densitymax);
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 

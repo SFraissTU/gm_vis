@@ -24,6 +24,7 @@ public:
 
 	QSize minimumSizeHint() const override;
 	QSize sizeHint() const override;
+	DisplaySettings* getSettings();
 
 	//should only be called after initialization!
 	void setPointCloud(PointCloud* pointcloud);

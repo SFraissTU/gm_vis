@@ -6,17 +6,122 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>699</width>
-    <height>478</height>
+    <width>825</width>
+    <height>583</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>776</width>
+    <height>583</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>VisualizerWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="0">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QScrollArea" name="scrollArea">
+      <property name="maximumSize">
+       <size>
+        <width>170</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>168</width>
+         <height>510</height>
+        </rect>
+       </property>
+       <widget class="QWidget" name="">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>10</y>
+          <width>165</width>
+          <height>48</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Min:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Max:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="spin_scalemin">
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="decimals">
+            <number>4</number>
+           </property>
+           <property name="maximum">
+            <double>9999999999999999635896294965248.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.000500000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="spin_scalemax">
+           <property name="wrapping">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="decimals">
+            <number>4</number>
+           </property>
+           <property name="maximum">
+            <double>9999999999999999635896294965248.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.000500000000000</double>
+           </property>
+           <property name="value">
+            <double>0.010000000000000</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+    <item>
      <widget class="DisplayWidget" name="openGLWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>500</width>
+        <height>500</height>
+       </size>
+      </property>
       <property name="maximumSize">
        <size>
         <width>16777215</width>
@@ -32,7 +137,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>699</width>
+     <width>825</width>
      <height>21</height>
     </rect>
    </property>
