@@ -21,8 +21,6 @@ layout(std430, binding=0) buffer GaussianMixture {
 	Gaussian gaussians[];
 } mixture;
 
-#define PI 3.1415926538
-
 void main() {
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 	vec2 pixel_center = vec2(pixel_coords) + vec2(0.5);
@@ -45,9 +43,6 @@ void main() {
 
 	vec3 samplingPoint = origin + direction;
 
-	//ToDo: Eigentlich wird hier nirgends das Koordinatensystem transformiert
-
-	//float sqrt2pi = sqrt(2*PI);
 	float sum = 0;
 	for (int i = 0; i < mixture.amount; i++) {
 		Gaussian gauss = mixture.gaussians[i];
@@ -57,46 +52,16 @@ void main() {
 		float mu = dot(rs, gauss.mu_amplitude.xyz-origin) * sig2;
 		float sig = sqrt(sig2);
 		vec3 pivec = origin + mu*direction - gauss.mu_amplitude.xyz;
-		//float amp = gauss.mu_amplitude.w * sqrt2pi * sig * exp(-0.5*dot(pivec*inv, pivec));
 		float amp = gauss.mu_amplitude.w * exp(-0.5*dot(pivec*inv, pivec));
 		sum += amp * texture(gaussTex, mu / sig).r;
 	}
 
-	//sum *= 0.00001f;
-	//sum = pow(sum, 4);
-	//sum = pow(sum, 1/3.0) / 100;
-	//sum = log(log(sum+1)+1) / 10.0f;
-	//sum = 10*sqrt(sum/100);
 	sum = sum * 100;
 	vec3 color = texture(transferTex, sum).rgb;
-	//sum = clamp(sum, 0.0f, 1.0f);
-
-//	float sum = 0;
-//	float sumaha = 0;
-//	for (int j = 0; j < mixture.amount; j++) {
-//		Gaussian gauss = mixture.gaussians[j];
-//		vec3 relpos = vec3(10 * d.x * aspectRatio, 10 * d.y, 0) - gauss.mu_amplitude.xyz;
-//		float ex = exp(-0.5 * dot(relpos*mat3(gauss.invsigma),relpos));
-//		sum += ex;//gauss.mu_amplitude.w * ex;
-//		sumaha += sqrt(dot(relpos*mat3(gauss.invsigma),relpos));
-//	}
-//	vec3 color = vec3(sumaha);
-	//vec3 color = texture(transferTex, sum).rgb;
-	//Gaussian gauss = mixture.gaussians[0];
-	//vec3 color = mat3(gauss.invsigma)[0] / 200.0;
+	
 	vec4 pixel = vec4(color, 1.0f);
 
-	//float samp = texture(density, vec3(pixel_uv.x, pixel_uv.y, 0.5)).r;
-	//vec4 pixel = vec4(samp, samp, samp, 1.0f);
-	//vec4 pixel = vec4(0.9*color + 0.2*abs(direction), 1.0f);
-	//vec4 pixel = 0.9*vec4(sum, sum, sum, 1.0f) + 0.2*vec4(abs(direction), 1.0f);
-	//vec4 pixel = 0.9*vec4(col, 1.0f) + 0.2*vec4(abs(direction), 1.0f);
-	//vec4 pixel = vec4(sum,sum,sum,1.0f);
-	//pixel.gb = vec2(0);
-	//pixel.rgb = vec3(mixture.gaussians[0].invsigma[0].rgb);
-	//pixel.rgb = vec3(mixture.gaussians[1].mu_amplitude.rgb);
 	pixel = blend * pixel + (1-blend) * vec4(texture(modelTex, pixel_uv).rgb, 1.0f);
-	//pixel = vec4(texture(depthTex, pixel_uv).rrr / 2.0f, 1.0f);
 
 	imageStore(img_output, pixel_coords, pixel);
 }
