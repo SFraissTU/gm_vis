@@ -1,6 +1,7 @@
 #include "DisplayWidget.h"
 
 #include <memory>
+#include <QTime>
 
 #include "math.h"
 
@@ -114,7 +115,24 @@ void DisplayWidget::paintGL()
 	if (m_settings.rendermodeblending > 0.0f) {
 		//Second pass: Pass old depth texture to ray marcher and render on screen
 		glBindFramebuffer(GL_FRAMEBUFFER, defaultFbo);
+		
+		GLuint query;
+		glGenQueries(1, &query);
+		glBeginQuery(GL_TIME_ELAPSED, query);
+
 		m_densityRenderer->render(m_fboIntermediate->getColorTexture());
+
+		glEndQuery(GL_TIME_ELAPSED);
+
+		GLint done = 0;
+		while (!done) {
+			glGetQueryObjectiv(query, GL_QUERY_RESULT_AVAILABLE, &done);
+		}
+
+		GLuint64 elapsed;
+		glGetQueryObjectui64v(query, GL_QUERY_RESULT, &elapsed);
+		qDebug() << elapsed / 1000000.0 << "ms\n";
+
 	}
 }
 

@@ -1,6 +1,5 @@
 #include "GMIsoellipsoidRenderer.h"
 #include "Helper.h"
-#include <Eigen/Eigenvalues>
 
 GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera) : m_gl(gl), m_settings(settings), m_camera(camera)
 {
@@ -98,27 +97,11 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 	for (int i = 0; i < n; ++i) {
 		const Gaussian* gauss = (*mixture)[i];
 
-		Eigen::Matrix3f cov = Eigen::Matrix3f();
-		cov(0, 0) = gauss->covxx;
-		cov(0, 1) = gauss->covxy;
-		cov(0, 2) = gauss->covxz;
-		cov(1, 0) = gauss->covxy;
-		cov(1, 1) = gauss->covyy;
-		cov(1, 2) = gauss->covyz;
-		cov(2, 0) = gauss->covxz;
-		cov(2, 1) = gauss->covyz;
-		cov(2, 2) = gauss->covzz;
-		Eigen::EigenSolver<Eigen::Matrix3Xf> eigensolver;
-		eigensolver.compute(cov, true);
-		Eigen::VectorXf eigen_values = eigensolver.eigenvalues().real();
-		Eigen::MatrixXf eigen_vectors = eigensolver.eigenvectors().real();
-		float l0 = sqrt(eigen_values(0));
-		float l1 = sqrt(eigen_values(1));
-		float l2 = sqrt(eigen_values(2));
+		QMatrix3x3 eigenMatrix = gauss->getEigenMatrix();
 		transforms[i] = QMatrix4x4(
-			l0 * eigen_vectors(0, 0), l1 * eigen_vectors(0, 1), l2 * eigen_vectors(0, 2), gauss->x,
-			l0 * eigen_vectors(1, 0), l1 * eigen_vectors(1, 1), l2 * eigen_vectors(1, 2), gauss->y,
-			l0 * eigen_vectors(2, 0), l1 * eigen_vectors(2, 1), l2 * eigen_vectors(2, 2), gauss->z,
+			eigenMatrix(0,0), eigenMatrix(0,1), eigenMatrix(0,2), gauss->x,
+			eigenMatrix(1,0), eigenMatrix(1,1), eigenMatrix(1, 2), gauss->y,
+			eigenMatrix(2, 0), eigenMatrix(2, 1), eigenMatrix(2, 2), gauss->z,
 			0, 0, 0, 1
 		);
 		if (transforms[i].determinant() < 0) {

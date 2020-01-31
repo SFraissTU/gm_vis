@@ -19,7 +19,6 @@ struct Gaussian {
 };
 
 layout(std430, binding=0) buffer GaussianMixture {
-	int amount;
 	Gaussian gaussians[];
 } mixture;
 
@@ -43,10 +42,8 @@ void main() {
 	origin = vec3(origin.x, -origin.z, origin.y);
 	direction = vec3(direction.x, -direction.z, direction.y);
 
-	vec3 samplingPoint = origin + direction;
-
 	float sum = 0;
-	for (int i = 0; i < mixture.amount; i++) {
+	for (int i = 0; i < mixture.gaussians.length(); i++) {
 		Gaussian gauss = mixture.gaussians[i];
 		mat3 inv = mat3(gauss.invsigma);
 		vec3 rs = direction*inv;

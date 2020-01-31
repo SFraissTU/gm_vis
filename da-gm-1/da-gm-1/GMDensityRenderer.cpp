@@ -4,26 +4,33 @@
 #include <QtMath>
 
 GMDensityRenderer::GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo(ScreenFBO(gl, width, height, false)) {
-	m_program = std::make_unique<QOpenGLShaderProgram>();
-	m_program->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density.comp");
-	m_program->link();
+	m_program_regular = std::make_unique<QOpenGLShaderProgram>();
+	m_program_regular->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density.comp");
+	m_program_regular->link();
 
-	m_program->bind();
-	m_locOuttex = m_program->uniformLocation("outtex");
-	m_locMixture = 0;
-	m_locProjMatrix = m_program->uniformLocation("projMatrix");
-	m_locInvViewMatrix = m_program->uniformLocation("invViewMatrix");
-	m_locWidth = m_program->uniformLocation("width");
-	m_locHeight = m_program->uniformLocation("height");
-	m_locFov = m_program->uniformLocation("fov");
-	m_locGaussTex = m_program->uniformLocation("gaussTex");
-	m_locTransferTex = m_program->uniformLocation("transferTex");
-	m_locModelTex = m_program->uniformLocation("modelTex");
-	m_locBlend = m_program->uniformLocation("blend");
-	m_locDensityMin = m_program->uniformLocation("densitymin");
-	m_locDensityMax = m_program->uniformLocation("densitymax");
+	m_program_accelerated = std::make_unique<QOpenGLShaderProgram>();
+	m_program_accelerated->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_acs.comp");
+	m_program_accelerated->link();
 
-	m_program->release();
+	m_program_accelerated->bind();
+	//Locations should be the same in both programs
+	m_locOuttex = m_program_regular->uniformLocation("outtex");
+	m_bindingMixture = 0;
+	m_bindingOctree = 1;
+	m_bindingTraversalMemory = 2;
+	m_locProjMatrix = m_program_regular->uniformLocation("projMatrix");
+	m_locInvViewMatrix = m_program_regular->uniformLocation("invViewMatrix");
+	m_locWidth = m_program_regular->uniformLocation("width");
+	m_locHeight = m_program_regular->uniformLocation("height");
+	m_locFov = m_program_regular->uniformLocation("fov");
+	m_locGaussTex = m_program_regular->uniformLocation("gaussTex");
+	m_locTransferTex = m_program_regular->uniformLocation("transferTex");
+	m_locModelTex = m_program_regular->uniformLocation("modelTex");
+	m_locBlend = m_program_regular->uniformLocation("blend");
+	m_locDensityMin = m_program_regular->uniformLocation("densitymin");
+	m_locDensityMax = m_program_regular->uniformLocation("densitymax");
+
+	m_program_regular->release();
 
 	m_fbo.attachColorTexture();
 
@@ -35,8 +42,8 @@ GMDensityRenderer::GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySetti
 		double t = (i - 500) / 100.0;
 		gaussdata[i] = 0.5 * erfc(-t / factor);
 	}
-	gl->glGenTextures(1, &m_gaussTexture);
-	gl->glBindTexture(GL_TEXTURE_1D, m_gaussTexture);
+	gl->glGenTextures(1, &m_texGauss);
+	gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -45,26 +52,34 @@ GMDensityRenderer::GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySetti
 	delete gaussdata;
 	
 	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
-	gl->glGenTextures(1, &m_transferTexture);
-	gl->glBindTexture(GL_TEXTURE_1D, m_transferTexture);
+	gl->glGenTextures(1, &m_texTransfer);
+	gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
 	
-	gl->glCreateBuffers(1, &m_mixtureSsbo);
+	gl->glCreateBuffers(1, &m_ssboMixture);
+	gl->glCreateBuffers(1, &m_ssboOctree);
+	gl->glCreateBuffers(1, &m_ssboTraversalMemory);
 }
 
 void GMDensityRenderer::setMixture(GaussianMixture* mixture)
 {
 	m_mixture = mixture;
-	size_t arrsize;
-	std::shared_ptr<char[]> gpudata = mixture->gpuData(arrsize);
 
-	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_mixtureSsbo);
-	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, arrsize, gpudata.get(), GL_STATIC_DRAW);
-	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	if (!useAccelerationStructure) {
+		size_t arrsize;
+		std::shared_ptr<char[]> gpudata = mixture->gpuData(arrsize);
+
+		m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
+		m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, arrsize, gpudata.get(), GL_STATIC_DRAW);
+		m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	}
+	else {
+		buildAccelerationStructure();
+	}
 }
 
 void GMDensityRenderer::setSize(int width, int height)
@@ -84,33 +99,33 @@ void GMDensityRenderer::render(GLuint depthTexture)
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	return;*/
 
-	m_program->bind();
+	m_program_regular->bind();
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindImageTexture(0, m_fbo.getColorTexture(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-	m_program->setUniformValue(m_locOuttex, 0);
+	m_program_regular->setUniformValue(m_locOuttex, 0);
 	m_gl->glActiveTexture(GL_TEXTURE1);
-	m_gl->glBindTexture(GL_TEXTURE_1D, m_gaussTexture);
-	m_program->setUniformValue(m_locGaussTex, 1);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
+	m_program_regular->setUniformValue(m_locGaussTex, 1);
 	m_gl->glActiveTexture(GL_TEXTURE2);
-	m_gl->glBindTexture(GL_TEXTURE_1D, m_transferTexture);
-	m_program->setUniformValue(m_locTransferTex, 2);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
+	m_program_regular->setUniformValue(m_locTransferTex, 2);
 	m_gl->glActiveTexture(GL_TEXTURE3);
 	m_gl->glBindTexture(GL_TEXTURE_2D, depthTexture);
-	m_program->setUniformValue(m_locModelTex, 3);
+	m_program_regular->setUniformValue(m_locModelTex, 3);
 
-	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_mixtureSsbo);
-	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_locMixture, m_mixtureSsbo);
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
+	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_bindingMixture, m_ssboMixture);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	int screenWidth = m_fbo.getWidth();
 	int screenHeight = m_fbo.getHeight();
-	m_program->setUniformValue(m_locWidth, screenWidth);
-	m_program->setUniformValue(m_locHeight, screenHeight);
-	m_program->setUniformValue(m_locInvViewMatrix, m_camera->getViewMatrix().inverted());
-	m_program->setUniformValue(m_locFov, qDegreesToRadians(m_camera->getFoV()));
-	m_program->setUniformValue(m_locBlend, m_settings->rendermodeblending);
-	m_program->setUniformValue(m_locDensityMin, m_settings->densitymin);
-	m_program->setUniformValue(m_locDensityMax, m_settings->densitymax);
+	m_program_regular->setUniformValue(m_locWidth, screenWidth);
+	m_program_regular->setUniformValue(m_locHeight, screenHeight);
+	m_program_regular->setUniformValue(m_locInvViewMatrix, m_camera->getViewMatrix().inverted());
+	m_program_regular->setUniformValue(m_locFov, qDegreesToRadians(m_camera->getFoV()));
+	m_program_regular->setUniformValue(m_locBlend, m_settings->rendermodeblending);
+	m_program_regular->setUniformValue(m_locDensityMin, m_settings->densitymin);
+	m_program_regular->setUniformValue(m_locDensityMax, m_settings->densitymax);
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
@@ -118,17 +133,33 @@ void GMDensityRenderer::render(GLuint depthTexture)
 
 	m_gl->glBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight,
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
+}
 
+void GMDensityRenderer::enableAccelerationStructure()
+{
+	if (!validAccelerationStructure) {
+		buildAccelerationStructure();
+	}
+	useAccelerationStructure = true;
+}
 
-	//Problem: Wir überschreiben hier das Rendering der Punktwolke...
-	//Aber für jetzt sollte das mal reichen, wir machens später.
-	//TODO
+void GMDensityRenderer::disableAccelerationStructure()
+{
+	useAccelerationStructure = false;
 }
 
 void GMDensityRenderer::cleanup()
 {
 	m_fbo.cleanup();
-	m_program.reset();
+	m_program_regular.reset();
+}
+
+void GMDensityRenderer::buildAccelerationStructure()
+{
+	QVector<GMOctreeNode> octree;
+	GLuint maxMemory;
+	size_t arrsize;
+	std::shared_ptr<char[]> gpudata = m_mixture->buildOctree(m_settings->octreethreshold, octree, maxMemory, arrsize);
 }
 
 

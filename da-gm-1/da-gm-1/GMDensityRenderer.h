@@ -16,6 +16,8 @@ public:
 	void setMixture(GaussianMixture* mixture);
 	void setSize(int width, int height);
 	void render(GLuint depthTexture);
+	void enableAccelerationStructure();
+	void disableAccelerationStructure();
 	void cleanup();
 
 private:
@@ -27,7 +29,6 @@ private:
 	ScreenFBO m_fbo;
 
 	GLuint m_locOuttex;
-	GLuint m_locMixture;
 	GLuint m_locProjMatrix;
 	GLuint m_locInvViewMatrix;
 	GLuint m_locFov;
@@ -39,10 +40,21 @@ private:
 	GLuint m_locBlend;
 	GLuint m_locDensityMin;
 	GLuint m_locDensityMax;
+	GLuint m_bindingMixture;
+	GLuint m_bindingOctree;
+	GLuint m_bindingTraversalMemory;
 
-	GLuint m_mixtureSsbo;
-	GLuint m_gaussTexture;
-	GLuint m_transferTexture;
+	GLuint m_ssboMixture;
+	GLuint m_ssboOctree;
+	GLuint m_ssboTraversalMemory;
+	GLuint m_texGauss;
+	GLuint m_texTransfer;
 
-	std::unique_ptr<QOpenGLShaderProgram> m_program;
+	bool validAccelerationStructure = false;
+	bool useAccelerationStructure = true;
+
+	std::unique_ptr<QOpenGLShaderProgram> m_program_regular;
+	std::unique_ptr<QOpenGLShaderProgram> m_program_accelerated;
+
+	void buildAccelerationStructure();
 };
