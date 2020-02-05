@@ -1,0 +1,18 @@
+ply
+format ascii 1.0
+comment mixture 1.0
+element component 3
+property float x
+property float y
+property float z
+property float covxx
+property float covxy
+property float covxz
+property float covyy
+property float covyz
+property float covzz
+property float weight
+end_header
+0  0  0  0.001  0  0  0.001  0  0.001  1
+5  5  5  0.001  0  0  0.001  0  0.001  1
+-2  -2  -2  0.001  0  0  0.001  0  0.001  1

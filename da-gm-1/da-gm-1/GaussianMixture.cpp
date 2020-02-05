@@ -33,13 +33,14 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize) const
 	return std::shared_ptr<char[]>(result);
 }
 
-std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<GMOctreeNode>& result, GLuint& maxTraversalMemory, size_t& arrsize) const
+std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const
 {
 	QVector3D absMin;
 	QVector3D absMax;
 	struct GaussianBoundingBox {
 		QVector3D min;
 		QVector3D max;
+		int gaussindex;
 	};
 
 	result.clear();
@@ -47,16 +48,18 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 	int n = numberOfGaussians();
 	for (int i = 0; i < n; i++) {
 		GaussianBoundingBox box;
-		gaussians[i].getBoundingBox(threshold, box.min, box.max);
-		boundingBoxes.append(box);
-		if (box.min.x() < absMin.x()) absMin.setX(box.min.x());
-		if (box.min.y() < absMin.y()) absMin.setY(box.min.y());
-		if (box.min.z() < absMin.z()) absMin.setZ(box.min.z());
-		if (box.max.x() > absMax.x()) absMax.setX(box.max.x());
-		if (box.max.y() > absMax.y()) absMax.setY(box.max.y());
-		if (box.max.z() > absMax.z()) absMax.setZ(box.max.z());
+		if (gaussians[i].getBoundingBox(threshold, box.min, box.max)) {
+			box.gaussindex = i;
+			boundingBoxes.append(box);
+			if (box.min.x() < absMin.x()) absMin.setX(box.min.x());
+			if (box.min.y() < absMin.y()) absMin.setY(box.min.y());
+			if (box.min.z() < absMin.z()) absMin.setZ(box.min.z());
+			if (box.max.x() > absMax.x()) absMax.setX(box.max.x());
+			if (box.max.y() > absMax.y()) absMax.setY(box.max.y());
+			if (box.max.z() > absMax.z()) absMax.setZ(box.max.z());
+		}
 	}
-	//ToDo: Adapt min and max such that it becomes a regular cube
+	//Adapt min and max such that it becomes a regular cube
 	double extent = std::max(absMax.x() - absMin.x(), std::max(absMax.y() - absMin.y(), absMax.z() - absMin.z()));
 	double xenlarge = (extent - absMax.x() + absMin.x()) / 2.0;
 	double yenlarge = (extent - absMax.y() + absMin.y()) / 2.0;
@@ -108,7 +111,8 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 	gaussianspernode.resize(result.size());
 	//we use the gaussianstart-flag here as a indicator whether this node contains non-empty children or gaussians (1) or not (-1)
 	//in order to delete unused ones later.
-	for (int i = 0; i < n; ++i) {
+	int m = boundingBoxes.size();
+	for (int i = 0; i < m; ++i) {
 		GaussianBoundingBox& box = boundingBoxes[i];
 		//Find corresponding octree node. Biggest node that encloses Gaussian completely
 		int currentnode = 0;
@@ -152,27 +156,28 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 		else {
 			//Check Gaussians
 			node.gaussianstart = -1;
-			QVector<int>& currentgaussians = gaussianspernode[nodeidx]; 
+			QVector<int>& currentgaussians = gaussianspernode[nodeidx + numberOfDeletedNodesSoFar]; //access with original index
 			if (currentgaussians.size() != 0) {
 				node.gaussianstart = gaussianList.size();
 				node.gaussianend = gaussianList.size() + currentgaussians.size() - 1;
 			}
 			for (const int* it = currentgaussians.cbegin(); it != currentgaussians.cend(); ++it) {
-				gaussianList.append(gaussians[*it].gpudata);
+				gaussianList.append(gaussians[boundingBoxes[*it].gaussindex].gpudata);
 			}
 
 			//Check Children
-			node.childrenstart -= numberOfDeletedNodesSoFar;
-			for (int childbit = 0; childbit <  8; ++childbit) {
-				int childidx = node.childrenstart + childbit;
-				if (result[childidx].gaussianstart == -1) {
-					node.childrenbits &= ~(1 << childbit);
+			if (node.childrenbits != 0) {
+				node.childrenstart -= numberOfDeletedNodesSoFar;	
+				//THIS IS PROBLEMATIC!!! MORE CHILDREN MIGHT BE DELETED BETWEEN CURRENTNODE AND CHILDRENSTART!
+				for (int childbit = 0; childbit < 8; ++childbit) {
+					int childidx = node.childrenstart + childbit;
+					if (result[childidx].gaussianstart == -1) {
+						node.childrenbits &= ~(1 << childbit);
+					}
 				}
 			}
 		}
 	}
-	//Now let's calculate the maximum amount of help memory we need.
-	maxTraversalMemory = std::min(result.size(), (maxlevels - 1) * 7 - (maxlevels - 2)) * sizeof(GLint);
 
 	GLint gaussN = gaussianList.size();
 	arrsize = 80 * gaussN;

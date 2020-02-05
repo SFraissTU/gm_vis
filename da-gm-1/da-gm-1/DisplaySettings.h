@@ -16,5 +16,7 @@ public:
 	float densitymin = 0.0f;
 	float densitymax = 0.01f;
 
+	bool accelerate = true;
 	double octreethreshold = 0.00001;
+	//double octreethreshold = 0.000000000001;
 };

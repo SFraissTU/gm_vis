@@ -18,6 +18,7 @@ public:
 	void render(GLuint depthTexture);
 	void enableAccelerationStructure();
 	void disableAccelerationStructure();
+	void setAccelerationStructureEnabled(bool enabled);
 	void cleanup();
 
 private:
@@ -42,11 +43,9 @@ private:
 	GLuint m_locDensityMax;
 	GLuint m_bindingMixture;
 	GLuint m_bindingOctree;
-	GLuint m_bindingTraversalMemory;
 
 	GLuint m_ssboMixture;
 	GLuint m_ssboOctree;
-	GLuint m_ssboTraversalMemory;
 	GLuint m_texGauss;
 	GLuint m_texTransfer;
 
@@ -57,4 +56,5 @@ private:
 	std::unique_ptr<QOpenGLShaderProgram> m_program_accelerated;
 
 	void buildAccelerationStructure();
+	void buildUnacceleratedData();
 };

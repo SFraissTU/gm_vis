@@ -17,7 +17,6 @@ GMDensityRenderer::GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySetti
 	m_locOuttex = m_program_regular->uniformLocation("outtex");
 	m_bindingMixture = 0;
 	m_bindingOctree = 1;
-	m_bindingTraversalMemory = 2;
 	m_locProjMatrix = m_program_regular->uniformLocation("projMatrix");
 	m_locInvViewMatrix = m_program_regular->uniformLocation("invViewMatrix");
 	m_locWidth = m_program_regular->uniformLocation("width");
@@ -62,7 +61,6 @@ GMDensityRenderer::GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySetti
 	
 	gl->glCreateBuffers(1, &m_ssboMixture);
 	gl->glCreateBuffers(1, &m_ssboOctree);
-	gl->glCreateBuffers(1, &m_ssboTraversalMemory);
 }
 
 void GMDensityRenderer::setMixture(GaussianMixture* mixture)
@@ -70,12 +68,7 @@ void GMDensityRenderer::setMixture(GaussianMixture* mixture)
 	m_mixture = mixture;
 
 	if (!useAccelerationStructure) {
-		size_t arrsize;
-		std::shared_ptr<char[]> gpudata = mixture->gpuData(arrsize);
-
-		m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
-		m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, arrsize, gpudata.get(), GL_STATIC_DRAW);
-		m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		buildUnacceleratedData();
 	}
 	else {
 		buildAccelerationStructure();
@@ -99,22 +92,30 @@ void GMDensityRenderer::render(GLuint depthTexture)
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	return;*/
 
-	m_program_regular->bind();
+	auto& currentProgram = useAccelerationStructure ? m_program_accelerated : m_program_regular;
+	
+	currentProgram->bind();
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindImageTexture(0, m_fbo.getColorTexture(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-	m_program_regular->setUniformValue(m_locOuttex, 0);
+	currentProgram->setUniformValue(m_locOuttex, 0);
 	m_gl->glActiveTexture(GL_TEXTURE1);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
-	m_program_regular->setUniformValue(m_locGaussTex, 1);
+	currentProgram->setUniformValue(m_locGaussTex, 1);
 	m_gl->glActiveTexture(GL_TEXTURE2);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
-	m_program_regular->setUniformValue(m_locTransferTex, 2);
+	currentProgram->setUniformValue(m_locTransferTex, 2);
 	m_gl->glActiveTexture(GL_TEXTURE3);
 	m_gl->glBindTexture(GL_TEXTURE_2D, depthTexture);
-	m_program_regular->setUniformValue(m_locModelTex, 3);
+	currentProgram->setUniformValue(m_locModelTex, 3);
 
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_bindingMixture, m_ssboMixture);
+
+	if (useAccelerationStructure) {
+		m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboOctree);
+		m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_bindingOctree, m_ssboOctree);
+	}
+
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	int screenWidth = m_fbo.getWidth();
@@ -137,7 +138,7 @@ void GMDensityRenderer::render(GLuint depthTexture)
 
 void GMDensityRenderer::enableAccelerationStructure()
 {
-	if (!validAccelerationStructure) {
+	if (!validAccelerationStructure && m_mixture) {
 		buildAccelerationStructure();
 	}
 	useAccelerationStructure = true;
@@ -145,7 +146,20 @@ void GMDensityRenderer::enableAccelerationStructure()
 
 void GMDensityRenderer::disableAccelerationStructure()
 {
+	if (useAccelerationStructure && m_mixture) {
+		buildUnacceleratedData();
+	}
 	useAccelerationStructure = false;
+}
+
+void GMDensityRenderer::setAccelerationStructureEnabled(bool enabled)
+{
+	if (enabled) {
+		enableAccelerationStructure();
+	}
+	else {
+		disableAccelerationStructure();
+	}
 }
 
 void GMDensityRenderer::cleanup()
@@ -157,9 +171,30 @@ void GMDensityRenderer::cleanup()
 void GMDensityRenderer::buildAccelerationStructure()
 {
 	QVector<GMOctreeNode> octree;
-	GLuint maxMemory;
 	size_t arrsize;
-	std::shared_ptr<char[]> gpudata = m_mixture->buildOctree(m_settings->octreethreshold, octree, maxMemory, arrsize);
+	std::shared_ptr<char[]> gpudata = m_mixture->buildOctree(m_settings->octreethreshold, octree, arrsize);
+	validAccelerationStructure = true;
+	//Bind Gaussians
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
+	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, arrsize, gpudata.get(), GL_STATIC_DRAW);
+	//Bind Octree
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboOctree);
+	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GMOctreeNode) * octree.size(), octree.constData(), GL_STATIC_DRAW);
+
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
+
+void GMDensityRenderer::buildUnacceleratedData()
+{
+	size_t arrsize;
+	std::shared_ptr<char[]> gpudata = m_mixture->gpuData(arrsize);
+
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
+	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, arrsize, gpudata.get(), GL_STATIC_DRAW);
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	validAccelerationStructure = false;
+}
+
 
 

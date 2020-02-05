@@ -11,8 +11,9 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	connect(ui.loadMixtureAction, SIGNAL(triggered()), this, SLOT(loadMixtureAction()));
 
 	connect(ui.spin_scalemin, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
-	connect(ui.spin_scalemax, SIGNAL(valueChanged(double
-	)), this, SLOT(updateSettings()));
+	connect(ui.spin_scalemax, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
+
+	connect(ui.cb_accelerated, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
 }
 
 void VisualizerWindow::loadPointcloudAction() {
@@ -43,5 +44,6 @@ void VisualizerWindow::updateSettings()
 	auto settings = ui.openGLWidget->getSettings();
 	settings->densitymin = ui.spin_scalemin->value();
 	settings->densitymax = ui.spin_scalemax->value();
+	settings->accelerate = ui.cb_accelerated->isChecked();
 	ui.openGLWidget->update();
 }

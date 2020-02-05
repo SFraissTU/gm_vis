@@ -107,25 +107,28 @@ void main() {
 	float sum = 0;
 
 	//Acceleration Structure Traversal
-	help.nodesToCheck[0] = 0;
+	int nodesToCheck[25];	//25 is maximum we need for 5 levels
+	nodesToCheck[0] = 0;
 	int remainingNodeCount = 1;
+	int foundgaussians = 0;
 	while (remainingNodeCount > 0) {
-		int nodeidx = help.nodesToCheck[remainingNodeCount-1];
+		int nodeidx = nodesToCheck[remainingNodeCount-1];
 		remainingNodeCount -= 1;
 		Node node = octree.nodes[nodeidx];
 		bool intersect = rayInsectsAABB(origin, direction, node.aabb);
 		if (intersect) {
 			//Check Gaussians
-			for (int gidx = node.content.z; gidx < node.content.w; gidx++) {
+			for (int gidx = node.content.z; gidx <= node.content.w; gidx++) {
 				Gaussian gauss = mixture.gaussians[gidx];
 				sum += evalGaussian(origin, direction, gauss);
+				foundgaussians += 1;
 			}
 			//Check Child Nodes
 			int children = node.content.x;
 			int currentchildindex = node.content.y;
 			for (int i = 7; i >= 0; i--) {
 				if ((children & (1 << i)) != 0) {
-					help.nodesToCheck[remainingNodeCount] = currentchildindex;
+					nodesToCheck[remainingNodeCount] = currentchildindex;
 					remainingNodeCount += 1;
 					currentchildindex += 1;
 				}
@@ -135,6 +138,7 @@ void main() {
 
 	sum = (sum - densitymin)/(densitymax - densitymin);
 	vec3 color = texture(transferTex, sum).rgb;
+	//color = 0.7 * color + 0.3 * vec3(foundgaussians / 20.0f);
 	
 	vec4 pixel = vec4(color, 1.0f);
 

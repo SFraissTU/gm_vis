@@ -79,7 +79,11 @@ public:
 		return eigenmatrix;
 	}
 
-	void getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const {
+	bool getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const {
+		//This ellipsoid only exists, if the threshold is smaller than the amplitude. Otherwise no result will be given
+		if (threshold >= gpudata.mu_amplitude.w()) {
+			return false;
+		}
 		float scalar = sqrt(-2 * log(threshold / gpudata.mu_amplitude.w()));
 		QMatrix3x3 transfo = eigenmatrix * scalar;
 		QVector3D r0 = QVector3D(transfo(0, 0), transfo(0, 1), transfo(0, 2));
@@ -89,5 +93,6 @@ public:
 		QVector3D muq = QVector3D(mu.x(), mu.y(), mu.z());
 		min = muq - delta;
 		max = muq + delta;
+		return true;
 	}
 };
