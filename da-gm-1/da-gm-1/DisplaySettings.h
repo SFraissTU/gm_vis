@@ -17,6 +17,9 @@ public:
 	float densitymax = 0.01f;
 
 	bool accelerate = true;
-	double octreethreshold = 0.00001;
-	//double octreethreshold = 0.000000000001;
+	double accelerationthreshold = 0.00001;
+	bool accelerationthresholdauto = true;
+	//Octreethreshold is determined automatically from densitymax
+
+	bool rebuildacc = false;
 };

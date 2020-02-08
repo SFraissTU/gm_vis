@@ -91,7 +91,12 @@ void DisplayWidget::initializeGL() {
 
 void DisplayWidget::paintGL()
 {
-	m_densityRenderer->setAccelerationStructureEnabled(m_settings.accelerate);
+	if (m_settings.rebuildacc) {
+		m_densityRenderer->rebuildAccelerationStructure();
+	}
+	else {
+		m_densityRenderer->setAccelerationStructureEnabled(m_settings.accelerate);
+	}
 
 	GLint defaultFbo = 0;
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);

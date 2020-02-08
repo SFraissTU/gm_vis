@@ -18,6 +18,7 @@ public:
 	void render(GLuint depthTexture);
 	void enableAccelerationStructure();
 	void disableAccelerationStructure();
+	void rebuildAccelerationStructure();
 	void setAccelerationStructureEnabled(bool enabled);
 	void cleanup();
 

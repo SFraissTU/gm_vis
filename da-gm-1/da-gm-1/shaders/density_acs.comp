@@ -38,11 +38,6 @@ layout(std430, binding=1) buffer Octree {
 	Node nodes[];
 } octree;
 
-//Help-Variable. Should be initialized with as much memory as we maximally need.
-layout(std430, binding=2) buffer TraversalMemory {
-	int nodesToCheck[];
-} help;
-
 //inspired by: https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
 bool rayInsectsAABB(vec3 rorig, vec3 rdir, vec4 aabb[2]) {
 	vec3 invrdir = 1 / rdir;
@@ -107,7 +102,7 @@ void main() {
 	float sum = 0;
 
 	//Acceleration Structure Traversal
-	int nodesToCheck[25];	//25 is maximum we need for 5 levels
+	int nodesToCheck[25];	//25 is maximum we need for 5 levels (l-1)*8 - l + 2
 	nodesToCheck[0] = 0;
 	int remainingNodeCount = 1;
 	int foundgaussians = 0;
@@ -118,10 +113,12 @@ void main() {
 		bool intersect = rayInsectsAABB(origin, direction, node.aabb);
 		if (intersect) {
 			//Check Gaussians
-			for (int gidx = node.content.z; gidx <= node.content.w; gidx++) {
-				Gaussian gauss = mixture.gaussians[gidx];
-				sum += evalGaussian(origin, direction, gauss);
-				foundgaussians += 1;
+			if (node.content.z >= 0) {
+				for (int gidx = node.content.z; gidx <= node.content.w; gidx++) {
+					Gaussian gauss = mixture.gaussians[gidx];
+					sum += evalGaussian(origin, direction, gauss);
+					foundgaussians += 1;
+				}
 			}
 			//Check Child Nodes
 			int children = node.content.x;
@@ -138,7 +135,6 @@ void main() {
 
 	sum = (sum - densitymin)/(densitymax - densitymin);
 	vec3 color = texture(transferTex, sum).rgb;
-	//color = 0.7 * color + 0.3 * vec3(foundgaussians / 20.0f);
 	
 	vec4 pixel = vec4(color, 1.0f);
 

@@ -43,7 +43,7 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 		int gaussindex;
 	};
 
-	result.clear();
+	QVector<GMOctreeNode> octreelist;
 	QVector<GaussianBoundingBox> boundingBoxes;
 	int n = numberOfGaussians();
 	for (int i = 0; i < n; i++) {
@@ -68,15 +68,15 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 	absMax = QVector3D(absMax.x() + xenlarge, absMax.y() + yenlarge, absMax.z() + zenlarge);
 
 	int maxlevels = 5;
-	QStack<int> stack;	//References to result per indices
+	QStack<int> stack;	//References to octreelist per indices
 	//While building, we use the gaussianend variable as level
-	result.append({ absMin, absMax, 255, -1, -1, 0 });
+	octreelist.append({ absMin, absMax, 255, -1, -1, 0 });
 	stack.push(0);
 	//First, we create a complete Octree, then we assign the Gaussians, then we remove empty nodes.
 	while (!stack.isEmpty()) {
 		int index = stack.pop();
-		GMOctreeNode& node = result[index];
-		int firstchildindex = result.size();
+		GMOctreeNode& node = octreelist[index];
+		int firstchildindex = octreelist.size();
 		QVector4D halfsize = (node.max - node.min) / 2.0;
 		double minx = node.min.x();
 		double miny = node.min.y();
@@ -90,14 +90,14 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 		int nextlevel = node.gaussianend + 1;
 		if (nextlevel < maxlevels) {
 			node.childrenstart = firstchildindex;	//Needs to happen first. Otherwise through reallocation of memory, the reference might not be up to date anymore
-			result.append({ node.min, QVector4D(middlex,middley,middlez,0), 255, -1, -1, nextlevel });
-			result.append({ QVector4D(middlex, miny, minz, 0), QVector4D(maxx, middley, middlez,0), 255, -1, -1, nextlevel });
-			result.append({ QVector4D(middlex, middley, minz, 0), QVector4D(maxx, maxy, middlez,0), 255, -1, -1, nextlevel });
-			result.append({ QVector4D(minx, middley, minz, 0), QVector4D(middlex, maxy, middlez,0), 255, -1, -1, nextlevel });
-			result.append({ QVector4D(minx, miny, middlez, 0), QVector4D(middlex, middley, maxz,0), 255, -1, -1, nextlevel });
-			result.append({ QVector4D(middlex, miny, middlez, 0), QVector4D(maxx, middley, maxz,0), 255, -1, -1, nextlevel });
-			result.append({ QVector4D(middlex, middley, middlez, 0), QVector4D(maxx, maxy, maxz,0), 255, -1, -1, nextlevel });
-			result.append({ QVector4D(minx, middley, middlez, 0), QVector4D(middlex, maxy, maxz,0), 255, -1, -1, nextlevel });
+			octreelist.append({ node.min, QVector4D(middlex,middley,middlez,0), 255, -1, -1, nextlevel });
+			octreelist.append({ QVector4D(middlex, miny, minz, 0), QVector4D(maxx, middley, middlez,0), 255, -1, -1, nextlevel });
+			octreelist.append({ QVector4D(middlex, middley, minz, 0), QVector4D(maxx, maxy, middlez,0), 255, -1, -1, nextlevel });
+			octreelist.append({ QVector4D(minx, middley, minz, 0), QVector4D(middlex, maxy, middlez,0), 255, -1, -1, nextlevel });
+			octreelist.append({ QVector4D(minx, miny, middlez, 0), QVector4D(middlex, middley, maxz,0), 255, -1, -1, nextlevel });
+			octreelist.append({ QVector4D(middlex, miny, middlez, 0), QVector4D(maxx, middley, maxz,0), 255, -1, -1, nextlevel });
+			octreelist.append({ QVector4D(middlex, middley, middlez, 0), QVector4D(maxx, maxy, maxz,0), 255, -1, -1, nextlevel });
+			octreelist.append({ QVector4D(minx, middley, middlez, 0), QVector4D(middlex, maxy, maxz,0), 255, -1, -1, nextlevel });
 			for (int i = 7; i >= 0; --i) {
 				stack.push(firstchildindex + i);
 			}
@@ -108,7 +108,7 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 	}
 	//Assign the Gaussians..
 	QVector<QVector<int>> gaussianspernode;
-	gaussianspernode.resize(result.size());
+	gaussianspernode.resize(octreelist.size());
 	//we use the gaussianstart-flag here as a indicator whether this node contains non-empty children or gaussians (1) or not (-1)
 	//in order to delete unused ones later.
 	int m = boundingBoxes.size();
@@ -117,7 +117,7 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 		//Find corresponding octree node. Biggest node that encloses Gaussian completely
 		int currentnode = 0;
 		do {
-			GMOctreeNode& node = result[currentnode];
+			GMOctreeNode& node = octreelist[currentnode];
 			node.gaussianstart = 1;
 			//Node contains box. Check if one of the children contains the box as well
 			if (node.childrenstart == -1) {
@@ -128,7 +128,7 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 			else {
 				int parentindex = currentnode;
 				for (int cidx = node.childrenstart; currentnode == parentindex && cidx < node.childrenstart + 8; ++cidx) {
-					GMOctreeNode& child = result[cidx];
+					GMOctreeNode& child = octreelist[cidx];
 					if (child.min.x() <= box.min.x() && child.min.y() <= box.min.y() && child.min.z() <= box.min.z()
 						&& child.max.x() >= box.max.x() && child.max.y() >= box.max.y() && child.max.z() >= box.max.z()) {
 						currentnode = cidx;
@@ -142,21 +142,30 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 			}
 		} while (currentnode != -1);
 	}
-	//Now we delete unused nodes and create the gaussian list in the right order
-	QVector<GaussianGPU> gaussianList;
-	int numberOfDeletedNodesSoFar = 0;
-	for (int nodeidx = 0; nodeidx < result.size(); ++nodeidx) {
-		GMOctreeNode& node = result[nodeidx];
-		if (node.gaussianstart == -1) {
-			//This node is unused. Can be deleted.
-			result.remove(nodeidx);
-			nodeidx -= 1;
-			numberOfDeletedNodesSoFar += 1;
+	//Just store the new indizes after deletion (needs to be precomputed before deletion)
+	QVector<int> newIndizes = QVector<int>();
+	newIndizes.resize(octreelist.size());
+	newIndizes[0] = 0;
+	int deletedSoFar = 0;
+	int survivingNodes = 0;
+	for (int i = 1; i < octreelist.size(); i++) {
+		if (octreelist[i].gaussianstart == -1) {
+			deletedSoFar++;
+			newIndizes[i] = -1;
 		}
 		else {
+			survivingNodes++;
+			newIndizes[i] = i - deletedSoFar;
+		}
+	}
+	//Now we assign correct child indizes and create the gaussian list in the right order
+	QVector<GaussianGPU> gaussianList;
+	for (int nodeidx = 0; nodeidx < octreelist.size(); ++nodeidx) {
+		GMOctreeNode& node = octreelist[nodeidx];
+		if (node.gaussianstart != -1) {	//if node won't be deleted
 			//Check Gaussians
 			node.gaussianstart = -1;
-			QVector<int>& currentgaussians = gaussianspernode[nodeidx + numberOfDeletedNodesSoFar]; //access with original index
+			QVector<int>& currentgaussians = gaussianspernode[nodeidx]; //access with original index
 			if (currentgaussians.size() != 0) {
 				node.gaussianstart = gaussianList.size();
 				node.gaussianend = gaussianList.size() + currentgaussians.size() - 1;
@@ -167,17 +176,36 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 
 			//Check Children
 			if (node.childrenbits != 0) {
-				node.childrenstart -= numberOfDeletedNodesSoFar;	
-				//THIS IS PROBLEMATIC!!! MORE CHILDREN MIGHT BE DELETED BETWEEN CURRENTNODE AND CHILDRENSTART!
+				int firstchild = -1;
 				for (int childbit = 0; childbit < 8; ++childbit) {
 					int childidx = node.childrenstart + childbit;
-					if (result[childidx].gaussianstart == -1) {
-						node.childrenbits &= ~(1 << childbit);
+					if (octreelist[childidx].gaussianstart == -1) {
+						node.childrenbits &= ~(1 << (7-childbit));
 					}
+					else if (firstchild == -1) {
+						firstchild = childidx;
+					}
+				}
+				if (firstchild == -1) {
+					node.childrenstart = -1;
+				}
+				else {
+					node.childrenstart = newIndizes[firstchild];
 				}
 			}
 		}
 	}
+	//now we delete unused nodes
+	//For effiency reasons instead of removing we just create a new result list
+	result.clear();
+	result.reserve(survivingNodes);
+	for (int nodeidx = 0; nodeidx < octreelist.size(); ++nodeidx) {
+		GMOctreeNode& node = octreelist[nodeidx];
+		if (newIndizes[nodeidx] != -1) {
+			result.push_back(node);
+		}
+	}
+
 
 	GLint gaussN = gaussianList.size();
 	arrsize = 80 * gaussN;

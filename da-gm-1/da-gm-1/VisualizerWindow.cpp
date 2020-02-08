@@ -14,6 +14,8 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	connect(ui.spin_scalemax, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
 
 	connect(ui.cb_accelerated, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
+	connect(ui.spin_accthreshold, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
+	connect(ui.cb_accthauto, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
 }
 
 void VisualizerWindow::loadPointcloudAction() {
@@ -42,8 +44,23 @@ void VisualizerWindow::loadMixtureAction()
 void VisualizerWindow::updateSettings()
 {
 	auto settings = ui.openGLWidget->getSettings();
+	settings->rebuildacc = false;
+	float accthr = settings->accelerationthreshold;
 	settings->densitymin = ui.spin_scalemin->value();
 	settings->densitymax = ui.spin_scalemax->value();
 	settings->accelerate = ui.cb_accelerated->isChecked();
+	settings->accelerationthresholdauto = ui.cb_accthauto->isChecked();
+	if (settings->accelerationthresholdauto) {
+		settings->accelerationthreshold = settings->densitymax * 0.001f;
+		ui.spin_accthreshold->setValue(settings->accelerationthreshold);
+		ui.spin_accthreshold->setEnabled(false);
+	}
+	else {
+		settings->accelerationthreshold = ui.spin_accthreshold->value();
+		ui.spin_accthreshold->setEnabled(true);
+	}
+	if (settings->accelerate && settings->accelerationthreshold != accthr) {
+		settings->rebuildacc = true;
+	}
 	ui.openGLWidget->update();
 }

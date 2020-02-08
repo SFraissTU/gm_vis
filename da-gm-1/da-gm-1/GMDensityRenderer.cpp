@@ -152,6 +152,14 @@ void GMDensityRenderer::disableAccelerationStructure()
 	useAccelerationStructure = false;
 }
 
+void GMDensityRenderer::rebuildAccelerationStructure()
+{
+	if (m_mixture) {
+		buildAccelerationStructure();
+	}
+	useAccelerationStructure = true;
+}
+
 void GMDensityRenderer::setAccelerationStructureEnabled(bool enabled)
 {
 	if (enabled) {
@@ -172,7 +180,7 @@ void GMDensityRenderer::buildAccelerationStructure()
 {
 	QVector<GMOctreeNode> octree;
 	size_t arrsize;
-	std::shared_ptr<char[]> gpudata = m_mixture->buildOctree(m_settings->octreethreshold, octree, arrsize);
+	std::shared_ptr<char[]> gpudata = m_mixture->buildOctree(m_settings->accelerationthreshold, octree, arrsize);
 	validAccelerationStructure = true;
 	//Bind Gaussians
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
