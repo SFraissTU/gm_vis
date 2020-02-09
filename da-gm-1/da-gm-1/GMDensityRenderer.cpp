@@ -124,7 +124,7 @@ void GMDensityRenderer::render(GLuint depthTexture)
 	m_program_regular->setUniformValue(m_locHeight, screenHeight);
 	m_program_regular->setUniformValue(m_locInvViewMatrix, m_camera->getViewMatrix().inverted());
 	m_program_regular->setUniformValue(m_locFov, qDegreesToRadians(m_camera->getFoV()));
-	m_program_regular->setUniformValue(m_locBlend, m_settings->rendermodeblending);
+	m_program_regular->setUniformValue(m_locBlend, (m_settings->displayPoints || m_settings->displayEllipsoids) ? m_settings->rendermodeblending : 1.0f);
 	m_program_regular->setUniformValue(m_locDensityMin, m_settings->densitymin);
 	m_program_regular->setUniformValue(m_locDensityMax, m_settings->densitymax);
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);

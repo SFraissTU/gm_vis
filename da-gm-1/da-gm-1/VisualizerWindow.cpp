@@ -10,6 +10,10 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(loadPointcloudAction()));
 	connect(ui.loadMixtureAction, SIGNAL(triggered()), this, SLOT(loadMixtureAction()));
 
+	connect(ui.cb_displayPointcloud, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
+	connect(ui.cb_displayEllipsoids, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
+	connect(ui.cb_displayDensity, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
+
 	connect(ui.spin_scalemin, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
 	connect(ui.spin_scalemax, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
 
@@ -46,6 +50,9 @@ void VisualizerWindow::updateSettings()
 	auto settings = ui.openGLWidget->getSettings();
 	settings->rebuildacc = false;
 	float accthr = settings->accelerationthreshold;
+	settings->displayPoints = ui.cb_displayPointcloud->isChecked();
+	settings->displayEllipsoids = ui.cb_displayEllipsoids->isChecked();
+	settings->displayDensity = ui.cb_displayDensity->isChecked();
 	settings->densitymin = ui.spin_scalemin->value();
 	settings->densitymax = ui.spin_scalemax->value();
 	settings->accelerate = ui.cb_accelerated->isChecked();

@@ -9,9 +9,13 @@ public:
 	float  pointSize = 1.0f;
 	bool   circles = false;
 
+	bool displayPoints = false;
+	bool displayEllipsoids = false;
+	bool displayDensity = true;
+
 	QColor ellipsoidColor = QColor(100, 100, 255);
 	QVector3D lightDirection = QVector3D(0.f, -0.7f, -1.0f).normalized();
-	float rendermodeblending = 1.0f;
+	float rendermodeblending = 0.5f;
 
 	float densitymin = 0.0f;
 	float densitymax = 0.01f;

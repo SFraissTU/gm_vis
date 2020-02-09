@@ -102,9 +102,9 @@ void DisplayWidget::paintGL()
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);
 
 	//Only render points and ellipsoids if blending mode requires it
-	if (m_settings.rendermodeblending < 1.0f) {
+	if (m_settings.displayPoints || m_settings.displayEllipsoids) {
 		//Only set FBO if we will render volume later on
-		if (m_settings.rendermodeblending > 0.0f) {
+		if (m_settings.displayDensity) {
 			//First pass: Render classicaly into texture
 			glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
 		}
@@ -114,12 +114,16 @@ void DisplayWidget::paintGL()
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 
-		m_pointcloudRenderer->render();
-		m_isoellipsoidRenderer->render();
+		if (m_settings.displayPoints) {
+			m_pointcloudRenderer->render();
+		}
+		if (m_settings.displayEllipsoids) {
+			m_isoellipsoidRenderer->render();
+		}
 	}
 
 	//Render volume if necessary
-	if (m_settings.rendermodeblending > 0.0f) {
+	if (m_settings.displayDensity) {
 		//Second pass: Pass old depth texture to ray marcher and render on screen
 		glBindFramebuffer(GL_FRAMEBUFFER, defaultFbo);
 		
