@@ -38,6 +38,8 @@ add_executable(visualizer
     GMIsoellipsoidRenderer.cpp
     GMDensityRenderer.h
     GMDensityRenderer.cpp
+    GMDensityRendererAcc2.h
+    GMDensityRendererAcc2.cpp
     Helper.h
     PointCloud.h
     PointCloudRenderer.h

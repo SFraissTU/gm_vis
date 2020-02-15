@@ -7,6 +7,7 @@
 #include <Eigen/Eigenvalues>
 #define _USE_MATH_DEFINES
 #include <Math.h>
+#include <optional>
 
 
 const double GAUSS_PI_FACTOR = 1.0 / pow(2 * M_PI, 3.0 / 2.0);
@@ -77,6 +78,24 @@ public:
 
 	QMatrix3x3 getEigenMatrix() const {
 		return eigenmatrix;
+	}
+
+	std::optional<QMatrix4x4> getTransform(double threshold) const {
+		if (threshold >= gpudata.mu_amplitude.w()) {
+			return {};
+		}
+		float scalar = sqrt(-2 * log(threshold / gpudata.mu_amplitude.w()));
+		QMatrix3x3 mat = eigenmatrix * scalar;
+		QMatrix4x4 mat4 = QMatrix4x4(
+			mat(0, 0), mat(0, 1), mat(0, 2), x,
+			mat(1, 0), mat(1, 1), mat(1, 2), y,
+			mat(2, 0), mat(2, 1), mat(2, 2), z,
+			0, 0, 0, 1
+		);
+		if (mat4.determinant() < 0) {
+			mat4 = mat4 * QMatrix4x4(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
+		}
+		return mat4;
 	}
 
 	bool getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const {

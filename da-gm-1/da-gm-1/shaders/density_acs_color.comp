@@ -1,0 +1,29 @@
+#version 450
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+layout(rgba32f) uniform image2D img_output;
+
+layout(r32f) uniform image2D img_sum;
+layout(rgba32f) uniform image2D img_pre;
+
+uniform int width;
+uniform int height;
+uniform float blend;
+uniform sampler1D transferTex;
+uniform float densitymin;
+uniform float densitymax;
+
+
+void main() {
+	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+
+	float sum = imageLoad(img_sum, pixel_coords).r;
+
+	sum = (sum - densitymin)/(densitymax - densitymin);
+	vec3 color = texture(transferTex, sum).rgb;
+	
+	vec4 pixel = vec4(color, 1.0f);
+
+	pixel = blend * pixel + (1-blend) * vec4(imageLoad(img_pre, pixel_coords).rgb, 1.0f);
+
+	imageStore(img_output, pixel_coords, pixel);
+}

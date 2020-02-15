@@ -17,7 +17,6 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Di
 	m_program->release();
 
 	//Create Geometry Data
-	//Helper::createTriangle(30.0f, m_geoVertices, m_geoNormals, m_geoIndices);
 	Helper::createSphere(1.0f, 32.0f, 32.0f, m_geoVertices, m_geoNormals, m_geoIndices);
 
 	//Create VAO
@@ -86,9 +85,7 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Di
 }
 
 void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
-{
-	//ToDo: Extract the Eigenvectors!
-	
+{	
 	int n = mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	QVector<QMatrix4x4> normalTransfs;

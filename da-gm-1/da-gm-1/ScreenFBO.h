@@ -4,10 +4,12 @@
 class ScreenFBO {
 
 public:
-	ScreenFBO(QOpenGLFunctions_4_5_Core* gl, int width, int height, bool equalsize);	//equalsize: internal and actual size is the same
-	void attachColorTexture();
+	ScreenFBO(QOpenGLFunctions_4_5_Core* gl, int width, int height, bool equalsize = false);	//equalsize: internal and actual size is the same
+	void attachSinglevalueTexture(GLuint attachment = 0);
+	void attachColorTexture(GLuint attachment = 0);
 	void attachDepthTexture();
 	void setSize(int width, int height);
+	GLuint getSinglevalueTexture();
 	GLuint getColorTexture();
 	GLuint getDepthTexture();
 	int getWidth();
@@ -18,6 +20,7 @@ public:
 private:
 	QOpenGLFunctions_4_5_Core* m_gl;
 	GLuint m_id;
+	GLuint m_singleTex = -1;
 	GLuint m_colorTex = -1;
 	GLuint m_depthTex = -1;
 

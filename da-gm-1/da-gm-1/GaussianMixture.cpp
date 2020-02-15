@@ -4,6 +4,7 @@
 #include <Eigen/Core>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QStack>
+#include <QTime>
 
 double GaussianMixture::sample(double x, double y, double z) const
 {
@@ -33,8 +34,33 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize) const
 	return std::shared_ptr<char[]>(result);
 }
 
+std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize, double threshold, GLuint& numberOfComponents) const {
+	GLint n = (GLint)numberOfGaussians();
+	numberOfComponents = 0;
+	for (int i = 0; i < n; i++) {
+		if (gaussians[i].gpudata.mu_amplitude.w() > threshold) {
+			numberOfComponents++;
+		}
+	}
+	arrsize = 80 * numberOfComponents;
+	char* result = new char[arrsize];
+	char* gaussmem = result;
+	for (int i = 0; i < n; i++) {
+		if (gaussians[i].gpudata.mu_amplitude.w() > threshold) {
+			GaussianGPU gpudata = gaussians[i].gpudata;
+			memcpy(gaussmem, &gpudata.mu_amplitude, 16);
+			gaussmem += 16;
+			memcpy(gaussmem, gpudata.invsigma.constData(), 64);
+			gaussmem += 64;
+		}
+	}
+	return std::shared_ptr<char[]>(result);
+}
+
 std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const
 {
+	QTime time;
+	time.start();
 	QVector3D absMin;
 	QVector3D absMax;
 	struct GaussianBoundingBox {
@@ -218,6 +244,8 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 		memcpy(gaussmem, gpudata.invsigma.constData(), 64);
 		gaussmem += 64;
 	}
+	qDebug() << "Time for building the octree: " << time.elapsed() << "ms (" << n << " Gaussians)";
+
 	return std::shared_ptr<char[]>(gaussRes);
 }
 

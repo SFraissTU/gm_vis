@@ -10,7 +10,21 @@ ScreenFBO::ScreenFBO(QOpenGLFunctions_4_5_Core* gl, int width, int height, bool 
 	}
 }
 
-void ScreenFBO::attachColorTexture()
+void ScreenFBO::attachSinglevalueTexture(GLuint attachment)
+{
+	m_gl->glGenTextures(1, &m_singleTex);
+	m_gl->glBindTexture(GL_TEXTURE_2D, m_singleTex);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, m_fboWidth, m_fboHeight, 0, GL_RED, GL_FLOAT, nullptr);
+	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
+	m_gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachment, GL_TEXTURE_2D, m_singleTex, 0);
+	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void ScreenFBO::attachColorTexture(GLuint attachment)
 {
 	m_gl->glGenTextures(1, &m_colorTex);
 	m_gl->glBindTexture(GL_TEXTURE_2D, m_colorTex);
@@ -20,7 +34,7 @@ void ScreenFBO::attachColorTexture()
 	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_fboWidth, m_fboHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
 	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
-	m_gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_colorTex, 0);
+	m_gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachment, GL_TEXTURE_2D, m_colorTex, 0);
 	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -43,6 +57,10 @@ void ScreenFBO::setSize(int width, int height)
 	if (width > m_fboWidth || height > m_fboHeight || m_equalsize) {
 		m_fboWidth = width;
 		m_fboHeight = height;
+		if (m_singleTex != -1) {
+			m_gl->glBindTexture(GL_TEXTURE_2D, m_singleTex);
+			m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, m_fboWidth, m_fboHeight, 0, GL_RED, GL_FLOAT, nullptr);
+		}
 		if (m_colorTex != -1) {
 			m_gl->glBindTexture(GL_TEXTURE_2D, m_colorTex);
 			m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_fboWidth, m_fboHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
@@ -54,6 +72,11 @@ void ScreenFBO::setSize(int width, int height)
 	}
 	m_screenWidth = width;
 	m_screenHeight = height;
+}
+
+GLuint ScreenFBO::getSinglevalueTexture()
+{
+	return m_singleTex;
 }
 
 GLuint ScreenFBO::getColorTexture()
@@ -84,6 +107,9 @@ int ScreenFBO::getID()
 void ScreenFBO::cleanup()
 {
 	m_gl->glDeleteFramebuffers(1, &m_id);
+	if (m_singleTex != -1) {
+		m_gl->glDeleteTextures(1, &m_singleTex);
+	}
 	if (m_colorTex != -1) {
 		m_gl->glDeleteTextures(1, &m_colorTex);
 	}
