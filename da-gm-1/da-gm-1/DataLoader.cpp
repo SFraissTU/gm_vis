@@ -63,7 +63,7 @@ std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(QFile& file, bool convert
 	}
 }
 
-std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(QString path, bool convertCoordinateSystem)
+std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(const QString& path, bool convertCoordinateSystem)
 {
 	QFile file(path);
 	return readPCDfromOFF(file, convertCoordinateSystem);
@@ -245,13 +245,13 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 	return std::unique_ptr<GaussianMixture>();
 }
 
-std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QString& path, bool convertCoordinateSystem)
+std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(const QString& path, bool convertCoordinateSystem)
 {
 	QFile file(path);
 	return readGMfromPLY(file, convertCoordinateSystem);
 }
 
-QVector<QVector3D> DataLoader::readTransferFunction(QString& path)
+QVector<QVector3D> DataLoader::readTransferFunction(const QString& path)
 {
 	QVector<QVector3D> result;
 	QFile file(path);

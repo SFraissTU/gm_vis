@@ -2,8 +2,7 @@
 #include <QVector>
 #include <QVector3D>
 #include <QOpenGLFunctions>
-#define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
 
 struct Helper {
 

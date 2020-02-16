@@ -2,8 +2,7 @@
 
 #include <memory>
 #include <QTime>
-
-#include "math.h"
+#include <cmath>
 
 //Partialy used this: https://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/hellogl2?h=5.13
 

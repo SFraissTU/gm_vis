@@ -1,6 +1,6 @@
 #include "GMDensityRaycastRenderer.h"
 #include "DataLoader.h"
-#include <math.h>
+#include <cmath>
 #include <QtMath>
 
 GMDensityRaycastRenderer::GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo(ScreenFBO(gl, width, height, false)) {

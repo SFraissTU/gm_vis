@@ -1,13 +1,14 @@
 #pragma once
+#include <cmath>
 #include <QVector3D>
 #include <QVector4D>
 #include <QMatrix4x4>
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <Eigen/Eigenvalues>
-#define _USE_MATH_DEFINES
-#include <Math.h>
 #include <optional>
+
+#define M_PI 3.14159265358979323846
 
 
 const double GAUSS_PI_FACTOR = 1.0 / pow(2 * M_PI, 3.0 / 2.0);

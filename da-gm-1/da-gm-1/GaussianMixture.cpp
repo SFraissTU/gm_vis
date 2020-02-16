@@ -1,6 +1,5 @@
 #include "GaussianMixture.h"
-#define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
 #include <Eigen/Core>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QStack>

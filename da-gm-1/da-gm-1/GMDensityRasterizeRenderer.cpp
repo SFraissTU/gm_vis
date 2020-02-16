@@ -1,7 +1,7 @@
 #include "GMDensityRasterizeRenderer.h"
 #include "DataLoader.h"
 #include "Helper.h"
-#include <math.h>
+#include <cmath>
 #include <QtMath>
 
 GMDensityRasterizeRenderer::GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo_projection(ScreenFBO(gl, width, height)), m_fbo_final(ScreenFBO(gl, width, height)) {
