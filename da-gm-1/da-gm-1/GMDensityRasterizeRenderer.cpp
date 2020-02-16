@@ -1,10 +1,10 @@
-#include "GMDensityRendererAcc2.h"
+#include "GMDensityRasterizeRenderer.h"
 #include "DataLoader.h"
 #include "Helper.h"
 #include <math.h>
 #include <QtMath>
 
-GMDensityRendererAcc2::GMDensityRendererAcc2(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo_projection(ScreenFBO(gl, width, height)), m_fbo_final(ScreenFBO(gl, width, height)) {
+GMDensityRasterizeRenderer::GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo_projection(ScreenFBO(gl, width, height)), m_fbo_final(ScreenFBO(gl, width, height)) {
 	m_program_projection = std::make_unique<QOpenGLShaderProgram>();
 	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/density_acs_proj.vert");
 	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/density_acs_proj.frag");
@@ -96,7 +96,7 @@ GMDensityRendererAcc2::GMDensityRendererAcc2(QOpenGLFunctions_4_5_Core* gl, Disp
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, 1001, 0, GL_RED, GL_FLOAT, gaussdata);
-	delete gaussdata;
+	delete[] gaussdata;
 
 	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
 	gl->glGenTextures(1, &m_texTransfer);
@@ -110,15 +110,21 @@ GMDensityRendererAcc2::GMDensityRendererAcc2(QOpenGLFunctions_4_5_Core* gl, Disp
 	gl->glCreateBuffers(1, &m_ssboMixture);
 }
 
-void GMDensityRendererAcc2::setMixture(GaussianMixture* mixture)
+void GMDensityRasterizeRenderer::setMixture(GaussianMixture* mixture)
 {
 	m_mixture = mixture;
 
-	int n = mixture->numberOfGaussians();
+	updateAccelerationData();
+
+}
+
+void GMDensityRasterizeRenderer::updateAccelerationData()
+{
+	int n = m_mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	transforms.reserve(n);
 	for (int i = 0; i < n; ++i) {
-		const Gaussian* gauss = (*mixture)[i];
+		const Gaussian* gauss = (*m_mixture)[i];
 		auto transform = gauss->getTransform(m_settings->accelerationthreshold);
 		if (transform.has_value()) {
 			transforms.push_back(transform.value());
@@ -137,23 +143,17 @@ void GMDensityRendererAcc2::setMixture(GaussianMixture* mixture)
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void GMDensityRendererAcc2::setSize(int width, int height)
+void GMDensityRasterizeRenderer::setSize(int width, int height)
 {
 	m_fbo_projection.setSize(width, height);
 	m_fbo_final.setSize(width, height);
 }
 
-void GMDensityRendererAcc2::render(GLuint preTexture)
+void GMDensityRasterizeRenderer::render(GLuint preTexture)
 {
 	if (!m_mixture) {
 		return;
 	}
-
-	/*m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, depthTexture);
-
-	m_gl->glBlitFramebuffer(0, 0, m_fbo.getWidth(), m_fbo.getHeight(), 0, 0, m_fbo.getWidth(), m_fbo.getHeight(),
-		GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	return;*/
 
 	GLint screenFbo = 0;
 	m_gl->glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &screenFbo);
@@ -217,7 +217,7 @@ void GMDensityRendererAcc2::render(GLuint preTexture)
 }
 
 
-void GMDensityRendererAcc2::cleanup()
+void GMDensityRasterizeRenderer::cleanup()
 {
 	m_fbo_projection.cleanup();
 	m_fbo_final.cleanup();

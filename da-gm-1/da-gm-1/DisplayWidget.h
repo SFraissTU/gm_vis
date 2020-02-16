@@ -14,7 +14,6 @@
 #include "PointCloudRenderer.h"
 #include "GMIsoellipsoidRenderer.h"
 #include "GMDensityRenderer.h"
-#include "GMDensityRendererAcc2.h"
 
 class DisplayWidget : public QOpenGLWidget, private QOpenGLFunctions_4_5_Core {
 	Q_OBJECT
@@ -56,7 +55,6 @@ private:
 	std::unique_ptr<PointCloudRenderer> m_pointcloudRenderer;
 	std::unique_ptr<GMIsoellipsoidRenderer> m_isoellipsoidRenderer;
 	std::unique_ptr<GMDensityRenderer> m_densityRenderer;
-	std::unique_ptr<GMDensityRendererAcc2> m_densityRenderer2;
 
 	std::unique_ptr<ScreenFBO> m_fboIntermediate;
 

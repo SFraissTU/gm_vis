@@ -46,7 +46,6 @@ void DisplayWidget::setGaussianMixture(GaussianMixture* mixture)
 {
 	m_isoellipsoidRenderer->setMixture(mixture);
 	m_densityRenderer->setMixture(mixture);
-	m_densityRenderer2->setMixture(mixture);
 	update();
 }
 
@@ -60,15 +59,13 @@ void DisplayWidget::cleanup() {
 		m_isoellipsoidRenderer.reset();
 		m_densityRenderer->cleanup();
 		m_densityRenderer.reset();
-		m_densityRenderer2->cleanup();
-		m_densityRenderer2.reset();
 		m_debugLogger.reset();
 	}
 	doneCurrent();
 }
 
 void DisplayWidget::initializeGL() {
-	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &DisplayWidget::cleanup);
+	(void)connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &DisplayWidget::cleanup);
 
 	initializeOpenGLFunctions();
 	m_fboIntermediate = std::make_unique<ScreenFBO>(static_cast<QOpenGLFunctions_4_5_Core*>(this), width(), height());
@@ -79,15 +76,14 @@ void DisplayWidget::initializeGL() {
 	m_debugLogger = std::make_unique<QOpenGLDebugLogger>(this);
 	if (m_debugLogger->initialize()) {
 		qDebug() << "GL_DEBUG Debug Logger " << m_debugLogger.get() << "\n";
-		connect(m_debugLogger.get(), &QOpenGLDebugLogger::messageLogged, this, &DisplayWidget::messageLogged);
+		(void)connect(m_debugLogger.get(), &QOpenGLDebugLogger::messageLogged, this, &DisplayWidget::messageLogged);
 		m_debugLogger->startLogging();
 	}
 #endif
 
 	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get());
 	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get());
-	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height());
-	m_densityRenderer2 = std::make_unique<GMDensityRendererAcc2>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height());
+	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height(), m_settings.renderMode);
 
 	auto background = m_settings.backgroundColor;
 	glClearColor(background.redF(), background.blueF(), background.greenF(), 1);
@@ -96,10 +92,11 @@ void DisplayWidget::initializeGL() {
 void DisplayWidget::paintGL()
 {
 	if (m_settings.rebuildacc) {
-		m_densityRenderer->rebuildAccelerationStructure();
+		m_densityRenderer->updateAccelerationData();
+		m_settings.rebuildacc = false;
 	}
 	else {
-		m_densityRenderer->setAccelerationStructureEnabled(m_settings.accelerate);
+		m_densityRenderer->setRenderMode(m_settings.renderMode);
 	}
 
 	GLint defaultFbo = 0;
@@ -137,7 +134,7 @@ void DisplayWidget::paintGL()
 		glGenQueries(1, &query);
 		glBeginQuery(GL_TIME_ELAPSED, query);
 
-		m_densityRenderer2->render(m_fboIntermediate->getColorTexture());
+		m_densityRenderer->render(m_fboIntermediate->getColorTexture());
 
 		glEndQuery(GL_TIME_ELAPSED);
 
@@ -157,7 +154,6 @@ void DisplayWidget::resizeGL(int width, int height)
 {
 	m_camera->setAspectRatio(GLfloat(width) / height);
 	m_densityRenderer->setSize(width, height);
-	m_densityRenderer2->setSize(width, height);
 	m_fboIntermediate->setSize(width, height);
 }
 

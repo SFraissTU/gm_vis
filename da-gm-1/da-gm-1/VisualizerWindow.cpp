@@ -1,25 +1,26 @@
 #include "VisualizerWindow.h"
 #include <qfiledialog.h>
 #include <QDoubleValidator>
+#include <QComboBox>
 
 VisualizerWindow::VisualizerWindow(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
 
-	connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(loadPointcloudAction()));
-	connect(ui.loadMixtureAction, SIGNAL(triggered()), this, SLOT(loadMixtureAction()));
+	(void)connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(loadPointcloudAction()));
+	(void)connect(ui.loadMixtureAction, SIGNAL(triggered()), this, SLOT(loadMixtureAction()));
 
-	connect(ui.cb_displayPointcloud, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
-	connect(ui.cb_displayEllipsoids, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
-	connect(ui.cb_displayDensity, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
+	(void)connect(ui.cb_displayPointcloud, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
+	(void)connect(ui.cb_displayEllipsoids, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
+	(void)connect(ui.cb_displayDensity, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
 
-	connect(ui.spin_scalemin, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
-	connect(ui.spin_scalemax, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
+	(void)connect(ui.spin_scalemin, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
+	(void)connect(ui.spin_scalemax, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
 
-	connect(ui.cb_accelerated, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
-	connect(ui.spin_accthreshold, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
-	connect(ui.cb_accthauto, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
+	(void)connect(ui.co_rendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(updateSettings()));
+	(void)connect(ui.spin_accthreshold, SIGNAL(valueChanged(double)), this, SLOT(updateSettings()));
+	(void)connect(ui.cb_accthauto, SIGNAL(stateChanged(int)), this, SLOT(updateSettings()));
 }
 
 void VisualizerWindow::loadPointcloudAction() {
@@ -55,7 +56,7 @@ void VisualizerWindow::updateSettings()
 	settings->displayDensity = ui.cb_displayDensity->isChecked();
 	settings->densitymin = ui.spin_scalemin->value();
 	settings->densitymax = ui.spin_scalemax->value();
-	settings->accelerate = ui.cb_accelerated->isChecked();
+	settings->renderMode = GMDensityRenderMode(ui.co_rendermode->currentIndex() + 1);
 	settings->accelerationthresholdauto = ui.cb_accthauto->isChecked();
 	if (settings->accelerationthresholdauto) {
 		settings->accelerationthreshold = settings->densitymax * 0.001f;
@@ -66,7 +67,7 @@ void VisualizerWindow::updateSettings()
 		settings->accelerationthreshold = ui.spin_accthreshold->value();
 		ui.spin_accthreshold->setEnabled(true);
 	}
-	if (settings->accelerate && settings->accelerationthreshold != accthr) {
+	if (GMDensityRenderer::isAccelerated(settings->renderMode) && abs(settings->accelerationthreshold - accthr) > 0.0000000001) {
 		settings->rebuildacc = true;
 	}
 	ui.openGLWidget->update();

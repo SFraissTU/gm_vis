@@ -1,6 +1,7 @@
 #pragma once
 #include <QColor>
 #include <QVector3D>
+#include "GMDensityRenderMode.h"
 
 class DisplaySettings {
 public:
@@ -20,7 +21,7 @@ public:
 	float densitymin = 0.0f;
 	float densitymax = 0.01f;
 
-	bool accelerate = true;
+	GMDensityRenderMode renderMode = GMDensityRenderMode::ADDITIVE;
 	double accelerationthreshold = 0.00001;
 	bool accelerationthresholdauto = true;
 	//Octreethreshold is determined automatically from densitymax

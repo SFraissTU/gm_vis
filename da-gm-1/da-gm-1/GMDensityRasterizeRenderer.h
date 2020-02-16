@@ -10,10 +10,11 @@
 #include <QOpenGLTexture>
 #include <QOpenGLFrameBufferObject>
 
-class GMDensityRendererAcc2 {
+class GMDensityRasterizeRenderer {
 public:
-	GMDensityRendererAcc2(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height);
+	GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height);
 	void setMixture(GaussianMixture* mixture);
+	void updateAccelerationData();
 	void setSize(int width, int height);
 	void render(GLuint preTexture);
 	void cleanup();
