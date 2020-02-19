@@ -8,7 +8,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLTexture>
-#include <QOpenGLFrameBufferObject>
+#include <QOpenGLFramebufferObject>
 
 class GMDensityRaycastRenderer {
 public:

@@ -64,9 +64,15 @@ public:
 		float l0 = sqrt(eigen_values(0));
 		float l1 = sqrt(eigen_values(1));
 		float l2 = sqrt(eigen_values(2));
-		float values[9] = { l0 * eigen_vectors(0, 0), l1 * eigen_vectors(0, 1), l2 * eigen_vectors(0, 2),
-			l0 * eigen_vectors(1, 0), l1 * eigen_vectors(1, 1), l2 * eigen_vectors(1, 2),
-			l0 * eigen_vectors(2, 0), l1 * eigen_vectors(2, 1), l2 * eigen_vectors(2, 2) };
+		float values[9] = { float(l0 * eigen_vectors(0, 0)),
+							float(l1 * eigen_vectors(0, 1)),
+							float(l2 * eigen_vectors(0, 2)),
+							float(l0 * eigen_vectors(1, 0)),
+							float(l1 * eigen_vectors(1, 1)),
+							float(l2 * eigen_vectors(1, 2)),
+							float(l0 * eigen_vectors(2, 0)),
+							float(l1 * eigen_vectors(2, 1)),
+							float(l2 * eigen_vectors(2, 2)) };
 		eigenmatrix = QMatrix3x3(values);
 	}
 

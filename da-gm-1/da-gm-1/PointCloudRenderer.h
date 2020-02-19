@@ -7,6 +7,8 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 
+#include <memory>
+
 class PointCloudRenderer {
 
 public:
