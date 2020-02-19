@@ -237,6 +237,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 		}
 		//The weights are multiplied by the amount of points, so we have to normalize them
 		mixture->normalize();
+		qDebug() << "Successfully read " << mixture->numberOfGaussians() << " Gaussians from " << file.fileName() << ".\n";
 		return std::move(mixture);
 	}
 	else {
