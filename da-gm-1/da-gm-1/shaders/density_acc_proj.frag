@@ -1,8 +1,11 @@
 #version 450
+
+// Accelerated Density Visualization
+// Fragment Shader. Calcualtes contribution to pixel sum
+
 flat in int gaussIndex;
 
 out float frag_sum;
-//out vec3 frag_color;
 
 uniform mat4 viewMatrix;
 uniform mat4 invViewMatrix;
@@ -51,5 +54,4 @@ void main() {
 	direction = vec3(direction.x, -direction.z, direction.y);
 
 	frag_sum = evalGaussian(origin, direction, mixture.gaussians[gaussIndex]);
-	//frag_sum = pixel_uv.x;
 }

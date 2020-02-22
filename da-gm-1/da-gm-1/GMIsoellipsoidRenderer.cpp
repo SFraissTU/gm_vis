@@ -4,8 +4,8 @@
 GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera) : m_gl(gl), m_settings(settings), m_camera(camera)
 {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
-	m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/isoell.vert");
-	m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/isoell.frag");
+	m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/ellipsoids.vert");
+	m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/ellipsoids.frag");
 	m_program->link();
 
 	m_program->bind();

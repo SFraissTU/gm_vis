@@ -5,11 +5,11 @@
 
 GMDensityRaycastRenderer::GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo(ScreenFBO(gl, width, height, false)) {
 	m_program_regular = std::make_unique<QOpenGLShaderProgram>();
-	m_program_regular->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density.comp");
+	m_program_regular->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_exact.comp");
 	m_program_regular->link();
 
 	m_program_accelerated = std::make_unique<QOpenGLShaderProgram>();
-	m_program_accelerated->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_acs.comp");
+	m_program_accelerated->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_octree.comp");
 	m_program_accelerated->link();
 
 	m_program_accelerated->bind();
