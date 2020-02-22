@@ -162,22 +162,22 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 						return {};
 					}
 					if (properties[i] == "x") {
-						newGaussian.x = val;
+						newGaussian.mux = val;
 					}
 					else if (properties[i] == "y") {
 						if (convertCoordinateSystem) {
-							newGaussian.z = -val;
+							newGaussian.muz = -val;
 						}
 						else {
-							newGaussian.y = val;
+							newGaussian.muy = val;
 						}
 					}
 					else if (properties[i] == "z") {
 						if (convertCoordinateSystem) {
-							newGaussian.y = val;
+							newGaussian.muy = val;
 						}
 						else {
-							newGaussian.z = val;
+							newGaussian.muz = val;
 						}
 					}
 					else if (properties[i] == "covxx") {

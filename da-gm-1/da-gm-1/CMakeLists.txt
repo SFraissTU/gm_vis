@@ -32,6 +32,7 @@ add_executable(visualizer
     Camera.cpp
     DisplaySettings.h
     Gaussian.h
+    Gaussian.cpp
     GaussianMixture.h
     GaussianMixture.cpp
     GMIsoellipsoidRenderer.h

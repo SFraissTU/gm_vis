@@ -13,106 +13,91 @@
 
 const double GAUSS_PI_FACTOR = 1.0 / pow(2 * M_PI, 3.0 / 2.0);
 
+/*
+Representation of a Gaussian that will be passed to the shader.
+*/
 struct GaussianGPU {
+	/* First three components represent the center of the Gaussian. 
+	The fourth value is the amplitude, so the value with which exp(...) is multiplied */
 	QVector4D mu_amplitude;
+	/* The inverse covariance matrix */
 	QMatrix4x4 invsigma;
-	//alignas(16) float amplitude;
-	//QVector3D padding;
 };
 
+/*
+Represents a single Gaussian.
+*/
 struct Gaussian {
-	double x;
-	double y;
-	double z;
+	/* x coordinate of the mean */
+	double mux;
+	/* y coordinate of the mean */
+	double muy;
+	/* z coordinate of the mean */
+	double muz;
+	/* variance of x */
 	double covxx;
+	/* covariance of x and y */
 	double covxy;
+	/* covariance of x and z */
 	double covxz;
+	/* variance of y */
 	double covyy;
+	/* covariance of y and z */
 	double covyz;
+	/* variance of z */
 	double covzz;
+	/* weight of this gaussian (commonly referred to as pi_k) */
 	double weight;
 
-	GaussianGPU gpudata;
+	const GaussianGPU& getGPUData() const;
 
 private:
-	Eigen::Matrix3d covariancematrix;
+	/* GPU data */
+	GaussianGPU gpudata;
+	/* Inverse covariance matrix */
 	Eigen::Matrix3d inversecovariance;
-	double factor; // With what exp is multiplied: 1/((2pi)^(3/2) * det(sigma)^(1/2)
+	/* Amplitude of this Gaussian, meaning what exp is multiplied with: pi_k/((2pi)^(3/2) * det(sigma)^(1/2)  */
+	double amplitude;
+	/* Mean of this Gaussian */
 	Eigen::Vector3d mu;
-	QMatrix3x3 eigenmatrix;
+	/* Vectors containing the eigenvectors multiplied by their eigenvalues. */
+	QGenericMatrix<3,3,double> eigenmatrix;
 
 public:
-	void finalizeInitialization() {
-		covariancematrix(0, 0) = covxx;
-		covariancematrix(0, 1) = covariancematrix(1, 0) = covxy;
-		covariancematrix(0, 2) = covariancematrix(2, 0) = covxz;
-		covariancematrix(1, 1) = covyy;
-		covariancematrix(1, 2) = covariancematrix(2, 1) = covyz;
-		covariancematrix(2, 2) = covzz;
-		inversecovariance = covariancematrix.inverse();
-		factor = 1.0f / (sqrt(covariancematrix.determinant())) * GAUSS_PI_FACTOR;
-		mu = Eigen::Vector3d(x, y, z);
-		float covdata[16] = { (float)inversecovariance(0,0), (float)inversecovariance(0,1), (float)inversecovariance(0,2), 0, 
-			(float)inversecovariance(1,0), (float)inversecovariance(1,1), (float)inversecovariance(1,2), 0, 
-			(float)inversecovariance(2,0), (float)inversecovariance(2,1), (float)inversecovariance(2,2), 0, 
-			0.0f, 0.0f, 0.0f, 1.0f };
-		gpudata = { QVector4D((float)mu.x(), (float)mu.y(), (float)mu.z(), float(weight * factor)), QMatrix4x4(covdata) };
-		Eigen::EigenSolver<Eigen::Matrix3Xd> eigensolver;
-		eigensolver.compute(covariancematrix, true);
-		Eigen::VectorXd eigen_values = eigensolver.eigenvalues().real();
-		Eigen::MatrixXd eigen_vectors = eigensolver.eigenvectors().real();
-		float l0 = sqrt(eigen_values(0));
-		float l1 = sqrt(eigen_values(1));
-		float l2 = sqrt(eigen_values(2));
-		float values[9] = { l0 * eigen_vectors(0, 0), l1 * eigen_vectors(0, 1), l2 * eigen_vectors(0, 2),
-			l0 * eigen_vectors(1, 0), l1 * eigen_vectors(1, 1), l2 * eigen_vectors(1, 2),
-			l0 * eigen_vectors(2, 0), l1 * eigen_vectors(2, 1), l2 * eigen_vectors(2, 2) };
-		eigenmatrix = QMatrix3x3(values);
-	}
+	/*
+	To initialize a Gaussian, the public values have to be set,
+	and then this function has to be called.
+	It initializes the private help members.
+	Other functions will not work correctly if this function has not been called.
+	*/
+	void finalizeInitialization();
 
-	double sample(double x, double y, double z) const {
-		Eigen::Vector3d relpos = Eigen::Vector3d(x - this->x, y - this->y, z - this->z);
-		double ex = std::exp(-0.5 * (relpos.transpose() * inversecovariance * relpos).x());
-		float val = factor * weight * ex;
-		return val;
-	}
+	/*
+	Samples the Gaussian at the given coordinate and returns the corresponding density value.
+	*/
+	double sample(double x, double y, double z) const;
 
-	QMatrix3x3 getEigenMatrix() const {
-		return eigenmatrix;
-	}
+	/*
+	Returns a matrix containing the eigenvectors multiplied by the eigenvalues
+	*/
+	const QGenericMatrix<3, 3, double>& getEigenMatrix() const;
 
-	std::optional<QMatrix4x4> getTransform(double threshold) const {
-		if (threshold >= gpudata.mu_amplitude.w()) {
-			return {};
-		}
-		float scalar = sqrt(-2 * log(threshold / gpudata.mu_amplitude.w()));
-		QMatrix3x3 mat = eigenmatrix * scalar;
-		QMatrix4x4 mat4 = QMatrix4x4(
-			mat(0, 0), mat(0, 1), mat(0, 2), x,
-			mat(1, 0), mat(1, 1), mat(1, 2), y,
-			mat(2, 0), mat(2, 1), mat(2, 2), z,
-			0, 0, 0, 1
-		);
-		if (mat4.determinant() < 0) {
-			mat4 = mat4 * QMatrix4x4(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
-		}
-		return mat4;
-	}
+	/*
+	Takes the isoellipsoid of this gaussian with the constant density value
+	defined by threshold and calculates a transformation matrix that transforms
+	a simple unit sphere at the origin to this ellipsoid.
+	Returns this matrix as a float matrix, or returns nothing if the threshold
+	does not result in an isoellipsoid, as it's bigger than any density value
+	appearing in this Gaussian.
+	*/
+	std::optional<QMatrix4x4> getTransform(double threshold) const;
 
-	bool getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const {
-		//This ellipsoid only exists, if the threshold is smaller than the amplitude. Otherwise no result will be given
-		if (threshold >= gpudata.mu_amplitude.w()) {
-			return false;
-		}
-		float scalar = sqrt(-2 * log(threshold / gpudata.mu_amplitude.w()));
-		QMatrix3x3 transfo = eigenmatrix * scalar;
-		QVector3D r0 = QVector3D(transfo(0, 0), transfo(0, 1), transfo(0, 2));
-		QVector3D r1 = QVector3D(transfo(1, 0), transfo(1, 1), transfo(1, 2));
-		QVector3D r2 = QVector3D(transfo(2, 0), transfo(2, 1), transfo(2, 2));
-		QVector3D delta = QVector3D(r0.length(), r1.length(), r2.length());
-		QVector3D muq = QVector3D(mu.x(), mu.y(), mu.z());
-		min = muq - delta;
-		max = muq + delta;
-		return true;
-	}
+	/*
+	Takes the isoellipsoid of this gaussian with the constant density value
+	defined by threshold and calculates the smallest axis aligned bounding box
+	that fully contains this ellipsoid.
+	If the isoellipsoid exists, true is returned and the min and max values
+	of the AABB are stored in the parameters. Otherwise, false is returned.
+	*/
+	bool getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const;
 };

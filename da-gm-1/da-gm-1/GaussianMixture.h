@@ -3,12 +3,21 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include "Gaussian.h"
 
+/*
+Represents a single node of an acceleration octree for a Gaussian Mixture
+*/
 struct GMOctreeNode {
+	/* Minimum of the AABB of this node */
 	QVector4D min;
+	/* Maximum of the AABB of this node */
 	QVector4D max;
+	/* The first 8 bits indicate which child nodes exist and which not */
 	GLint childrenbits;
+	/* If this node has child nodes, this is the index of the first child node. Otherwise -1 */
 	GLint childrenstart;
+	/* If this node has Gaussians, this is the index of the first corresponding Gaussian in the list. Otherwise -1 */
 	GLint gaussianstart;
+	/* If this node has Gaussians, this is the index of the last corresponding Gaussian in the list. Otherwise undefined. */
 	GLint gaussianend;
 };
 
