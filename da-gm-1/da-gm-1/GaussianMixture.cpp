@@ -24,7 +24,7 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize) const
 	char* result = new char[arrsize];
 	char* gaussmem = result;
 	for (int i = 0; i < n; i++) {
-		GaussianGPU gpudata = gaussians[i].gpudata;
+		const GaussianGPU& gpudata = gaussians[i].getGPUData();
 		memcpy(gaussmem, &gpudata.mu_amplitude, 16);
 		gaussmem += 16;
 		memcpy(gaussmem, gpudata.invsigma.constData(), 64);
@@ -37,7 +37,7 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize, double thresho
 	GLint n = (GLint)numberOfGaussians();
 	numberOfComponents = 0;
 	for (int i = 0; i < n; i++) {
-		if (gaussians[i].gpudata.mu_amplitude.w() > threshold) {
+		if (gaussians[i].getGPUData().mu_amplitude.w() > threshold) {
 			numberOfComponents++;
 		}
 	}
@@ -45,8 +45,8 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize, double thresho
 	char* result = new char[arrsize];
 	char* gaussmem = result;
 	for (int i = 0; i < n; i++) {
-		if (gaussians[i].gpudata.mu_amplitude.w() > threshold) {
-			GaussianGPU gpudata = gaussians[i].gpudata;
+		const GaussianGPU& gpudata = gaussians[i].getGPUData();
+		if (gpudata.mu_amplitude.w() > threshold) {
 			memcpy(gaussmem, &gpudata.mu_amplitude, 16);
 			gaussmem += 16;
 			memcpy(gaussmem, gpudata.invsigma.constData(), 64);
@@ -196,7 +196,7 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 				node.gaussianend = gaussianList.size() + currentgaussians.size() - 1;
 			}
 			for (const int* it = currentgaussians.cbegin(); it != currentgaussians.cend(); ++it) {
-				gaussianList.append(gaussians[boundingBoxes[*it].gaussindex].gpudata);
+				gaussianList.append(gaussians[boundingBoxes[*it].gaussindex].getGPUData());
 			}
 
 			//Check Children
@@ -256,7 +256,6 @@ void GaussianMixture::normalize()
 	}
 	double factor = 1.0 / sum;
 	for (int i = 0; i < gaussians.size(); ++i) {
-		gaussians[i].weight *= factor;
-		gaussians[i].gpudata.mu_amplitude.setW(gaussians[i].gpudata.mu_amplitude.w() * factor);
+		gaussians[i].updateWeight(gaussians[i].weight * factor);
 	}
 }

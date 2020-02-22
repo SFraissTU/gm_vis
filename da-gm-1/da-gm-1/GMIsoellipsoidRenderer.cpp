@@ -94,11 +94,11 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 	for (int i = 0; i < n; ++i) {
 		const Gaussian* gauss = (*mixture)[i];
 
-		QMatrix3x3 eigenMatrix = gauss->getEigenMatrix();
+		auto eigenMatrix = gauss->getEigenMatrix();
 		transforms[i] = QMatrix4x4(
-			eigenMatrix(0,0), eigenMatrix(0,1), eigenMatrix(0,2), gauss->x,
-			eigenMatrix(1,0), eigenMatrix(1,1), eigenMatrix(1, 2), gauss->y,
-			eigenMatrix(2, 0), eigenMatrix(2, 1), eigenMatrix(2, 2), gauss->z,
+			(float)eigenMatrix(0, 0), (float)eigenMatrix(0,1),  (float)eigenMatrix(0,2),  (float)gauss->mux,
+			(float)eigenMatrix(1, 0), (float)eigenMatrix(1,1),  (float)eigenMatrix(1, 2), (float)gauss->muy,
+			(float)eigenMatrix(2, 0), (float)eigenMatrix(2, 1), (float)eigenMatrix(2, 2), (float)gauss->muz,
 			0, 0, 0, 1
 		);
 		if (transforms[i].determinant() < 0) {
