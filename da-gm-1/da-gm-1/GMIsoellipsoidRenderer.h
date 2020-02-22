@@ -34,6 +34,7 @@ private:
 	QOpenGLBuffer m_indices_vbo = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
 	QOpenGLBuffer m_transf_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 	QOpenGLBuffer m_normtr_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+	QOpenGLBuffer m_color_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 
 	//Shader
 	std::unique_ptr<QOpenGLShaderProgram> m_program;

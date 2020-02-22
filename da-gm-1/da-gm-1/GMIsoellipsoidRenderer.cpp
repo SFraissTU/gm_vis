@@ -81,6 +81,15 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Di
 	m_gl->glVertexAttribDivisor(9, 1);
 	m_normtr_vbo.release();
 
+	//Create Color VBO (for testing purposes)
+	m_color_vbo.create();
+	m_color_vbo.bind();
+	m_color_vbo.allocate(nullptr, 0);
+	m_gl->glEnableVertexAttribArray(10);
+	m_gl->glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, sizeof(QVector3D), 0);
+	m_gl->glVertexAttribDivisor(10, 1);
+	m_color_vbo.release();
+
 	m_gm_vao.release();
 }
 
@@ -89,8 +98,10 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 	int n = mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	QVector<QMatrix4x4> normalTransfs;
+	QVector<QVector3D> colors;
 	transforms.resize(n);
 	normalTransfs.resize(n);
+	colors.resize(n);
 	for (int i = 0; i < n; ++i) {
 		const Gaussian* gauss = (*mixture)[i];
 
@@ -108,6 +119,10 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 		}
 		//transforms[i].translate(QVector3D(gauss->x, gauss->y, gauss->z));
 		normalTransfs[i] = transforms[i].inverted().transposed();
+
+		float amplitude = gauss->getGPUData().mu_amplitude.w() * 100;
+		//float amplitude = gauss->weight * 10000;
+		colors[i] = (1 - amplitude) * QVector3D(0, 0, 1) + amplitude * QVector3D(1, 0, 0);
 	}
 
 	m_transf_vbo.bind();
@@ -116,6 +131,9 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 	m_normtr_vbo.bind();
 	m_normtr_vbo.allocate(normalTransfs.data(), n * sizeof(QMatrix4x4));
 	m_normtr_vbo.release();
+	m_color_vbo.bind();
+	m_color_vbo.allocate(colors.data(), n * sizeof(QVector3D));
+	m_color_vbo.release();
 	m_mixture = mixture;
 }
 
