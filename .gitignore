@@ -370,3 +370,6 @@ target_wrapper.*
 
 # QtCreator CMake
 CMakeLists.txt.user*
+da-gm-1/data/chair_0128HR.off
+da-gm-1/data/chair_0030HR.off
+da-gm-1/data/c_30HRL0.ply
