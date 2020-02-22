@@ -3,6 +3,7 @@
 #include "GaussianMixture.h"
 #include <qstring.h>
 #include <qfile.h>
+#include <memory>
 
 //Convert Coordinate System: (x,y,z) -> (x,z,-y)
 

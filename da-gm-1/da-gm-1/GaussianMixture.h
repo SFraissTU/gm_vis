@@ -1,6 +1,7 @@
 #pragma once
 #include <QVector>
 #include <QOpenGLFunctions_4_5_Core>
+#include <memory>
 #include "Gaussian.h"
 
 /*

@@ -61,7 +61,7 @@ private:
 	/* Mean of this Gaussian */
 	Eigen::Vector3d mu;
 	/* Vectors containing the eigenvectors multiplied by their eigenvalues. */
-	QGenericMatrix<3,3,double> eigenmatrix;
+	QGenericMatrix<3, 3, double> eigenmatrix;
 
 public:
 	/*
@@ -71,6 +71,11 @@ public:
 	Other functions will not work correctly if this function has not been called.
 	*/
 	void finalizeInitialization();
+
+	/*
+	Sets the weight and updates the GPU data and private members.
+	*/
+	void updateWeight(double weight);
 
 	/*
 	Samples the Gaussian at the given coordinate and returns the corresponding density value.
@@ -100,4 +105,5 @@ public:
 	of the AABB are stored in the parameters. Otherwise, false is returned.
 	*/
 	bool getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const;
+
 };

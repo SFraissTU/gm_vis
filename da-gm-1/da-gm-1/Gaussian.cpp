@@ -27,7 +27,8 @@ void Gaussian::finalizeInitialization() {
 
 	//---- Create the GPU Data ----
 	//1. Store inverse covariance matrix as float array to convert to QMatrix4x4. GPU uses float values.
-	float covdata[16] = { (float)inversecovariance(0,0), (float)inversecovariance(0,1), (float)inversecovariance(0,2), 0,
+	float covdata[16] = { 
+		(float)inversecovariance(0,0), (float)inversecovariance(0,1), (float)inversecovariance(0,2), 0,
 		(float)inversecovariance(1,0), (float)inversecovariance(1,1), (float)inversecovariance(1,2), 0,
 		(float)inversecovariance(2,0), (float)inversecovariance(2,1), (float)inversecovariance(2,2), 0,
 		0.0f, 0.0f, 0.0f, 1.0f };
@@ -42,10 +43,19 @@ void Gaussian::finalizeInitialization() {
 	double l0 = sqrt(eigen_values(0));
 	double l1 = sqrt(eigen_values(1));
 	double l2 = sqrt(eigen_values(2));
-	double values[9] = { l0 * eigen_vectors(0, 0), l1 * eigen_vectors(0, 1), l2 * eigen_vectors(0, 2),
+	double values[9] = { 
+		l0 * eigen_vectors(0, 0), l1 * eigen_vectors(0, 1), l2 * eigen_vectors(0, 2),
 		l0 * eigen_vectors(1, 0), l1 * eigen_vectors(1, 1), l2 * eigen_vectors(1, 2),
 		l0 * eigen_vectors(2, 0), l1 * eigen_vectors(2, 1), l2 * eigen_vectors(2, 2) };
+
 	eigenmatrix = QGenericMatrix<3,3,double>(values);
+}
+
+void Gaussian::updateWeight(double weight)
+{
+	amplitude = (amplitude / this->weight) * weight;
+	this->weight = weight;
+	gpudata.mu_amplitude.setW(float(amplitude));
 }
 
 double Gaussian::sample(double x, double y, double z) const {
