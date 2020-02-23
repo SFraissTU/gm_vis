@@ -1,4 +1,8 @@
 #version 450
+
+//Accelerated Density Visualization
+//Vertex Shader. Projects ellipsoids.
+
 layout(location = 0) in vec3 in_vertex;
 layout(location = 1) in mat4 in_transform;
 

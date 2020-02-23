@@ -6,12 +6,12 @@
 
 GMDensityRasterizeRenderer::GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo_projection(ScreenFBO(gl, width, height)), m_fbo_final(ScreenFBO(gl, width, height)) {
 	m_program_projection = std::make_unique<QOpenGLShaderProgram>();
-	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/density_acs_proj.vert");
-	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/density_acs_proj.frag");
+	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/density_acc_proj.vert");
+	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/density_acc_proj.frag");
 	m_program_projection->link();
 
 	m_program_coloring = std::make_unique<QOpenGLShaderProgram>();
-	m_program_coloring->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_acs_color.comp");
+	m_program_coloring->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_acc_color.comp");
 	m_program_coloring->link();
 
 	m_program_projection->bind();

@@ -1,4 +1,7 @@
 #version 450
+
+// Density Visualization with Octree
+
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform image2D img_output;
 
@@ -104,7 +107,6 @@ void main() {
 	int nodesToCheck[25];	//25 is maximum we need for 5 levels (l-1)*8 - l + 2
 	nodesToCheck[0] = 0;
 	int remainingNodeCount = 1;
-	int foundgaussians = 0;
 	while (remainingNodeCount > 0) {
 		int nodeidx = nodesToCheck[remainingNodeCount-1];
 		remainingNodeCount -= 1;
@@ -116,7 +118,6 @@ void main() {
 				for (int gidx = node.content.z; gidx <= node.content.w; gidx++) {
 					Gaussian gauss = mixture.gaussians[gidx];
 					sum += evalGaussian(origin, direction, gauss);
-					foundgaussians += 1;
 				}
 			}
 			//Check Child Nodes
