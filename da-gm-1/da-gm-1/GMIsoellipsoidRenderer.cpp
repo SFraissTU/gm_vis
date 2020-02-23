@@ -1,7 +1,7 @@
 #include "GMIsoellipsoidRenderer.h"
 #include "Helper.h"
 
-GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera) : m_gl(gl), m_settings(settings), m_camera(camera)
+GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, GMIsoellipsoidRenderMode renderMode) : m_gl(gl), m_settings(settings), m_camera(camera), m_renderMode(renderMode)
 {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
 	m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/ellipsoids.vert");
@@ -12,7 +12,6 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Di
 	m_locProjMatrix = m_program->uniformLocation("projMatrix");
 	m_locViewMatrix = m_program->uniformLocation("viewMatrix");
 	m_lightDirLoc = m_program->uniformLocation("lightDir");
-	m_surfaceColorLoc = m_program->uniformLocation("surfaceColor");
 	
 	m_program->release();
 
@@ -81,7 +80,7 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Di
 	m_gl->glVertexAttribDivisor(9, 1);
 	m_normtr_vbo.release();
 
-	//Create Color VBO (for testing purposes)
+	//Create Color VBO
 	m_color_vbo.create();
 	m_color_vbo.bind();
 	m_color_vbo.allocate(nullptr, 0);
@@ -95,13 +94,13 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Di
 
 void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 {	
+	m_mixture = mixture;
 	int n = mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	QVector<QMatrix4x4> normalTransfs;
 	QVector<QVector3D> colors;
 	transforms.resize(n);
 	normalTransfs.resize(n);
-	colors.resize(n);
 	for (int i = 0; i < n; ++i) {
 		const Gaussian* gauss = (*mixture)[i];
 
@@ -117,12 +116,7 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 			//otherwise face ordering might switch
 			transforms[i] = transforms[i] * QMatrix4x4(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
 		}
-		//transforms[i].translate(QVector3D(gauss->x, gauss->y, gauss->z));
 		normalTransfs[i] = transforms[i].inverted().transposed();
-
-		float amplitude = gauss->getGPUData().mu_amplitude.w() * 100;
-		//float amplitude = gauss->weight * 10000;
-		colors[i] = (1 - amplitude) * QVector3D(0, 0, 1) + amplitude * QVector3D(1, 0, 0);
 	}
 
 	m_transf_vbo.bind();
@@ -131,10 +125,16 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 	m_normtr_vbo.bind();
 	m_normtr_vbo.allocate(normalTransfs.data(), n * sizeof(QMatrix4x4));
 	m_normtr_vbo.release();
-	m_color_vbo.bind();
-	m_color_vbo.allocate(colors.data(), n * sizeof(QVector3D));
-	m_color_vbo.release();
-	m_mixture = mixture;
+
+	updateColors();
+}
+
+void GMIsoellipsoidRenderer::setRenderMode(GMIsoellipsoidRenderMode renderMode)
+{
+	if (m_renderMode != renderMode) {
+		m_renderMode = renderMode;
+		updateColors();
+	}
 }
 
 void GMIsoellipsoidRenderer::render()
@@ -144,7 +144,6 @@ void GMIsoellipsoidRenderer::render()
 	}
 	m_gm_vao.bind();
 	m_program->bind();
-	m_program->setUniformValue(m_surfaceColorLoc, m_settings->ellipsoidColor);
 	m_program->setUniformValue(m_lightDirLoc, m_settings->lightDirection);
 	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
 	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
@@ -163,4 +162,55 @@ void GMIsoellipsoidRenderer::cleanup()
 	m_transf_vbo.destroy();
 	m_normtr_vbo.destroy();
 	m_program.reset();
+}
+
+void GMIsoellipsoidRenderer::updateColors()
+{
+	int n = m_mixture->numberOfGaussians();
+	QVector<QVector3D> colors;
+	colors.resize(n);
+	if (m_renderMode == GMIsoellipsoidRenderMode::COLOR_UNIFORM) {
+		for (int i = 0; i < n; ++i) {
+			colors[i] = QVector3D(
+				m_settings->ellipsoidColor.redF(),
+				m_settings->ellipsoidColor.greenF(),
+				m_settings->ellipsoidColor.blueF()
+			);
+		}
+	}
+	else {
+		//Find min and max Values
+		float sum = 0;
+		QVector<float> values;
+		values.resize(n);
+		for (int i = 0; i < n; ++i) {
+			const Gaussian* gauss = (*m_mixture)[i];
+			float val = (float) (m_renderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
+			values[i] = val;
+		}
+		qSort(values);
+		float median = values[n/2];
+		QVector<float> deviations;
+		deviations.resize(n);
+		for (int i = 0; i < n; ++i) {
+			float val = values[i];
+			deviations[i] = abs(val - median);
+		}
+		qSort(deviations);
+		float medmed = deviations[n/2];
+		//Assign colors
+		float minVal = std::max(median - medmed, values[0]);
+		float maxVal = std::min(median + medmed, values[n-1]);
+		float range = maxVal - minVal;
+		for (int i = 0; i < n; ++i) {
+			const Gaussian* gauss = (*m_mixture)[i];
+			float val = (float)(m_renderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
+			float t = (val - minVal) / range;
+			colors[i] = (1 - t) * QVector3D(0, 0, 1) + t * QVector3D(1, 0, 0);
+		}
+	}
+
+	m_color_vbo.bind();
+	m_color_vbo.allocate(colors.data(), n * sizeof(QVector3D));
+	m_color_vbo.release();
 }

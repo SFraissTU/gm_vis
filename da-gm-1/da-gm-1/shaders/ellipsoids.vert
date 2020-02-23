@@ -7,7 +7,7 @@ layout(location = 10) in vec3 in_color;
 
 out vec4 frag_position;
 out vec3 frag_normal;
-out vec3 frag_scolor;
+out vec3 frag_color;
 
 uniform mat4 projMatrix;
 uniform mat4 viewMatrix;
@@ -19,5 +19,5 @@ void main() {
 	gl_Position = projMatrix * viewMatrix  * frag_position;
 	frag_normal = mat3(in_normtrans) * in_normal;
 	frag_normal = vec3(frag_normal.x, frag_normal.z, -frag_normal.y);
-	frag_scolor = in_color;
+	frag_color = in_color;
 }

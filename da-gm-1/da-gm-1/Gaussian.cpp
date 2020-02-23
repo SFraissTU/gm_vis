@@ -58,6 +58,11 @@ void Gaussian::updateWeight(double weight)
 	gpudata.mu_amplitude.setW(float(amplitude));
 }
 
+const double& Gaussian::getAmplitude() const
+{
+	return amplitude;
+}
+
 double Gaussian::sample(double x, double y, double z) const {
 	Eigen::Vector3d relpos = Eigen::Vector3d(x - this->mux, y - this->muy, z - this->muz);
 	double ex = std::exp(-0.5 * (relpos.transpose() * inversecovariance * relpos).x());

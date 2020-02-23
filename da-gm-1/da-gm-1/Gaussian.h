@@ -78,6 +78,11 @@ public:
 	void updateWeight(double weight);
 
 	/*
+	Returns the amplitude of the Gaussian (everything that's multiplied with exp(...)).
+	*/
+	const double& getAmplitude() const;
+
+	/*
 	Samples the Gaussian at the given coordinate and returns the corresponding density value.
 	*/
 	double sample(double x, double y, double z) const;

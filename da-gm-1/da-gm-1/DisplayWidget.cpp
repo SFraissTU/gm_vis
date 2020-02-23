@@ -81,8 +81,8 @@ void DisplayWidget::initializeGL() {
 #endif
 
 	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get());
-	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get());
-	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height(), m_settings.renderMode);
+	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), m_settings.ellipsoidRenderMode);
+	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height(), m_settings.densityRenderMode);
 
 	auto background = m_settings.backgroundColor;
 	glClearColor(background.redF(), background.blueF(), background.greenF(), 1);
@@ -95,8 +95,9 @@ void DisplayWidget::paintGL()
 		m_settings.rebuildacc = false;
 	}
 	else {
-		m_densityRenderer->setRenderMode(m_settings.renderMode);
+		m_densityRenderer->setRenderMode(m_settings.densityRenderMode);
 	}
+	m_isoellipsoidRenderer->setRenderMode(m_settings.ellipsoidRenderMode);
 
 	GLint defaultFbo = 0;
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);

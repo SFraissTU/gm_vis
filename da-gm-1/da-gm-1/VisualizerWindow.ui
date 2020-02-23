@@ -47,7 +47,7 @@
           <x>0</x>
           <y>10</y>
           <width>171</width>
-          <height>371</height>
+          <height>401</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -59,10 +59,22 @@
          </property>
          <item>
           <widget class="QGroupBox" name="displaygroup">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>100</height>
+            </size>
+           </property>
            <property name="title">
             <string>Display</string>
            </property>
-           <widget class="QWidget" name="">
+           <widget class="QWidget" name="layoutWidget">
             <property name="geometry">
              <rect>
               <x>10</x>
@@ -101,49 +113,112 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="rendermodegroup">
-           <property name="title">
-            <string>Density render mode</string>
+          <widget class="QGroupBox" name="ellrendermodegroup">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
-           <widget class="QComboBox" name="co_rendermode">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>120</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>Render Modes</string>
+           </property>
+           <widget class="QWidget" name="verticalLayoutWidget">
             <property name="geometry">
              <rect>
               <x>0</x>
-              <y>30</y>
-              <width>151</width>
-              <height>22</height>
+              <y>20</y>
+              <width>160</width>
+              <height>86</height>
              </rect>
             </property>
-            <property name="currentText">
-             <string>Additive: Exact</string>
-            </property>
-            <property name="currentIndex">
-             <number>0</number>
-            </property>
-            <item>
-             <property name="text">
-              <string>Additive: Exact</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Additive: Fast (Octree)</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Additive: Fast (Projection)</string>
-             </property>
-            </item>
+            <layout class="QVBoxLayout" name="verticalLayout_3">
+             <item>
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string> Ellipsoids:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="co_ellrendermode">
+               <item>
+                <property name="text">
+                 <string>Uniform color</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Color by weight</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Color by amplitude</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string> Density:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="co_densrendermode">
+               <property name="currentText">
+                <string>Additive: Exact</string>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>Additive: Exact</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Additive: Fast (Octree)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Additive: Fast (Projection)</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </widget>
          </item>
          <item>
           <widget class="QGroupBox" name="coloringgroup">
-           <property name="title">
-            <string>Coloring</string>
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
-           <widget class="QWidget" name="">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>80</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>Density Coloring</string>
+           </property>
+           <widget class="QWidget" name="layoutWidget">
             <property name="geometry">
              <rect>
               <x>0</x>
@@ -220,10 +295,22 @@
          </item>
          <item>
           <widget class="QGroupBox" name="accelerationgroup">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>80</height>
+            </size>
+           </property>
            <property name="title">
             <string>Acceleration</string>
            </property>
-           <widget class="QWidget" name="">
+           <widget class="QWidget" name="layoutWidget">
             <property name="geometry">
              <rect>
               <x>0</x>

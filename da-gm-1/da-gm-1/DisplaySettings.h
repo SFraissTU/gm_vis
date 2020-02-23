@@ -1,7 +1,7 @@
 #pragma once
 #include <QColor>
 #include <QVector3D>
-#include "GMDensityRenderMode.h"
+#include "GMRenderModes.h"
 
 class DisplaySettings {
 public:
@@ -16,12 +16,13 @@ public:
 
 	QColor ellipsoidColor = QColor(100, 100, 255);
 	QVector3D lightDirection = QVector3D(0.f, -0.7f, -1.0f).normalized();
+	GMIsoellipsoidRenderMode ellipsoidRenderMode = GMIsoellipsoidRenderMode::COLOR_UNIFORM;
 	float rendermodeblending = 0.5f;
 
 	float densitymin = 0.0f;
 	float densitymax = 0.01f;
 
-	GMDensityRenderMode renderMode = GMDensityRenderMode::ADDITIVE;
+	GMDensityRenderMode densityRenderMode = GMDensityRenderMode::ADDITIVE;
 	double accelerationthreshold = 0.00001;
 	bool accelerationthresholdauto = true;
 	//Octreethreshold is determined automatically from densitymax

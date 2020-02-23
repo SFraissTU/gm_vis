@@ -37,7 +37,7 @@ add_executable(visualizer
     GaussianMixture.cpp
     GMIsoellipsoidRenderer.h
     GMIsoellipsoidRenderer.cpp
-    GMDensityRenderMode.h
+    GMRenderModes.h
     GMDensityRenderer.h
     GMDensityRenderer.cpp
     GMDensityRaycastRenderer.h

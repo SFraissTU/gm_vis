@@ -2,7 +2,7 @@
 
 #include "GMDensityRasterizeRenderer.h"
 #include "GMDensityRaycastRenderer.h"
-#include "GMDensityRenderMode.h"
+#include "GMRenderModes.h"
 
 class GMDensityRenderer {
 public:
