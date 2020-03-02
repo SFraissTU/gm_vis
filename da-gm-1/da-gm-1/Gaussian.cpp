@@ -33,7 +33,7 @@ void Gaussian::finalizeInitialization() {
 		(float)inversecovariance(2,0), (float)inversecovariance(2,1), (float)inversecovariance(2,2), 0,
 		0.0f, 0.0f, 0.0f, 1.0f };
 	//2. Create GPU Data object
-	gpudata = { QVector4D((float)mu.x(), (float)mu.y(), (float)mu.z(), float(amplitude)), QMatrix4x4(covdata) };
+	gpudata = { QVector4D((float)mu.x(), (float)mu.y(), (float)mu.z(), float(SQRT_TWO_PI * amplitude)), QMatrix4x4(covdata) };
 
 	//---- Calculate Eigenmatrix ----
 	Eigen::EigenSolver<Eigen::Matrix3Xd> eigensolver;
@@ -55,7 +55,7 @@ void Gaussian::updateWeight(double weight)
 {
 	amplitude = (amplitude / this->weight) * weight;
 	this->weight = weight;
-	gpudata.mu_amplitude.setW(float(amplitude));
+	gpudata.mu_beta.setW(float(SQRT_TWO_PI * amplitude));
 }
 
 const double& Gaussian::getAmplitude() const
@@ -97,7 +97,7 @@ bool Gaussian::getBoundingBox(double threshold, QVector3D& min, QVector3D& max) 
 	if (threshold >= amplitude) {
 		return false;
 	}
-	double scalar = sqrt(-2 * log(threshold / gpudata.mu_amplitude.w()));
+	double scalar = sqrt(-2 * log(threshold / amplitude));
 	QGenericMatrix<3, 3, double> transfo = eigenmatrix * scalar;
 	QVector3D r0 = QVector3D((float)transfo(0, 0), (float)transfo(0, 1), (float)transfo(0, 2));
 	QVector3D r1 = QVector3D((float)transfo(1, 0), (float)transfo(1, 1), (float)transfo(1, 2));

@@ -17,7 +17,7 @@ layout(location=9) uniform float densitymin;
 layout(location=10) uniform float densitymax;
 
 struct Gaussian {
-	vec4 mu_amplitude;
+	vec4 mu_beta;
 	mat4 invsigma;
 };
 
@@ -51,11 +51,11 @@ void main() {
 		mat3 inv = mat3(gauss.invsigma);
 		vec3 rs = direction*inv;
 		float sig2 = 1.0 / dot(rs, direction);
-		float mu = dot(rs, gauss.mu_amplitude.xyz-origin) * sig2;
+		float mu = dot(rs, gauss.mu_beta.xyz-origin) * sig2;
 		float sig = sqrt(sig2);
-		vec3 pivec = origin + mu*direction - gauss.mu_amplitude.xyz;
-		float amp = gauss.mu_amplitude.w * exp(-0.5*dot(pivec*inv, pivec));
-		sum += amp * texture(gaussTex, mu / sig).r;
+		vec3 pivec = origin + mu*direction - gauss.mu_beta.xyz;
+		float pik = sig * gauss.mu_beta.w * exp(-0.5*dot(pivec*inv, pivec));
+		sum += pik * texture(gaussTex, mu / sig).r;
 	}
 
 	sum = (sum - densitymin)/(densitymax - densitymin);

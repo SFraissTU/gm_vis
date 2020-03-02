@@ -55,21 +55,21 @@ void VisualizerWindow::updateSettings()
 	settings->displayPoints = ui.cb_displayPointcloud->isChecked();
 	settings->displayEllipsoids = ui.cb_displayEllipsoids->isChecked();
 	settings->displayDensity = ui.cb_displayDensity->isChecked();
-	settings->densitymin = ui.spin_scalemin->value();
-	settings->densitymax = ui.spin_scalemax->value();
+	settings->densitymin = 0.01f * ui.spin_scalemin->value();
+	settings->densitymax = 0.01f * ui.spin_scalemax->value();
 	settings->densityRenderMode = GMDensityRenderMode(ui.co_densrendermode->currentIndex() + 1);
 	settings->ellipsoidRenderMode = GMIsoellipsoidRenderMode(ui.co_ellrendermode->currentIndex() + 1);
 	settings->accelerationthresholdauto = ui.cb_accthauto->isChecked();
 	if (settings->accelerationthresholdauto) {
-		settings->accelerationthreshold = settings->densitymax * 0.001f;
-		ui.spin_accthreshold->setValue(settings->accelerationthreshold);
+		settings->accelerationthreshold = settings->densitymax * 0.0001f;	//ToDo: Some ungood float/double thingies
+		ui.spin_accthreshold->setValue(settings->accelerationthreshold * 100);
 		ui.spin_accthreshold->setEnabled(false);
 	}
 	else {
-		settings->accelerationthreshold = ui.spin_accthreshold->value();
+		settings->accelerationthreshold = 0.01f * ui.spin_accthreshold->value();
 		ui.spin_accthreshold->setEnabled(true);
 	}
-	if (GMDensityRenderer::isAccelerated(settings->densityRenderMode) && abs(settings->accelerationthreshold - accthr) > 0.0000000001) {
+	if (GMDensityRenderer::isAccelerated(settings->densityRenderMode) && abs(settings->accelerationthreshold - accthr) > 0.000000000001) {
 		settings->rebuildacc = true;
 	}
 	ui.openGLWidget->update();

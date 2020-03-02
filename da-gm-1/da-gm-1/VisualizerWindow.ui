@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>825</width>
+    <width>900</width>
     <height>583</height>
    </rect>
   </property>
@@ -25,7 +25,7 @@
      <widget class="QScrollArea" name="scrollArea">
       <property name="maximumSize">
        <size>
-        <width>180</width>
+        <width>210</width>
         <height>16777215</height>
        </size>
       </property>
@@ -37,7 +37,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>178</width>
+         <width>208</width>
          <height>510</height>
         </rect>
        </property>
@@ -46,7 +46,7 @@
          <rect>
           <x>0</x>
           <y>10</y>
-          <width>171</width>
+          <width>201</width>
           <height>401</height>
          </rect>
         </property>
@@ -216,7 +216,7 @@
             </size>
            </property>
            <property name="title">
-            <string>Density Coloring</string>
+            <string>Density Coloring (x100)</string>
            </property>
            <widget class="QWidget" name="layoutWidget">
             <property name="geometry">
@@ -252,7 +252,7 @@
                 <double>0.000500000000000</double>
                </property>
                <property name="value">
-                <double>0.010000000000000</double>
+                <double>0.050000000000000</double>
                </property>
               </widget>
              </item>
@@ -315,7 +315,7 @@
              <rect>
               <x>0</x>
               <y>20</y>
-              <width>161</width>
+              <width>191</width>
               <height>45</height>
              </rect>
             </property>
@@ -341,14 +341,14 @@
                 <double>0.000005000000000</double>
                </property>
                <property name="value">
-                <double>0.000010000000000</double>
+                <double>0.000005000000000</double>
                </property>
               </widget>
              </item>
              <item row="0" column="0">
               <widget class="QLabel" name="label_4">
                <property name="text">
-                <string>Threshold:</string>
+                <string>Threshold(x100):</string>
                </property>
               </widget>
              </item>
@@ -400,7 +400,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>825</width>
+     <width>900</width>
      <height>21</height>
     </rect>
    </property>

@@ -20,10 +20,10 @@ public:
 	float rendermodeblending = 0.5f;
 
 	float densitymin = 0.0f;
-	float densitymax = 0.01f;
+	float densitymax = 0.0005f;
 
 	GMDensityRenderMode densityRenderMode = GMDensityRenderMode::ADDITIVE;
-	double accelerationthreshold = 0.00001;
+	double accelerationthreshold = 0.0000005;
 	bool accelerationthresholdauto = true;
 	//Octreethreshold is determined automatically from densitymax
 

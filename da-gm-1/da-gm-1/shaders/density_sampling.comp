@@ -18,7 +18,7 @@ layout(location=9) uniform float densitymin;
 layout(location=10) uniform float densitymax;
 
 struct Gaussian {
-	vec4 mu_amplitude;
+	vec4 mu_beta;
 	mat4 invsigma;
 };
 
@@ -87,9 +87,9 @@ void main() {
 				if (node.content.z >= 0) {
 					for (int gidx = node.content.z; gidx <= node.content.w; gidx++) {
 						Gaussian gauss = mixture.gaussians[gidx];
-						vec3 relpos = samplingPoint - gauss.mu_amplitude.xyz;
+						vec3 relpos = samplingPoint - gauss.mu_beta.xyz;
 						float ex = exp(-0.5 * dot(relpos*mat3(gauss.invsigma),relpos));
-						alpha += gauss.mu_amplitude.w * ex;
+						alpha += gauss.mu_beta.w * ex * 0.3989422804;	//a = b/sqrt(2pi)
 					}
 				}
 				//Check Child Nodes
@@ -104,8 +104,6 @@ void main() {
 				}
 			}
 		}
-		//float alpha = texture(density, texcoords).r;
-		//sum = sum*(1-alpha) + alpha;//maybe alpha^2
 		sum += 2*alpha;
 	}
 

@@ -25,7 +25,7 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize) const
 	char* gaussmem = result;
 	for (int i = 0; i < n; i++) {
 		const GaussianGPU& gpudata = gaussians[i].getGPUData();
-		memcpy(gaussmem, &gpudata.mu_amplitude, 16);
+		memcpy(gaussmem, &gpudata.mu_beta, 16);
 		gaussmem += 16;
 		memcpy(gaussmem, gpudata.invsigma.constData(), 64);
 		gaussmem += 64;
@@ -37,7 +37,7 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize, double thresho
 	GLint n = (GLint)numberOfGaussians();
 	numberOfComponents = 0;
 	for (int i = 0; i < n; i++) {
-		if (gaussians[i].getGPUData().mu_amplitude.w() > threshold) {
+		if (gaussians[i].getAmplitude() > threshold) {
 			numberOfComponents++;
 		}
 	}
@@ -46,8 +46,8 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize, double thresho
 	char* gaussmem = result;
 	for (int i = 0; i < n; i++) {
 		const GaussianGPU& gpudata = gaussians[i].getGPUData();
-		if (gpudata.mu_amplitude.w() > threshold) {
-			memcpy(gaussmem, &gpudata.mu_amplitude, 16);
+		if (gaussians[i].getAmplitude() > threshold) {
+			memcpy(gaussmem, &gpudata.mu_beta, 16);
 			gaussmem += 16;
 			memcpy(gaussmem, gpudata.invsigma.constData(), 64);
 			gaussmem += 64;
@@ -238,7 +238,7 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 	char* gaussmem = gaussRes;
 	for (int i = 0; i < gaussN; i++) {
 		GaussianGPU gpudata = gaussianList[i];
-		memcpy(gaussmem, &gpudata.mu_amplitude, 16);
+		memcpy(gaussmem, &gpudata.mu_beta, 16);
 		gaussmem += 16;
 		memcpy(gaussmem, gpudata.invsigma.constData(), 64);
 		gaussmem += 64;

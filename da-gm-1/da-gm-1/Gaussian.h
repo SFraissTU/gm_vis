@@ -12,14 +12,15 @@
 
 
 const double GAUSS_PI_FACTOR = 1.0 / pow(2 * M_PI, 3.0 / 2.0);
+const double SQRT_TWO_PI = sqrt(2 * M_PI);
 
 /*
 Representation of a Gaussian that will be passed to the shader.
 */
 struct GaussianGPU {
 	/* First three components represent the center of the Gaussian. 
-	The fourth value is the amplitude, so the value with which exp(...) is multiplied */
-	QVector4D mu_amplitude;
+	The fourth value is beta, so the value with which exp(...) is multiplied times sqrt(2pi). Necessary for shader calculations */
+	QVector4D mu_beta;
 	/* The inverse covariance matrix */
 	QMatrix4x4 invsigma;
 };

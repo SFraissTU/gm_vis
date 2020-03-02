@@ -15,7 +15,7 @@ uniform float fov;
 uniform sampler1D gaussTex;
 
 struct Gaussian {
-	vec4 mu_amplitude;
+	vec4 mu_beta;
 	mat4 invsigma;
 };
 
@@ -27,11 +27,11 @@ float evalGaussian(vec3 rorig, vec3 rdir, Gaussian gauss) {
 	mat3 inv = mat3(gauss.invsigma);
 	vec3 rs = rdir*inv;
 	float sig2 = 1.0 / dot(rs, rdir);
-	float mu = dot(rs, gauss.mu_amplitude.xyz-rorig) * sig2;
+	float mu = dot(rs, gauss.mu_beta.xyz-rorig) * sig2;
 	float sig = sqrt(sig2);
-	vec3 pivec = rorig + mu*rdir- gauss.mu_amplitude.xyz;
-	float amp = gauss.mu_amplitude.w * exp(-0.5*dot(pivec*inv, pivec));
-	return amp * texture(gaussTex, mu / sig).r;
+	vec3 pivec = rorig + mu*rdir- gauss.mu_beta.xyz;
+	float pik = sig * gauss.mu_beta.w * exp(-0.5*dot(pivec*inv, pivec));
+	return pik * texture(gaussTex, mu / sig).r;
 }
 
 
