@@ -98,6 +98,9 @@ void DisplayWidget::paintGL()
 		m_densityRenderer->setRenderMode(m_settings.densityRenderMode);
 	}
 	m_isoellipsoidRenderer->setRenderMode(m_settings.ellipsoidRenderMode);
+	if (m_settings.updatecolors) {
+		m_isoellipsoidRenderer->updateColors();
+	}
 
 	GLint defaultFbo = 0;
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);

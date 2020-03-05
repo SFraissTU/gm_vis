@@ -24,7 +24,7 @@ GMDensityRaycastRenderer::GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl
 	m_locFov = m_program_regular->uniformLocation("fov");
 	m_locGaussTex = m_program_regular->uniformLocation("gaussTex");
 	m_locTransferTex = m_program_regular->uniformLocation("transferTex");
-	m_locModelTex = m_program_regular->uniformLocation("modelTex");
+	m_locPreImg = m_program_regular->uniformLocation("img_pre");
 	m_locBlend = m_program_regular->uniformLocation("blend");
 	m_locDensityMin = m_program_regular->uniformLocation("densitymin");
 	m_locDensityMax = m_program_regular->uniformLocation("densitymax");
@@ -80,7 +80,7 @@ void GMDensityRaycastRenderer::setSize(int width, int height)
 	m_fbo.setSize(width, height);
 }
 
-void GMDensityRaycastRenderer::render(GLuint depthTexture)
+void GMDensityRaycastRenderer::render(GLuint preTexture)
 {
 	if (!m_mixture) {
 		return;
@@ -105,8 +105,8 @@ void GMDensityRaycastRenderer::render(GLuint depthTexture)
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
 	currentProgram->setUniformValue(m_locTransferTex, 2);
 	m_gl->glActiveTexture(GL_TEXTURE3);
-	m_gl->glBindTexture(GL_TEXTURE_2D, depthTexture);
-	currentProgram->setUniformValue(m_locModelTex, 3);
+	m_gl->glBindImageTexture(3, preTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+	currentProgram->setUniformValue(m_locPreImg, 3);
 
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_bindingMixture, m_ssboMixture);

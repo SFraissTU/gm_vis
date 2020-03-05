@@ -3,8 +3,12 @@
 #include <QVector3D>
 #include "GMRenderModes.h"
 
+class VisualizerWindow;
+
 class DisplaySettings {
 public:
+	VisualizerWindow* window = nullptr;
+
 	QColor backgroundColor = QColor(0, 0, 0);
 	QColor pointcloudColor = QColor(255, 255, 255);
 	float  pointSize = 1.0f;
@@ -22,10 +26,15 @@ public:
 	float densitymin = 0.0f;
 	float densitymax = 0.0005f;
 
+	double ellmin = 0.0f;
+	double ellmax = 0.05f;
+	bool ellauto = true;
+
 	GMDensityRenderMode densityRenderMode = GMDensityRenderMode::ADDITIVE;
 	double accelerationthreshold = 0.0000005;
 	bool accelerationthresholdauto = true;
 	//Octreethreshold is determined automatically from densitymax
 
 	bool rebuildacc = false;
+	bool updatecolors = false;
 };

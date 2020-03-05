@@ -2,7 +2,6 @@
 
 #include "PointCloud.h"
 #include "DataLoader.h"
-#include "DisplaySettings.h"
 #include <memory>
 #include <QtWidgets/QMainWindow>
 #include "ui_VisualizerWindow.h"

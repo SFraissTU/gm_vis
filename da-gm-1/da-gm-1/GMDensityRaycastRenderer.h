@@ -15,7 +15,7 @@ public:
 	GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height);
 	void setMixture(GaussianMixture* mixture);
 	void setSize(int width, int height);
-	void render(GLuint depthTexture);
+	void render(GLuint preTexture);
 	void enableAccelerationStructure();
 	void disableAccelerationStructure();
 	void rebuildAccelerationStructure();
@@ -38,7 +38,7 @@ private:
 	GLuint m_locHeight;
 	GLuint m_locGaussTex;
 	GLuint m_locTransferTex;
-	GLuint m_locModelTex;
+	GLuint m_locPreImg;
 	GLuint m_locBlend;
 	GLuint m_locDensityMin;
 	GLuint m_locDensityMax;

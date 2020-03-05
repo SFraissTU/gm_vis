@@ -12,7 +12,7 @@ layout(location=3) uniform mat4 invViewMatrix;
 layout(location=4) uniform float fov;
 layout(location=5) uniform sampler1D gaussTex;
 layout(location=6) uniform sampler1D transferTex;
-layout(location=7) uniform sampler2D modelTex;
+layout(location=7, rgba32f) uniform image2D img_pre;
 layout(location=8) uniform float blend;
 layout(location=9) uniform float densitymin;
 layout(location=10) uniform float densitymax;
@@ -72,8 +72,8 @@ void main() {
 
 	float sum = 0;
 
-	for (int i = 300; i > 0; --i) {
-		vec3 samplingPoint = origin + i*0.5f*direction;
+	for (int i = 2000; i > 0; --i) {
+		vec3 samplingPoint = origin + i*0.1f*direction;
 		int nodesToCheck[25];
 		nodesToCheck[0] = 0;
 		int remainingNodeCount = 1;
@@ -104,7 +104,7 @@ void main() {
 				}
 			}
 		}
-		sum += 2*alpha;
+		sum += 0.1*alpha;
 	}
 
 	sum = (sum - densitymin)/(densitymax - densitymin);
@@ -112,7 +112,7 @@ void main() {
 	
 	vec4 pixel = vec4(color, 1.0f);
 
-	pixel = blend * pixel + (1-blend) * vec4(texture(modelTex, pixel_uv).rgb, 1.0f);
+	pixel = blend * pixel + (1-blend) * vec4(imageLoad(img_pre, pixel_coords).rgb, 1.0f);
 
 	imageStore(img_output, pixel_coords, pixel);
 }

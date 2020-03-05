@@ -1,5 +1,6 @@
 #include "GMIsoellipsoidRenderer.h"
 #include "Helper.h"
+#include "VisualizerWindow.h"
 
 GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, GMIsoellipsoidRenderMode renderMode) : m_gl(gl), m_settings(settings), m_camera(camera), m_renderMode(renderMode)
 {
@@ -11,7 +12,10 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Di
 	m_program->bind();
 	m_locProjMatrix = m_program->uniformLocation("projMatrix");
 	m_locViewMatrix = m_program->uniformLocation("viewMatrix");
-	m_lightDirLoc = m_program->uniformLocation("lightDir");
+	m_locLightDir = m_program->uniformLocation("lightDir");
+	m_locSurfaceColor = m_program->uniformLocation("surfaceColor");
+	m_locTransferTex = m_program->uniformLocation("transferTex");
+	m_locUseInColor = m_program->uniformLocation("useInColor");
 	
 	m_program->release();
 
@@ -44,52 +48,62 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Di
 	m_indices_vbo.bind();
 	m_indices_vbo.allocate(m_geoIndices.data(), m_geoIndices.size() * sizeof(GLuint));
 
+	//Create Colors VBO (one color value per instance)
+	m_color_vbo.create();
+	m_color_vbo.bind();
+	m_color_vbo.allocate(nullptr, 0);
+	m_gl->glEnableVertexAttribArray(2);
+	m_gl->glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(float), 0);
+	m_gl->glVertexAttribDivisor(2, 1);
+	m_color_vbo.release();
+
 	//Create Transformations VBO (one transformation per instance)
 	m_transf_vbo.create();
 	m_transf_vbo.bind();
 	m_transf_vbo.allocate(nullptr, 0);
-	m_gl->glEnableVertexAttribArray(2);
-	m_gl->glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), 0);
 	m_gl->glEnableVertexAttribArray(3);
-	m_gl->glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 4));
+	m_gl->glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), 0);
 	m_gl->glEnableVertexAttribArray(4);
-	m_gl->glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 8));
+	m_gl->glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 4));
 	m_gl->glEnableVertexAttribArray(5);
-	m_gl->glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 12));
-	m_gl->glVertexAttribDivisor(2, 1);
+	m_gl->glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 8));
+	m_gl->glEnableVertexAttribArray(6);
+	m_gl->glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 12));
 	m_gl->glVertexAttribDivisor(3, 1);
 	m_gl->glVertexAttribDivisor(4, 1);
 	m_gl->glVertexAttribDivisor(5, 1);
+	m_gl->glVertexAttribDivisor(6, 1);
 	m_transf_vbo.release();
 
 	//Create Normal-Transformations VBO (one transformation per instance)
 	m_normtr_vbo.create();
 	m_normtr_vbo.bind();
 	m_normtr_vbo.allocate(nullptr, 0);
-	m_gl->glEnableVertexAttribArray(6);
-	m_gl->glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), 0);
 	m_gl->glEnableVertexAttribArray(7);
-	m_gl->glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 4));
+	m_gl->glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), 0);
 	m_gl->glEnableVertexAttribArray(8);
-	m_gl->glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 8));
+	m_gl->glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 4));
 	m_gl->glEnableVertexAttribArray(9);
-	m_gl->glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 12));
-	m_gl->glVertexAttribDivisor(6, 1);
+	m_gl->glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 8));
+	m_gl->glEnableVertexAttribArray(10);
+	m_gl->glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 12));
 	m_gl->glVertexAttribDivisor(7, 1);
 	m_gl->glVertexAttribDivisor(8, 1);
 	m_gl->glVertexAttribDivisor(9, 1);
+	m_gl->glVertexAttribDivisor(10, 1);
 	m_normtr_vbo.release();
 
-	//Create Color VBO
-	m_color_vbo.create();
-	m_color_vbo.bind();
-	m_color_vbo.allocate(nullptr, 0);
-	m_gl->glEnableVertexAttribArray(10);
-	m_gl->glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, sizeof(QVector3D), 0);
-	m_gl->glVertexAttribDivisor(10, 1);
-	m_color_vbo.release();
-
 	m_gm_vao.release();
+
+	//Create Transfer Tex
+	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
+	gl->glGenTextures(1, &m_texTransfer);
+	gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
 }
 
 void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
@@ -144,12 +158,14 @@ void GMIsoellipsoidRenderer::render()
 	}
 	m_gm_vao.bind();
 	m_program->bind();
-	m_program->setUniformValue(m_lightDirLoc, m_settings->lightDirection);
+	m_program->setUniformValue(m_locLightDir, m_settings->lightDirection);
 	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
 	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
-	//m_gl->glDrawArraysInstanced(GL_TRIANGLES, 0, m_geoVertices.count(), 3);
-	//m_gl->glDrawArrays(GL_TRIANGLES, 0, m_geoVertices.count());
-	//m_gl->glDrawElements(GL_TRIANGLES, m_geoIndices.count(), GL_UNSIGNED_INT, nullptr);
+	m_program->setUniformValue(m_locSurfaceColor, m_settings->ellipsoidColor);
+	m_program->setUniformValue(m_locUseInColor, (m_renderMode != GMIsoellipsoidRenderMode::COLOR_UNIFORM));
+	m_gl->glActiveTexture(GL_TEXTURE0);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
+	m_program->setUniformValue(m_locTransferTex, 0);
 	m_gl->glDrawElementsInstanced(GL_TRIANGLES, m_geoIndices.count(), GL_UNSIGNED_INT, nullptr, m_mixture->numberOfGaussians());
 	m_program->release();
 	m_gm_vao.release();
@@ -167,50 +183,49 @@ void GMIsoellipsoidRenderer::cleanup()
 void GMIsoellipsoidRenderer::updateColors()
 {
 	int n = m_mixture->numberOfGaussians();
-	QVector<QVector3D> colors;
+	QVector<float> colors;
 	colors.resize(n);
-	if (m_renderMode == GMIsoellipsoidRenderMode::COLOR_UNIFORM) {
-		for (int i = 0; i < n; ++i) {
-			colors[i] = QVector3D(
-				m_settings->ellipsoidColor.redF(),
-				m_settings->ellipsoidColor.greenF(),
-				m_settings->ellipsoidColor.blueF()
-			);
-		}
-	}
-	else {
+	if (m_renderMode != GMIsoellipsoidRenderMode::COLOR_UNIFORM) {
 		//Find min and max Values
-		float sum = 0;
-		QVector<float> values;
-		values.resize(n);
+		double minVal = m_settings->ellmin;
+		double maxVal = m_settings->ellmax;
+		if (m_settings->ellauto) {
+			double sum = 0;
+			QVector<double> values;
+			values.resize(n);
+			for (int i = 0; i < n; ++i) {
+				const Gaussian* gauss = (*m_mixture)[i];
+				double val = (m_renderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
+				values[i] = val;
+			}
+			qSort(values);
+			double median = values[n / 2];
+			QVector<double> deviations;
+			deviations.resize(n);
+			for (int i = 0; i < n; ++i) {
+				float val = values[i];
+				deviations[i] = abs(val - median);
+			}
+			qSort(deviations);
+			double medmed = deviations[n / 2];
+			//Assign colors
+			minVal = std::max(median - medmed, values[0]);
+			maxVal = std::min(median + medmed, values[n - 1]);
+			m_settings->ellmin = minVal;
+			m_settings->ellmax = maxVal;
+			m_settings->window->updateSettings();
+		}
+		double range = maxVal - minVal;
 		for (int i = 0; i < n; ++i) {
 			const Gaussian* gauss = (*m_mixture)[i];
-			float val = (float) (m_renderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
-			values[i] = val;
-		}
-		qSort(values);
-		float median = values[n/2];
-		QVector<float> deviations;
-		deviations.resize(n);
-		for (int i = 0; i < n; ++i) {
-			float val = values[i];
-			deviations[i] = abs(val - median);
-		}
-		qSort(deviations);
-		float medmed = deviations[n/2];
-		//Assign colors
-		float minVal = std::max(median - medmed, values[0]);
-		float maxVal = std::min(median + medmed, values[n-1]);
-		float range = maxVal - minVal;
-		for (int i = 0; i < n; ++i) {
-			const Gaussian* gauss = (*m_mixture)[i];
-			float val = (float)(m_renderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
-			float t = (val - minVal) / range;
-			colors[i] = (1 - t) * QVector3D(0, 0, 1) + t * QVector3D(1, 0, 0);
+			double val = (m_renderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
+			float t = std::min(1.0f, float((val - minVal) / range));
+			t = std::max(t, 0.0f);
+			colors[i] = t;
 		}
 	}
 
 	m_color_vbo.bind();
-	m_color_vbo.allocate(colors.data(), n * sizeof(QVector3D));
+	m_color_vbo.allocate(colors.data(), n * sizeof(float));
 	m_color_vbo.release();
 }

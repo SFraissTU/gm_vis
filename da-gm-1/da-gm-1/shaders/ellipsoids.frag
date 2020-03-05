@@ -7,7 +7,6 @@ out vec3 out_color;
 
 uniform mat4 viewMatrix;
 uniform vec3 lightDir;
-uniform vec4 surfaceColor;
 
 void main() {
 	vec3 normal = normalize(frag_normal);

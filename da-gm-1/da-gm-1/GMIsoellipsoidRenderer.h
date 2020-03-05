@@ -15,6 +15,7 @@ public:
 	GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, GMIsoellipsoidRenderMode renderMode);
 	void setMixture(GaussianMixture* mixture);
 	void setRenderMode(GMIsoellipsoidRenderMode renderMode);
+	void updateColors();
 	void render();
 	void cleanup();
 
@@ -38,6 +39,7 @@ private:
 	QOpenGLBuffer m_transf_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 	QOpenGLBuffer m_normtr_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 	QOpenGLBuffer m_color_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+	GLuint m_texTransfer;
 
 	//Shader
 	std::unique_ptr<QOpenGLShaderProgram> m_program;
@@ -45,7 +47,8 @@ private:
 	//Locations
 	int m_locProjMatrix;
 	int m_locViewMatrix;
-	int m_lightDirLoc;
-
-	void updateColors();
+	int m_locLightDir;
+	int m_locUseInColor;
+	int m_locSurfaceColor;
+	int m_locTransferTex;
 };
