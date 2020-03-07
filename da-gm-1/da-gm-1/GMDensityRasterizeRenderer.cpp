@@ -4,7 +4,15 @@
 #include <cmath>
 #include <QtMath>
 
-GMDensityRasterizeRenderer::GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo_projection(ScreenFBO(gl, width, height)), m_fbo_final(ScreenFBO(gl, width, height)) {
+GMDensityRasterizeRenderer::GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height) : m_gl(gl), m_camera(camera), m_fbo_projection(ScreenFBO(gl, width, height)), m_fbo_final(ScreenFBO(gl, width, height)) {
+	
+}
+
+void GMDensityRasterizeRenderer::initialize()
+{
+	m_fbo_projection.initialize();
+	m_fbo_final.initialize();
+
 	m_program_projection = std::make_unique<QOpenGLShaderProgram>();
 	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/density_acc_proj.vert");
 	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/density_acc_proj.frag");
@@ -89,43 +97,41 @@ GMDensityRasterizeRenderer::GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core
 		double t = (i - 500) / 100.0;
 		gaussdata[i] = 0.5 * erfc(-t / factor);
 	}
-	gl->glGenTextures(1, &m_texGauss);
-	gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, 1001, 0, GL_RED, GL_FLOAT, gaussdata);
+	m_gl->glGenTextures(1, &m_texGauss);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, 1001, 0, GL_RED, GL_FLOAT, gaussdata);
 	delete[] gaussdata;
 
 	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
-	gl->glGenTextures(1, &m_texTransfer);
-	gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
+	m_gl->glGenTextures(1, &m_texTransfer);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
 
-	gl->glCreateBuffers(1, &m_ssboMixture);
+	m_gl->glCreateBuffers(1, &m_ssboMixture);
 }
 
-void GMDensityRasterizeRenderer::setMixture(GaussianMixture* mixture)
+void GMDensityRasterizeRenderer::setMixture(GaussianMixture* mixture, double accThreshold)
 {
 	m_mixture = mixture;
-
-	updateAccelerationData();
-
+	updateAccelerationData(accThreshold);
 }
 
-void GMDensityRasterizeRenderer::updateAccelerationData()
+void GMDensityRasterizeRenderer::updateAccelerationData(double accThreshold)
 {
 	int n = m_mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	transforms.reserve(n);
 	for (int i = 0; i < n; ++i) {
 		const Gaussian* gauss = (*m_mixture)[i];
-		auto transform = gauss->getTransform(m_settings->accelerationthreshold);
+		auto transform = gauss->getTransform(accThreshold);
 		if (transform.has_value()) {
 			transforms.push_back(transform.value());
 		}
@@ -134,9 +140,9 @@ void GMDensityRasterizeRenderer::updateAccelerationData()
 	m_transf_vbo.bind();
 	m_transf_vbo.allocate(transforms.data(), transforms.size() * sizeof(QMatrix4x4));
 	m_transf_vbo.release();
-
+	
 	size_t arrsize;
-	std::shared_ptr<char[]> gpudata = m_mixture->gpuData(arrsize, m_settings->accelerationthreshold, m_nrValidMixtureComponents);
+	std::shared_ptr<char[]> gpudata = m_mixture->gpuData(arrsize, accThreshold, m_nrValidMixtureComponents);
 
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
 	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, arrsize, gpudata.get(), GL_DYNAMIC_DRAW);
@@ -149,7 +155,7 @@ void GMDensityRasterizeRenderer::setSize(int width, int height)
 	m_fbo_final.setSize(width, height);
 }
 
-void GMDensityRasterizeRenderer::render(GLuint preTexture)
+void GMDensityRasterizeRenderer::render(GLuint preTexture, bool blend, double densityMin, double densityMax)
 {
 	if (!m_mixture) {
 		return;
@@ -202,9 +208,9 @@ void GMDensityRasterizeRenderer::render(GLuint preTexture)
 	
 	m_program_coloring->setUniformValue(m_col_locWidth, screenWidth);
 	m_program_coloring->setUniformValue(m_col_locHeight, screenHeight);
-	m_program_coloring->setUniformValue(m_col_locBlend, (m_settings->displayPoints || m_settings->displayEllipsoids) ? m_settings->rendermodeblending : 1.0f);
-	m_program_coloring->setUniformValue(m_col_locDensityMin, m_settings->densitymin);
-	m_program_coloring->setUniformValue(m_col_locDensityMax, m_settings->densitymax);
+	m_program_coloring->setUniformValue(m_col_locBlend, blend ? 0.5f : 1.0f);
+	m_program_coloring->setUniformValue(m_col_locDensityMin, (float)densityMin);
+	m_program_coloring->setUniformValue(m_col_locDensityMax, (float)densityMax);
 
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

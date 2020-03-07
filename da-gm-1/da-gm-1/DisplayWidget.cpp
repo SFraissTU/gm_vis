@@ -6,15 +6,20 @@
 
 //Partialy used this: https://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/hellogl2?h=5.13
 
-DisplayWidget::DisplayWidget(QWidget* parent) : QOpenGLWidget(parent) {
+DisplayWidget::DisplayWidget(QWidget* parent) : QOpenGLWidget(parent)
+{
 	QSurfaceFormat format;
 	format.setMajorVersion(4);
 	format.setMinorVersion(6);
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	format.setOption(QSurfaceFormat::DebugContext);
 	setFormat(format);
-	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width()) / height(), 0.01f, 1000.0f);
 	setFocusPolicy(Qt::StrongFocus);
+
+	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width()) / height(), 0.01f, 1000.0f);
+	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
+	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
+	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get(), width(), height());
 }
 
 DisplayWidget::~DisplayWidget() {
@@ -29,23 +34,49 @@ QSize DisplayWidget::sizeHint() const {
 	return QSize(500, 500);
 }
 
-DisplaySettings* DisplayWidget::getSettings()
+void DisplayWidget::setPointDisplayEnabled(bool enabled)
 {
-	return &m_settings;
+	m_sDisplayPoints = enabled;
 }
 
-//should only be called after initialization!
-void DisplayWidget::setPointCloud(PointCloud* pointcloud)
+void DisplayWidget::setEllipsoidDisplayEnabled(bool enabled)
 {
-	m_pointcloudRenderer->setPointCloud(pointcloud);
-	update();
+	m_sDisplayEllipsoids = enabled;
 }
 
-void DisplayWidget::setGaussianMixture(GaussianMixture* mixture)
+void DisplayWidget::setDensityDisplayEnabled(bool enabled)
 {
-	m_isoellipsoidRenderer->setMixture(mixture);
-	m_densityRenderer->setMixture(mixture);
-	update();
+	m_sDisplayDensity = enabled;
+}
+
+bool DisplayWidget::isPointDisplayEnabled()
+{
+	return m_sDisplayPoints;
+}
+
+bool DisplayWidget::isEllipsoidDisplayEnabled()
+{
+	return m_sDisplayEllipsoids;
+}
+
+bool DisplayWidget::isDensityDisplayEnabled()
+{
+	return m_sDisplayDensity;
+}
+
+PointCloudRenderer* DisplayWidget::getPointCloudRenderer()
+{
+	return m_pointcloudRenderer.get();
+}
+
+GMIsoellipsoidRenderer* DisplayWidget::getGMIsoellipsoidRenderer()
+{
+	return m_isoellipsoidRenderer.get();
+}
+
+GMDensityRenderer* DisplayWidget::getGMDensityRenderer()
+{
+	return m_densityRenderer.get();
 }
 
 void DisplayWidget::cleanup() {
@@ -67,7 +98,13 @@ void DisplayWidget::initializeGL() {
 	(void)connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &DisplayWidget::cleanup);
 
 	initializeOpenGLFunctions();
+
+	m_pointcloudRenderer->initialize();
+	m_isoellipsoidRenderer->initialize();
+	m_densityRenderer->initialize();
+
 	m_fboIntermediate = std::make_unique<ScreenFBO>(static_cast<QOpenGLFunctions_4_5_Core*>(this), width(), height());
+	m_fboIntermediate->initialize();
 	m_fboIntermediate->attachColorTexture();
 	m_fboIntermediate->attachDepthTexture();
 
@@ -79,36 +116,20 @@ void DisplayWidget::initializeGL() {
 		m_debugLogger->startLogging();
 	}
 #endif
-
-	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get());
-	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), m_settings.ellipsoidRenderMode);
-	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), &m_settings, m_camera.get(), width(), height(), m_settings.densityRenderMode);
-
-	auto background = m_settings.backgroundColor;
+	
+	auto background = QColor(0, 0, 0);
 	glClearColor(background.redF(), background.blueF(), background.greenF(), 1);
 }
 
 void DisplayWidget::paintGL()
 {
-	if (m_settings.rebuildacc) {
-		m_densityRenderer->updateAccelerationData();
-		m_settings.rebuildacc = false;
-	}
-	else {
-		m_densityRenderer->setRenderMode(m_settings.densityRenderMode);
-	}
-	m_isoellipsoidRenderer->setRenderMode(m_settings.ellipsoidRenderMode);
-	if (m_settings.updatecolors) {
-		m_isoellipsoidRenderer->updateColors();
-	}
-
 	GLint defaultFbo = 0;
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);
 
 	//Only render points and ellipsoids if blending mode requires it
-	if (m_settings.displayPoints || m_settings.displayEllipsoids) {
+	if (m_sDisplayPoints || m_sDisplayEllipsoids) {
 		//Only set FBO if we will render volume later on
-		if (m_settings.displayDensity) {
+		if (m_sDisplayDensity) {
 			//First pass: Render classicaly into texture
 			glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
 		}
@@ -120,16 +141,16 @@ void DisplayWidget::paintGL()
 		glDisable(GL_BLEND);
 		glViewport(0, 0, m_fboIntermediate->getWidth(), m_fboIntermediate->getHeight());
 
-		if (m_settings.displayPoints) {
+		if (m_sDisplayPoints) {
 			m_pointcloudRenderer->render();
 		}
-		if (m_settings.displayEllipsoids) {
+		if (m_sDisplayEllipsoids) {
 			m_isoellipsoidRenderer->render();
 		}
 	}
 
 	//Render volume if necessary
-	if (m_settings.displayDensity) {
+	if (m_sDisplayDensity) {
 		//Second pass: Pass old depth texture to ray marcher and render on screen
 		glBindFramebuffer(GL_FRAMEBUFFER, defaultFbo);
 		
@@ -137,7 +158,7 @@ void DisplayWidget::paintGL()
 		glGenQueries(1, &query);
 		glBeginQuery(GL_TIME_ELAPSED, query);
 
-		m_densityRenderer->render(m_fboIntermediate->getColorTexture());
+		m_densityRenderer->render(m_fboIntermediate->getColorTexture(), m_sDisplayPoints || m_sDisplayEllipsoids);
 
 		glEndQuery(GL_TIME_ELAPSED);
 
@@ -187,22 +208,6 @@ void DisplayWidget::mouseMoveEvent(QMouseEvent* event)
 	if (refresh) {
 		update();
 		m_lastPos = event->pos();
-	}
-}
-
-void DisplayWidget::keyReleaseEvent(QKeyEvent* event)
-{
-	if (event->key() == Qt::Key::Key_1) {
-		m_settings.rendermodeblending = 0;
-		update();
-	}
-	else if (event->key() == Qt::Key::Key_2) {
-		m_settings.rendermodeblending = 0.5;
-		update();
-	}
-	else if (event->key() == Qt::Key::Key_3) {
-		m_settings.rendermodeblending = 1;
-		update();
 	}
 }
 

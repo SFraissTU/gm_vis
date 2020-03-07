@@ -3,7 +3,14 @@
 #include <cmath>
 #include <QtMath>
 
-GMDensityRaycastRenderer::GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height) : m_gl(gl), m_settings(settings), m_camera(camera), m_fbo(ScreenFBO(gl, width, height, false)) {
+GMDensityRaycastRenderer::GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height) : m_gl(gl), m_camera(camera), m_fbo(ScreenFBO(gl, width, height, false)) {
+	
+}
+
+void GMDensityRaycastRenderer::initialize()
+{
+	m_fbo.initialize();
+
 	m_program_regular = std::make_unique<QOpenGLShaderProgram>();
 	m_program_regular->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_exact.comp");
 	m_program_regular->link();
@@ -12,9 +19,13 @@ GMDensityRaycastRenderer::GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl
 	m_program_accelerated->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_octree.comp");
 	m_program_accelerated->link();
 
+	m_program_sampling = std::make_unique<QOpenGLShaderProgram>();
+	m_program_sampling->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_sampling.comp");
+	m_program_sampling->link();
+
 	m_program_accelerated->bind();
 	//Locations should be the same in both programs
-	m_locOuttex = m_program_regular->uniformLocation("outtex");
+	m_locOuttex = m_program_regular->uniformLocation("img_output");
 	m_bindingMixture = 0;
 	m_bindingOctree = 1;
 	m_locProjMatrix = m_program_regular->uniformLocation("projMatrix");
@@ -41,33 +52,33 @@ GMDensityRaycastRenderer::GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl
 		double t = (i - 500) / 100.0;
 		gaussdata[i] = 0.5 * erfc(-t / factor);
 	}
-	gl->glGenTextures(1, &m_texGauss);
-	gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, 1001, 0, GL_RED, GL_FLOAT, gaussdata);
+	m_gl->glGenTextures(1, &m_texGauss);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, 1001, 0, GL_RED, GL_FLOAT, gaussdata);
 	delete[] gaussdata;
-	
+
 	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
-	gl->glGenTextures(1, &m_texTransfer);
-	gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
-	
-	gl->glCreateBuffers(1, &m_ssboMixture);
-	gl->glCreateBuffers(1, &m_ssboOctree);
+	m_gl->glGenTextures(1, &m_texTransfer);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
+
+	m_gl->glCreateBuffers(1, &m_ssboMixture);
+	m_gl->glCreateBuffers(1, &m_ssboOctree);
 }
 
 void GMDensityRaycastRenderer::setMixture(GaussianMixture* mixture)
 {
 	m_mixture = mixture;
 
-	if (!useAccelerationStructure) {
+	if (!m_useAccelerationStructure) {
 		buildUnacceleratedData();
 	}
 	else {
@@ -80,7 +91,7 @@ void GMDensityRaycastRenderer::setSize(int width, int height)
 	m_fbo.setSize(width, height);
 }
 
-void GMDensityRaycastRenderer::render(GLuint preTexture)
+void GMDensityRaycastRenderer::render(GLuint preTexture, bool blend, double densityMin, double densityMax)
 {
 	if (!m_mixture) {
 		return;
@@ -92,7 +103,9 @@ void GMDensityRaycastRenderer::render(GLuint preTexture)
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	return;*/
 
-	auto& currentProgram = useAccelerationStructure ? m_program_accelerated : m_program_regular;
+	auto& currentProgram = m_useAccelerationStructure ? 
+		(m_useSampling ? m_program_sampling : m_program_accelerated)
+		: m_program_regular;
 	
 	currentProgram->bind();
 	m_gl->glActiveTexture(GL_TEXTURE0);
@@ -111,7 +124,7 @@ void GMDensityRaycastRenderer::render(GLuint preTexture)
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_bindingMixture, m_ssboMixture);
 
-	if (useAccelerationStructure) {
+	if (m_useAccelerationStructure) {
 		m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboOctree);
 		m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_bindingOctree, m_ssboOctree);
 	}
@@ -124,9 +137,9 @@ void GMDensityRaycastRenderer::render(GLuint preTexture)
 	m_program_regular->setUniformValue(m_locHeight, screenHeight);
 	m_program_regular->setUniformValue(m_locInvViewMatrix, m_camera->getViewMatrix().inverted());
 	m_program_regular->setUniformValue(m_locFov, qDegreesToRadians(m_camera->getFoV()));
-	m_program_regular->setUniformValue(m_locBlend, (m_settings->displayPoints || m_settings->displayEllipsoids) ? m_settings->rendermodeblending : 1.0f);
-	m_program_regular->setUniformValue(m_locDensityMin, m_settings->densitymin);
-	m_program_regular->setUniformValue(m_locDensityMax, m_settings->densitymax);
+	m_program_regular->setUniformValue(m_locBlend, blend ? 0.5f : 1.0f);
+	m_program_regular->setUniformValue(m_locDensityMin, (float)densityMin);
+	m_program_regular->setUniformValue(m_locDensityMax, (float)densityMax);
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
@@ -138,18 +151,18 @@ void GMDensityRaycastRenderer::render(GLuint preTexture)
 
 void GMDensityRaycastRenderer::enableAccelerationStructure()
 {
-	if (!validAccelerationStructure && m_mixture) {
+	if (!m_validAccelerationStructure && m_mixture) {
 		buildAccelerationStructure();
 	}
-	useAccelerationStructure = true;
+	m_useAccelerationStructure = true;
 }
 
 void GMDensityRaycastRenderer::disableAccelerationStructure()
 {
-	if (useAccelerationStructure && m_mixture) {
+	if (m_useAccelerationStructure && m_mixture) {
 		buildUnacceleratedData();
 	}
-	useAccelerationStructure = false;
+	m_useAccelerationStructure = false;
 }
 
 void GMDensityRaycastRenderer::rebuildAccelerationStructure()
@@ -157,7 +170,12 @@ void GMDensityRaycastRenderer::rebuildAccelerationStructure()
 	if (m_mixture) {
 		buildAccelerationStructure();
 	}
-	useAccelerationStructure = true;
+	m_useAccelerationStructure = true;
+}
+
+void GMDensityRaycastRenderer::setSampling(bool sampling)
+{
+	this->m_useSampling = sampling;
 }
 
 void GMDensityRaycastRenderer::setAccelerationStructureEnabled(bool enabled)
@@ -170,18 +188,25 @@ void GMDensityRaycastRenderer::setAccelerationStructureEnabled(bool enabled)
 	}
 }
 
+void GMDensityRaycastRenderer::setAccelerationThreshold(double threshold)
+{
+	m_sAccThreshold = threshold;
+}
+
 void GMDensityRaycastRenderer::cleanup()
 {
 	m_fbo.cleanup();
 	m_program_regular.reset();
+	m_program_accelerated.reset();
+	m_program_sampling.reset();
 }
 
 void GMDensityRaycastRenderer::buildAccelerationStructure()
 {
 	QVector<GMOctreeNode> octree;
 	size_t arrsize;
-	std::shared_ptr<char[]> gpudata = m_mixture->buildOctree(m_settings->accelerationthreshold, octree, arrsize);
-	validAccelerationStructure = true;
+	std::shared_ptr<char[]> gpudata = m_mixture->buildOctree(m_sAccThreshold, octree, arrsize);
+	m_validAccelerationStructure = true;
 	//Bind Gaussians
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
 	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, arrsize, gpudata.get(), GL_STATIC_DRAW);
@@ -201,7 +226,7 @@ void GMDensityRaycastRenderer::buildUnacceleratedData()
 	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, arrsize, gpudata.get(), GL_STATIC_DRAW);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-	validAccelerationStructure = false;
+	m_validAccelerationStructure = false;
 }
 
 

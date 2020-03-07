@@ -2,12 +2,15 @@
 
 ScreenFBO::ScreenFBO(QOpenGLFunctions_4_5_Core* gl, int width, int height, bool equalsize) : m_gl(gl), m_screenWidth(width), m_screenHeight(height), m_equalsize(equalsize)
 {
-	gl->glCreateFramebuffers(1, &m_id);
-
 	if (m_equalsize) {
 		m_fboWidth = width;
 		m_fboHeight = height;
 	}
+}
+
+void ScreenFBO::initialize()
+{
+	m_gl->glCreateFramebuffers(1, &m_id);
 }
 
 void ScreenFBO::attachSinglevalueTexture(GLuint attachment)

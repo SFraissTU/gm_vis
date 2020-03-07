@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>900</width>
-    <height>583</height>
+    <height>610</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -38,7 +38,7 @@
          <x>0</x>
          <y>0</y>
          <width>208</width>
-         <height>510</height>
+         <height>537</height>
         </rect>
        </property>
        <widget class="QWidget" name="layoutWidget">
@@ -175,24 +175,29 @@
              <item>
               <widget class="QComboBox" name="co_densrendermode">
                <property name="currentText">
-                <string>Additive: Exact</string>
+                <string>Fast (Projection)</string>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>2</number>
                </property>
                <item>
                 <property name="text">
-                 <string>Additive: Exact</string>
+                 <string>Exact</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>Additive: Fast (Octree)</string>
+                 <string>Fast (Octree)</string>
                 </property>
                </item>
                <item>
                 <property name="text">
-                 <string>Additive: Fast (Projection)</string>
+                 <string>Fast (Projection)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Sampling</string>
                 </property>
                </item>
               </widget>
@@ -224,17 +229,10 @@
               <x>0</x>
               <y>20</y>
               <width>165</width>
-              <height>71</height>
+              <height>74</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_3">
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_6">
-               <property name="text">
-                <string>Min:</string>
-               </property>
-              </widget>
-             </item>
              <item row="0" column="1">
               <widget class="QDoubleSpinBox" name="spin_ellmin">
                <property name="enabled">
@@ -257,10 +255,10 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_7">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_6">
                <property name="text">
-                <string>Max:</string>
+                <string>Min:</string>
                </property>
               </widget>
              </item>
@@ -295,14 +293,33 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="1">
-              <widget class="QCheckBox" name="cb_ellauto">
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_7">
                <property name="text">
-                <string>Auto</string>
+                <string>Max:</string>
                </property>
-               <property name="checked">
-                <bool>true</bool>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QComboBox" name="co_ellrangemode">
+               <property name="currentIndex">
+                <number>1</number>
                </property>
+               <item>
+                <property name="text">
+                 <string>Manually</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Auto (MinMax)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Auto (MedMed)</string>
+                </property>
+               </item>
               </widget>
              </item>
             </layout>

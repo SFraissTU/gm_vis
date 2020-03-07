@@ -10,7 +10,6 @@
 #include <qevent.h>
 #include "PointCloud.h"
 #include "Camera.h"
-#include "DisplaySettings.h"
 #include "PointCloudRenderer.h"
 #include "GMIsoellipsoidRenderer.h"
 #include "GMDensityRenderer.h"
@@ -24,11 +23,18 @@ public:
 
 	QSize minimumSizeHint() const override;
 	QSize sizeHint() const override;
-	DisplaySettings* getSettings();
 
-	//should only be called after initialization!
-	void setPointCloud(PointCloud* pointcloud);
-	void setGaussianMixture(GaussianMixture* mixture);
+	void setPointDisplayEnabled(bool enabled);
+	void setEllipsoidDisplayEnabled(bool enabled);
+	void setDensityDisplayEnabled(bool enabled);
+
+	bool isPointDisplayEnabled();
+	bool isEllipsoidDisplayEnabled();
+	bool isDensityDisplayEnabled();
+
+	PointCloudRenderer* getPointCloudRenderer();
+	GMIsoellipsoidRenderer* getGMIsoellipsoidRenderer();
+	GMDensityRenderer* getGMDensityRenderer();
 
 public slots:
 	void cleanup();
@@ -39,7 +45,6 @@ protected:
 	void resizeGL(int width, int height) override;
 	void mousePressEvent(QMouseEvent* event) override;
 	void mouseMoveEvent(QMouseEvent* event) override;
-	void keyReleaseEvent(QKeyEvent* event) override;
 
 protected slots:
 	void messageLogged(const QOpenGLDebugMessage& msg);
@@ -49,7 +54,9 @@ private:
 	std::unique_ptr<QOpenGLDebugLogger> m_debugLogger;
 
 	//Settings
-	DisplaySettings m_settings;
+	bool m_sDisplayPoints = false;
+	bool m_sDisplayEllipsoids = false;
+	bool m_sDisplayDensity = true;
 
 	//Renderers
 	std::unique_ptr<PointCloudRenderer> m_pointcloudRenderer;

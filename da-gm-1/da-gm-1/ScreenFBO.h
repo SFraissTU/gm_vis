@@ -5,6 +5,7 @@ class ScreenFBO {
 
 public:
 	ScreenFBO(QOpenGLFunctions_4_5_Core* gl, int width, int height, bool equalsize = false);	//equalsize: internal and actual size is the same
+	void initialize();
 	void attachSinglevalueTexture(GLuint attachment = 0);
 	void attachColorTexture(GLuint attachment = 0);
 	void attachDepthTexture();

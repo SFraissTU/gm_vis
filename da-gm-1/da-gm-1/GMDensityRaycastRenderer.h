@@ -1,6 +1,5 @@
 #pragma once
 #include "GaussianMixture.h"
-#include "DisplaySettings.h"
 #include "Camera.h"
 #include "ScreenFBO.h"
 #include <QOpenGLFunctions_4_5_Core>
@@ -12,19 +11,21 @@
 
 class GMDensityRaycastRenderer {
 public:
-	GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height);
+	GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height);
+	void initialize();
 	void setMixture(GaussianMixture* mixture);
 	void setSize(int width, int height);
-	void render(GLuint preTexture);
+	void render(GLuint preTexture, bool blend, double densityMin, double densityMax);
 	void enableAccelerationStructure();
 	void disableAccelerationStructure();
 	void rebuildAccelerationStructure();
+	void setSampling(bool sampling);
 	void setAccelerationStructureEnabled(bool enabled);
+	void setAccelerationThreshold(double threshold);
 	void cleanup();
 
 private:
 	QOpenGLFunctions_4_5_Core* m_gl;
-	DisplaySettings* m_settings;
 	Camera* m_camera;
 	GaussianMixture* m_mixture = nullptr;
 
@@ -50,11 +51,15 @@ private:
 	GLuint m_texGauss;
 	GLuint m_texTransfer;
 
-	bool validAccelerationStructure = false;
-	bool useAccelerationStructure = true;
+	bool m_useSampling = false;
+	bool m_validAccelerationStructure = false;
+	bool m_useAccelerationStructure = true;
 
 	std::unique_ptr<QOpenGLShaderProgram> m_program_regular;
 	std::unique_ptr<QOpenGLShaderProgram> m_program_accelerated;
+	std::unique_ptr<QOpenGLShaderProgram> m_program_sampling;
+
+	double m_sAccThreshold;
 
 	void buildAccelerationStructure();
 	void buildUnacceleratedData();

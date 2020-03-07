@@ -30,7 +30,6 @@ add_executable(visualizer
     DisplayWidget.cpp
     Camera.h
     Camera.cpp
-    DisplaySettings.h
     Gaussian.h
     Gaussian.cpp
     GaussianMixture.h

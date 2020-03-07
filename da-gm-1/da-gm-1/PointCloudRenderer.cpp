@@ -1,6 +1,10 @@
 #include "PointCloudRenderer.h"
 
-PointCloudRenderer::PointCloudRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera) : m_gl(gl), m_settings(settings), m_camera(camera)
+PointCloudRenderer::PointCloudRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera) : m_gl(gl), m_camera(camera)
+{
+}
+
+void PointCloudRenderer::initialize()
 {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
 	m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/pointcloud.vert");
@@ -10,11 +14,8 @@ PointCloudRenderer::PointCloudRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySet
 	m_program->bind();
 	m_locProjMatrix = m_program->uniformLocation("projMatrix");
 	m_locViewMatrix = m_program->uniformLocation("viewMatrix");
-	//m_lightPosLoc = m_program->uniformLocation("lightPos");
 	m_colorLoc = m_program->uniformLocation("pointcloudColor");
 	m_circlesLoc = m_program->uniformLocation("circles");
-
-	//m_program->setUniformValue(m_lightPosLoc, QVector3D(0, 0, 2));
 
 	m_program->release();
 
@@ -46,17 +47,14 @@ void PointCloudRenderer::render()
 	if (!m_pointcloud) {
 		return;
 	}
-	/*if (m_pc_vao == -1) {
-		return;
-	}*/
 
 	m_pc_vao.bind();
 	m_program->bind();
-	m_program->setUniformValue(m_colorLoc, m_settings->pointcloudColor);
-	m_program->setUniformValue(m_circlesLoc, m_settings->circles);
+	m_program->setUniformValue(m_colorLoc, m_sPointColor);
+	m_program->setUniformValue(m_circlesLoc, m_sPointCircles);
 	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
 	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
-	m_gl->glPointSize(m_settings->pointSize);
+	m_gl->glPointSize(m_sPointSize);
 
 	m_gl->glDrawArrays(GL_POINTS, 0, m_pointcloud->getPointCount());
 	m_program->release();
@@ -68,4 +66,34 @@ void PointCloudRenderer::cleanup()
 	m_pc_vbo.destroy();
 	m_pc_vao.destroy();
 	m_program.reset();
+}
+
+const QColor& PointCloudRenderer::getPointColor() const
+{
+	return m_sPointColor;
+}
+
+const float& PointCloudRenderer::getPointSize() const
+{
+	return m_sPointSize;
+}
+
+const bool& PointCloudRenderer::getPointCircles() const
+{
+	return m_sPointCircles;
+}
+
+void PointCloudRenderer::setPointColor(const QColor& pointColor)
+{
+	m_sPointColor = pointColor;
+}
+
+void PointCloudRenderer::setPointSize(float pointSize)
+{
+	m_sPointSize = pointSize;
+}
+
+void PointCloudRenderer::setPointCircles(bool pointCircles)
+{
+	m_sPointCircles = pointCircles;
 }

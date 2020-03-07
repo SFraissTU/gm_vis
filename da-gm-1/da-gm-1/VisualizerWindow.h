@@ -14,9 +14,16 @@ public:
 	VisualizerWindow(QWidget *parent = Q_NULLPTR);
 
 public slots:
-	void loadPointcloudAction();
-	void loadMixtureAction();
-	void updateSettings();
+	void slotLoadPointcloud();
+	void slotLoadMixture();
+	void slotDisplayOptionsChanged();
+	void slotEllValuesChanged();
+	void slotEllAutoValueChanged();
+	void slotEllipsoidRenderModeChanged();
+	void slotDensityValuesChanged();
+	void slotDensityRenderModeChanged();
+	void slotAccelerationThresholdChanged();
+	void slotAccelerationThreshAutoChanged();
 
 private:
 	Ui::VisualizerWindowClass ui;

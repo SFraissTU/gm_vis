@@ -1,30 +1,40 @@
 #pragma once
 #include "GaussianMixture.h"
-#include "DisplaySettings.h"
 #include "Camera.h"
 #include "GMRenderModes.h"
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
+#include <QColor>
 #include <memory>
 
 class GMIsoellipsoidRenderer {
 
 public:
-	GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, GMIsoellipsoidRenderMode renderMode);
+	GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera);
+	void initialize();
 	void setMixture(GaussianMixture* mixture);
-	void setRenderMode(GMIsoellipsoidRenderMode renderMode);
 	void updateColors();
 	void render();
 	void cleanup();
 
+	const QColor& getUniformColor() const;
+	const GMIsoellipsoidRenderMode& getRenderMode() const;
+	const double& getEllMin() const;
+	const double& getEllMax() const;
+	const GMIsoellipsoidColorRangeMode& getRangeMode() const;
+
+	void setUniformColor(const QColor& uniformColor);
+	void setRenderMode(GMIsoellipsoidRenderMode renderMode);
+	void setEllMin(double min);
+	void setEllMax(double max);
+	void setRangeMode(GMIsoellipsoidColorRangeMode rangeMode);
+
 private:
 	QOpenGLFunctions_4_5_Core* m_gl;
-	DisplaySettings* m_settings;
 	Camera* m_camera;
 	GaussianMixture* m_mixture = nullptr;
-	GMIsoellipsoidRenderMode m_renderMode;
 
 	//Geometry Data per Sphere
 	QVector<QVector3D> m_geoVertices;
@@ -51,4 +61,12 @@ private:
 	int m_locUseInColor;
 	int m_locSurfaceColor;
 	int m_locTransferTex;
+
+	//Settings
+	QColor					 m_sUniformColor	= QColor(100, 100, 255);
+	QVector3D				 m_sLightDirection	= QVector3D(0.f, -0.7f, -1.0f).normalized();
+	GMIsoellipsoidRenderMode m_sRenderMode		= GMIsoellipsoidRenderMode::COLOR_UNIFORM;
+	double m_sEllMin = 0;
+	double m_sEllMax = 0.05;
+	GMIsoellipsoidColorRangeMode m_sRangeMode = GMIsoellipsoidColorRangeMode::RANGE_MINMAX;
 };

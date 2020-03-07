@@ -72,8 +72,11 @@ void main() {
 
 	float sum = 0;
 
-	for (int i = 2000; i > 0; --i) {
-		vec3 samplingPoint = origin + i*0.1f*direction;
+	int STEPS = 500;
+	float STEPSIZE = 0.4f;
+
+	for (int i = STEPS; i > 0; --i) {
+		vec3 samplingPoint = origin + i*STEPSIZE*direction;
 		int nodesToCheck[25];
 		nodesToCheck[0] = 0;
 		int remainingNodeCount = 1;
@@ -104,7 +107,7 @@ void main() {
 				}
 			}
 		}
-		sum += 0.1*alpha;
+		sum += STEPSIZE*alpha;
 	}
 
 	sum = (sum - densitymin)/(densitymax - densitymin);

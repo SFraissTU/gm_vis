@@ -2,7 +2,11 @@
 #include "Helper.h"
 #include "VisualizerWindow.h"
 
-GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, GMIsoellipsoidRenderMode renderMode) : m_gl(gl), m_settings(settings), m_camera(camera), m_renderMode(renderMode)
+GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera) : m_gl(gl), m_camera(camera)
+{
+}
+
+void GMIsoellipsoidRenderer::initialize()
 {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
 	m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/ellipsoids.vert");
@@ -16,7 +20,7 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Di
 	m_locSurfaceColor = m_program->uniformLocation("surfaceColor");
 	m_locTransferTex = m_program->uniformLocation("transferTex");
 	m_locUseInColor = m_program->uniformLocation("useInColor");
-	
+
 	m_program->release();
 
 	//Create Geometry Data
@@ -97,13 +101,13 @@ GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Di
 
 	//Create Transfer Tex
 	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
-	gl->glGenTextures(1, &m_texTransfer);
-	gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
+	m_gl->glGenTextures(1, &m_texTransfer);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
 }
 
 void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
@@ -143,12 +147,30 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 	updateColors();
 }
 
+void GMIsoellipsoidRenderer::setUniformColor(const QColor& uniformColor)
+{
+	m_sUniformColor = uniformColor;
+}
+
+//updateColors needs to be called manually!!
 void GMIsoellipsoidRenderer::setRenderMode(GMIsoellipsoidRenderMode renderMode)
 {
-	if (m_renderMode != renderMode) {
-		m_renderMode = renderMode;
-		updateColors();
-	}
+	m_sRenderMode = renderMode;
+}
+
+void GMIsoellipsoidRenderer::setEllMin(double min)
+{
+	m_sEllMin = min;
+}
+
+void GMIsoellipsoidRenderer::setEllMax(double max)
+{
+	m_sEllMax = max;
+}
+
+void GMIsoellipsoidRenderer::setRangeMode(GMIsoellipsoidColorRangeMode rangeMode)
+{
+	m_sRangeMode = rangeMode;
 }
 
 void GMIsoellipsoidRenderer::render()
@@ -158,11 +180,11 @@ void GMIsoellipsoidRenderer::render()
 	}
 	m_gm_vao.bind();
 	m_program->bind();
-	m_program->setUniformValue(m_locLightDir, m_settings->lightDirection);
+	m_program->setUniformValue(m_locLightDir, m_sLightDirection);
 	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
 	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
-	m_program->setUniformValue(m_locSurfaceColor, m_settings->ellipsoidColor);
-	m_program->setUniformValue(m_locUseInColor, (m_renderMode != GMIsoellipsoidRenderMode::COLOR_UNIFORM));
+	m_program->setUniformValue(m_locSurfaceColor, m_sUniformColor);
+	m_program->setUniformValue(m_locUseInColor, (m_sRenderMode != GMIsoellipsoidRenderMode::COLOR_UNIFORM));
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
 	m_program->setUniformValue(m_locTransferTex, 0);
@@ -180,22 +202,65 @@ void GMIsoellipsoidRenderer::cleanup()
 	m_program.reset();
 }
 
+const QColor& GMIsoellipsoidRenderer::getUniformColor() const
+{
+	return m_sUniformColor;
+}
+
+const GMIsoellipsoidRenderMode& GMIsoellipsoidRenderer::getRenderMode() const
+{
+	return m_sRenderMode;
+}
+
+const double& GMIsoellipsoidRenderer::getEllMin() const
+{
+	return m_sEllMin;
+}
+
+const double& GMIsoellipsoidRenderer::getEllMax() const
+{
+	return m_sEllMax;
+}
+
+const GMIsoellipsoidColorRangeMode& GMIsoellipsoidRenderer::getRangeMode() const
+{
+	return m_sRangeMode;
+}
+
 void GMIsoellipsoidRenderer::updateColors()
 {
+	if (!m_mixture) {
+		return;
+	}
+
 	int n = m_mixture->numberOfGaussians();
 	QVector<float> colors;
 	colors.resize(n);
-	if (m_renderMode != GMIsoellipsoidRenderMode::COLOR_UNIFORM) {
+	if (m_sRenderMode != GMIsoellipsoidRenderMode::COLOR_UNIFORM) {
 		//Find min and max Values
-		double minVal = m_settings->ellmin;
-		double maxVal = m_settings->ellmax;
-		if (m_settings->ellauto) {
+		double minVal = m_sEllMin;
+		double maxVal = m_sEllMax;
+		if (m_sRangeMode == GMIsoellipsoidColorRangeMode::RANGE_MINMAX) {
+			minVal = std::numeric_limits<double>::infinity();
+			maxVal = -minVal;
+			for (int i = 0; i < n; ++i) {
+				const Gaussian* gauss = (*m_mixture)[i];
+				double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
+				if (val < minVal) {
+					minVal = val;
+				}
+				if (val > maxVal) {
+					maxVal = val;
+				}
+			}
+		}
+		else if (m_sRangeMode == GMIsoellipsoidColorRangeMode::RANGE_MEDMED) {
 			double sum = 0;
 			QVector<double> values;
 			values.resize(n);
 			for (int i = 0; i < n; ++i) {
 				const Gaussian* gauss = (*m_mixture)[i];
-				double val = (m_renderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
+				double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
 				values[i] = val;
 			}
 			qSort(values);
@@ -211,18 +276,17 @@ void GMIsoellipsoidRenderer::updateColors()
 			//Assign colors
 			minVal = std::max(median - medmed, values[0]);
 			maxVal = std::min(median + medmed, values[n - 1]);
-			m_settings->ellmin = minVal;
-			m_settings->ellmax = maxVal;
-			m_settings->window->updateSettings();
 		}
 		double range = maxVal - minVal;
 		for (int i = 0; i < n; ++i) {
 			const Gaussian* gauss = (*m_mixture)[i];
-			double val = (m_renderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
+			double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
 			float t = std::min(1.0f, float((val - minVal) / range));
 			t = std::max(t, 0.0f);
 			colors[i] = t;
 		}
+		m_sEllMin = minVal;
+		m_sEllMax = maxVal;
 	}
 
 	m_color_vbo.bind();

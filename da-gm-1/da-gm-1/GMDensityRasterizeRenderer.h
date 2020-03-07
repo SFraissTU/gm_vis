@@ -1,6 +1,5 @@
 #pragma once
 #include "GaussianMixture.h"
-#include "DisplaySettings.h"
 #include "Camera.h"
 #include "ScreenFBO.h"
 #include <QOpenGLFunctions_4_5_Core>
@@ -13,16 +12,16 @@
 
 class GMDensityRasterizeRenderer {
 public:
-	GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core* gl, DisplaySettings* settings, Camera* camera, int width, int height);
-	void setMixture(GaussianMixture* mixture);
-	void updateAccelerationData();
+	GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height);
+	void initialize();
+	void setMixture(GaussianMixture* mixture, double accThreshold);
+	void updateAccelerationData(double accThreshold);
 	void setSize(int width, int height);
-	void render(GLuint preTexture);
+	void render(GLuint preTexture, bool blend, double densityMin, double densityMax);
 	void cleanup();
 
 private:
 	QOpenGLFunctions_4_5_Core* m_gl;
-	DisplaySettings* m_settings;
 	Camera* m_camera;
 	GaussianMixture* m_mixture = nullptr;
 
