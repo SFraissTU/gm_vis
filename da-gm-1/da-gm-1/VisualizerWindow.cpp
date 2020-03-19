@@ -22,8 +22,8 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.co_ellrendermode->setCurrentIndex((int)ellrenderer->getRenderMode() - 1);
 
 	auto densrenderer = widget->getGMDensityRenderer();
-	ui.spin_scalemin->setValue(densrenderer->getDensityMin());
-	ui.spin_scalemax->setValue(densrenderer->getDensityMax());
+	ui.spin_scalemin->setValue(densrenderer->getDensityMin() * 100);
+	ui.spin_scalemax->setValue(densrenderer->getDensityMax() * 100);
 	ui.co_densrendermode->setCurrentIndex((int)densrenderer->getRenderMode() - 1);
 	ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * 100);
 	ui.spin_accthreshold->setEnabled(!densrenderer->getAccelerationThresholdAuto());
