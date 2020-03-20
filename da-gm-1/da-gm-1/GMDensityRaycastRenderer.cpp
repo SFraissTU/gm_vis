@@ -28,7 +28,6 @@ void GMDensityRaycastRenderer::initialize()
 	m_locOuttex = m_program_regular->uniformLocation("img_output");
 	m_bindingMixture = 0;
 	m_bindingOctree = 1;
-	m_locProjMatrix = m_program_regular->uniformLocation("projMatrix");
 	m_locInvViewMatrix = m_program_regular->uniformLocation("invViewMatrix");
 	m_locWidth = m_program_regular->uniformLocation("width");
 	m_locHeight = m_program_regular->uniformLocation("height");
@@ -167,10 +166,9 @@ void GMDensityRaycastRenderer::disableAccelerationStructure()
 
 void GMDensityRaycastRenderer::rebuildAccelerationStructure()
 {
-	if (m_mixture) {
+	if (m_mixture && m_useAccelerationStructure) {
 		buildAccelerationStructure();
 	}
-	m_useAccelerationStructure = true;
 }
 
 void GMDensityRaycastRenderer::setSampling(bool sampling)

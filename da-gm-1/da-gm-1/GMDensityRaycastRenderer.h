@@ -32,7 +32,6 @@ private:
 	ScreenFBO m_fbo;
 
 	GLuint m_locOuttex;
-	GLuint m_locProjMatrix;
 	GLuint m_locInvViewMatrix;
 	GLuint m_locFov;
 	GLuint m_locWidth;
