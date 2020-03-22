@@ -29,10 +29,10 @@ void GMDensityRenderer::setSize(int width, int height)
 void GMDensityRenderer::render(GLuint preTexture, bool blend)
 {
 	if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_PROJECTED) {
-		m_rasterizeRenderer.render(preTexture, blend, m_sDensityMin, m_sDensityMax);
+		m_rasterizeRenderer.render(preTexture, blend, m_sDensityMin, m_sDensityMax, m_sDensityAuto, m_sDensityAutoPerc);
 	}
 	else {
-		m_raycastRenderer.render(preTexture, blend, m_sDensityMin, m_sDensityMax);
+		m_raycastRenderer.render(preTexture, blend, m_sDensityMin, m_sDensityMax, m_sDensityAuto, m_sDensityAutoPerc);
 	}
 }
 
@@ -79,8 +79,18 @@ void GMDensityRenderer::setDensityMax(double densityMax)
 {
 	m_sDensityMax = densityMax;
 	if (m_sAccThreshAuto) {
-		m_sAccThreshold = m_sDensityMax * 0.0001;
+		m_sAccThreshold = std::max(m_sDensityMax * 0.0001, 0.000000000001);
 	}
+}
+
+void GMDensityRenderer::setDensityAuto(bool densityAuto)
+{
+	m_sDensityAuto = densityAuto;
+}
+
+void GMDensityRenderer::setDensityAutoPercentage(double percentage)
+{
+	m_sDensityAutoPerc = percentage;
 }
 
 void GMDensityRenderer::setAccelerationThreshold(double accThreshold)
@@ -110,6 +120,16 @@ const double& GMDensityRenderer::getDensityMin() const
 const double& GMDensityRenderer::getDensityMax() const
 {
 	return m_sDensityMax;
+}
+
+const bool& GMDensityRenderer::getDensityAuto() const
+{
+	return m_sDensityAuto;
+}
+
+const double& GMDensityRenderer::getDensityAutoPercentage() const
+{
+	return m_sDensityAutoPerc;
 }
 
 const double& GMDensityRenderer::getAccelerationThreshold() const

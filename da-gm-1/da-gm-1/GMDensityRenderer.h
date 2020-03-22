@@ -17,12 +17,16 @@ public:
 	const GMDensityRenderMode& getRenderMode() const;
 	const double& getDensityMin() const;
 	const double& getDensityMax() const;
+	const bool& getDensityAuto() const;
+	const double& getDensityAutoPercentage() const;
 	const double& getAccelerationThreshold() const;
 	const bool& getAccelerationThresholdAuto() const;
 
 	void setRenderMode(GMDensityRenderMode mode);
 	void setDensityMin(double densityMin);
 	void setDensityMax(double densityMax);
+	void setDensityAuto(bool densityAuto);
+	void setDensityAutoPercentage(double percentage);
 	void setAccelerationThreshold(double accThreshold);
 	void setAccelerationThresholdAuto(bool accThreshAuto);
 
@@ -37,6 +41,8 @@ private:
 	GMDensityRenderMode m_sRenderMode = GMDensityRenderMode::ADDITIVE_ACC_PROJECTED;
 	double m_sDensityMin   = 0.0f;
 	double m_sDensityMax   = 0.0005f;
+	bool  m_sDensityAuto   = false;
+	double m_sDensityAutoPerc = 0.9;
 	double m_sAccThreshold  = 0.0000005;
 	bool   m_sAccThreshAuto = true;
 	

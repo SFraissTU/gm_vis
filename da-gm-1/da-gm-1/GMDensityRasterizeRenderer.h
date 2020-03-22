@@ -17,7 +17,7 @@ public:
 	void setMixture(GaussianMixture* mixture, double accThreshold);
 	void updateAccelerationData(double accThreshold);
 	void setSize(int width, int height);
-	void render(GLuint preTexture, bool blend, double densityMin, double densityMax);
+	void render(GLuint preTexture, bool blend, double& densityMin, double& densityMax, bool densityAuto, double autoPercentage);
 	void cleanup();
 
 private:

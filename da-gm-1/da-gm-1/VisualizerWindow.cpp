@@ -22,8 +22,10 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.co_ellrendermode->setCurrentIndex((int)ellrenderer->getRenderMode() - 1);
 
 	auto densrenderer = widget->getGMDensityRenderer();
-	ui.spin_scalemin->setValue(densrenderer->getDensityMin() * 100);
-	ui.spin_scalemax->setValue(densrenderer->getDensityMax() * 100);
+	ui.spin_dscalemin->setValue(densrenderer->getDensityMin() * 100);
+	ui.spin_dscalemax->setValue(densrenderer->getDensityMax() * 100);
+	ui.cb_dscaleauto->setChecked(densrenderer->getDensityAuto());
+	ui.sl_dscalepercentage->setValue(densrenderer->getDensityAutoPercentage() * 100);
 	ui.co_densrendermode->setCurrentIndex((int)densrenderer->getRenderMode() - 1);
 	ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * 100);
 	ui.spin_accthreshold->setEnabled(!densrenderer->getAccelerationThresholdAuto());
@@ -40,13 +42,17 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.spin_ellmax, SIGNAL(valueChanged(double)), this, SLOT(slotEllValuesChanged()));
 	(void)connect(ui.co_ellrangemode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotEllAutoValueChanged()));
 
-	(void)connect(ui.spin_scalemin, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
-	(void)connect(ui.spin_scalemax, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
+	(void)connect(ui.spin_dscalemin, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
+	(void)connect(ui.spin_dscalemax, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
+	(void)connect(ui.cb_dscaleauto, SIGNAL(stateChanged(int)), this, SLOT(slotDensityAutoChanged()));
+	(void)connect(ui.sl_dscalepercentage, SIGNAL(sliderMoved(int)), this, SLOT(slotDensityAutoChanged()));
 
 	(void)connect(ui.co_densrendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotDensityRenderModeChanged()));
 	(void)connect(ui.co_ellrendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotEllipsoidRenderModeChanged()));
 	(void)connect(ui.spin_accthreshold, SIGNAL(valueChanged(double)), this, SLOT(slotAccelerationThresholdChanged()));
 	(void)connect(ui.cb_accthauto, SIGNAL(stateChanged(int)), this, SLOT(slotAccelerationThreshAutoChanged()));
+
+	(void)connect(ui.openGLWidget, SIGNAL(frameSwapped()), this, SLOT(slotPostRender()));
 }
 
 void VisualizerWindow::slotLoadPointcloud() {
@@ -125,9 +131,21 @@ void VisualizerWindow::slotEllipsoidRenderModeChanged()
 void VisualizerWindow::slotDensityValuesChanged()
 {
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
-	renderer->setDensityMin(ui.spin_scalemin->value() * 0.01);
-	renderer->setDensityMax(ui.spin_scalemax->value() * 0.01);
+	renderer->setDensityMin(ui.spin_dscalemin->value() * 0.01);
+	renderer->setDensityMax(ui.spin_dscalemax->value() * 0.01);
 	ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
+	ui.openGLWidget->update();
+}
+
+void VisualizerWindow::slotDensityAutoChanged()
+{
+	auto renderer = ui.openGLWidget->getGMDensityRenderer();
+	bool dauto = ui.cb_dscaleauto->isChecked();
+	renderer->setDensityAuto(dauto);
+	renderer->setDensityAutoPercentage(ui.sl_dscalepercentage->value() * 0.01);
+	ui.spin_dscalemax->setEnabled(!dauto);
+	ui.spin_dscalemin->setEnabled(!dauto);
+	ui.sl_dscalepercentage->setEnabled(dauto);
 	ui.openGLWidget->update();
 }
 
@@ -155,4 +173,13 @@ void VisualizerWindow::slotAccelerationThreshAutoChanged()
 	ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
 	renderer->updateAccelerationData();
 	ui.openGLWidget->update();
+}
+
+void VisualizerWindow::slotPostRender()
+{
+	if (ui.cb_dscaleauto->isChecked()) {
+		auto renderer = ui.openGLWidget->getGMDensityRenderer();
+		ui.spin_dscalemin->setValue(renderer->getDensityMin() * 100);
+		ui.spin_dscalemax->setValue(renderer->getDensityMax() * 100);
+	}
 }

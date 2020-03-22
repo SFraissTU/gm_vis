@@ -21,9 +21,11 @@ public slots:
 	void slotEllAutoValueChanged();
 	void slotEllipsoidRenderModeChanged();
 	void slotDensityValuesChanged();
+	void slotDensityAutoChanged();
 	void slotDensityRenderModeChanged();
 	void slotAccelerationThresholdChanged();
 	void slotAccelerationThreshAutoChanged();
+	void slotPostRender();
 
 private:
 	Ui::VisualizerWindowClass ui;

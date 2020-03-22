@@ -155,7 +155,7 @@ void GMDensityRasterizeRenderer::setSize(int width, int height)
 	m_fbo_final.setSize(width, height);
 }
 
-void GMDensityRasterizeRenderer::render(GLuint preTexture, bool blend, double densityMin, double densityMax)
+void GMDensityRasterizeRenderer::render(GLuint preTexture, bool blend, double& densityMin, double& densityMax, bool densityAuto, double autoPercentage)
 {
 	if (!m_mixture) {
 		return;
@@ -191,6 +191,19 @@ void GMDensityRasterizeRenderer::render(GLuint preTexture, bool blend, double de
 
 	m_gm_vao.bind();
 	m_gl->glDrawElementsInstanced(GL_TRIANGLES, m_geoIndices.count(), GL_UNSIGNED_INT, nullptr, m_nrValidMixtureComponents);
+
+	//Auto-Density-Scale-Mode
+	if (densityAuto) {
+		m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo_projection.getID());
+		int nrpixels = screenWidth * screenHeight;
+		float* pixeldata = new float[nrpixels];
+		m_gl->glReadPixels(0, 0, screenWidth, screenHeight, GL_RED, GL_FLOAT, pixeldata);
+		std::vector<float> pixels = std::vector<float>(pixeldata, pixeldata + nrpixels);
+		std::sort(pixels.begin(), pixels.end());
+		densityMin = 0;
+		densityMax = pixels[(pixels.size()-1) * autoPercentage];
+		delete pixeldata;
+	}
 
 	m_program_coloring->bind();
 	m_gl->glActiveTexture(GL_TEXTURE0);

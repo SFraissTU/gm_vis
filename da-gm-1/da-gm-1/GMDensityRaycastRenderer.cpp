@@ -90,7 +90,7 @@ void GMDensityRaycastRenderer::setSize(int width, int height)
 	m_fbo.setSize(width, height);
 }
 
-void GMDensityRaycastRenderer::render(GLuint preTexture, bool blend, double densityMin, double densityMax)
+void GMDensityRaycastRenderer::render(GLuint preTexture, bool blend, double& densityMin, double& densityMax, bool densityAuto, double autoPercentage)
 {
 	if (!m_mixture) {
 		return;
