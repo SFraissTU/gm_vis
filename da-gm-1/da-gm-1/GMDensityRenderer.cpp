@@ -52,6 +52,8 @@ void GMDensityRenderer::setRenderMode(GMDensityRenderMode mode)
 		m_raycastRenderer.enableAccelerationStructure();
 		break;
 	case GMDensityRenderMode::ADDITIVE_ACC_PROJECTED:
+		m_raycastRenderer.disableAccelerationStructure();
+		m_rasterizeRenderer.updateAccelerationData(m_sAccThreshold);
 		break;
 	default:
 		qDebug() << "Unsupported Render Mode\n";
@@ -60,8 +62,12 @@ void GMDensityRenderer::setRenderMode(GMDensityRenderMode mode)
 
 void GMDensityRenderer::updateAccelerationData()
 {
-	m_rasterizeRenderer.updateAccelerationData(m_sAccThreshold);
-	m_raycastRenderer.rebuildAccelerationStructure();
+	if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_OCTREE || m_sRenderMode == GMDensityRenderMode::ADDITIVE_SAMPLING_OCTREE) {
+		m_raycastRenderer.rebuildAccelerationStructure();
+	}
+	else if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_PROJECTED) {
+		m_rasterizeRenderer.updateAccelerationData(m_sAccThreshold);
+	}
 }
 
 void GMDensityRenderer::cleanup()

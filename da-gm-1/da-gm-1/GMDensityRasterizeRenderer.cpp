@@ -126,6 +126,7 @@ void GMDensityRasterizeRenderer::setMixture(GaussianMixture* mixture, double acc
 
 void GMDensityRasterizeRenderer::updateAccelerationData(double accThreshold)
 {
+	if (!m_mixture) return;
 	int n = m_mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	transforms.reserve(n);
@@ -202,7 +203,7 @@ void GMDensityRasterizeRenderer::render(GLuint preTexture, bool blend, double& d
 		std::sort(pixels.begin(), pixels.end());
 		densityMin = 0;
 		densityMax = pixels[(pixels.size()-1) * autoPercentage];
-		delete pixeldata;
+		delete[] pixeldata;
 	}
 
 	m_program_coloring->bind();

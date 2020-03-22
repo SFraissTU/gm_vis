@@ -45,7 +45,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.spin_dscalemin, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
 	(void)connect(ui.spin_dscalemax, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
 	(void)connect(ui.cb_dscaleauto, SIGNAL(stateChanged(int)), this, SLOT(slotDensityAutoChanged()));
-	(void)connect(ui.sl_dscalepercentage, SIGNAL(sliderMoved(int)), this, SLOT(slotDensityAutoChanged()));
+	(void)connect(ui.sl_dscalepercentage, SIGNAL(valueChanged(int)), this, SLOT(slotDensityAutoChanged()));
 
 	(void)connect(ui.co_densrendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotDensityRenderModeChanged()));
 	(void)connect(ui.co_ellrendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotEllipsoidRenderModeChanged()));
@@ -134,7 +134,9 @@ void VisualizerWindow::slotDensityValuesChanged()
 	renderer->setDensityMin(ui.spin_dscalemin->value() * 0.01);
 	renderer->setDensityMax(ui.spin_dscalemax->value() * 0.01);
 	ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
-	ui.openGLWidget->update();
+	if (!ui.cb_dscaleauto->isChecked()) {
+		ui.openGLWidget->update();
+	}
 }
 
 void VisualizerWindow::slotDensityAutoChanged()
@@ -161,7 +163,9 @@ void VisualizerWindow::slotAccelerationThresholdChanged()
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
 	renderer->setAccelerationThreshold(0.01f * ui.spin_accthreshold->value());
 	renderer->updateAccelerationData();
-	ui.openGLWidget->update();
+	if (!ui.cb_accthauto->isChecked() || !ui.cb_dscaleauto->isChecked()) {
+		ui.openGLWidget->update();
+	}
 }
 
 void VisualizerWindow::slotAccelerationThreshAutoChanged()
@@ -172,7 +176,7 @@ void VisualizerWindow::slotAccelerationThreshAutoChanged()
 	ui.spin_accthreshold->setEnabled(!autoth);
 	ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
 	renderer->updateAccelerationData();
-	ui.openGLWidget->update();
+		ui.openGLWidget->update();
 }
 
 void VisualizerWindow::slotPostRender()
