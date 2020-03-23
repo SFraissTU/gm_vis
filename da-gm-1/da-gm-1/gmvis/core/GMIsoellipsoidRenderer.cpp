@@ -1,6 +1,8 @@
 #include "GMIsoellipsoidRenderer.h"
 #include "Helper.h"
-#include "VisualizerWindow.h"
+#include "DataLoader.h"
+
+using namespace gmvis::core;
 
 GMIsoellipsoidRenderer::GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera) : m_gl(gl), m_camera(camera)
 {

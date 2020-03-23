@@ -1,5 +1,7 @@
 #include "PointCloudRenderer.h"
 
+using namespace gmvis::core;
+
 PointCloudRenderer::PointCloudRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera) : m_gl(gl), m_camera(camera)
 {
 }

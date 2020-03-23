@@ -4,6 +4,9 @@
 #include <QTime>
 #include <cmath>
 
+using namespace gmvis::ui;
+using namespace gmvis::core;
+
 //Partialy used this: https://code.qt.io/cgit/qt/qtbase.git/tree/examples/opengl/hellogl2?h=5.13
 
 DisplayWidget::DisplayWidget(QWidget* parent) : QOpenGLWidget(parent)

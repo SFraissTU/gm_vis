@@ -4,6 +4,8 @@
 #include <cmath>
 #include <QtMath>
 
+using namespace gmvis::core;
+
 GMDensityRasterizeRenderer::GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height) : m_gl(gl), m_camera(camera) {
 	
 }

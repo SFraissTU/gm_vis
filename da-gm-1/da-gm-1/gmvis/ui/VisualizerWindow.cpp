@@ -1,7 +1,10 @@
-#include "VisualizerWindow.h"
+#include "gmvis/ui/VisualizerWindow.h"
 #include <qfiledialog.h>
 #include <QDoubleValidator>
 #include <QComboBox>
+
+using namespace gmvis::ui;
+using namespace gmvis::core;
 
 VisualizerWindow::VisualizerWindow(QWidget *parent)
 	: QMainWindow(parent)

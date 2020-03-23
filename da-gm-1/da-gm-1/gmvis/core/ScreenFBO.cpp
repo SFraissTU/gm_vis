@@ -1,5 +1,7 @@
 #include "ScreenFBO.h"
 
+using namespace gmvis::core;
+
 ScreenFBO::ScreenFBO(QOpenGLFunctions_4_5_Core* gl, int width, int height, bool equalsize) : m_gl(gl), m_screenWidth(width), m_screenHeight(height), m_equalsize(equalsize)
 {
 	if (m_equalsize) {

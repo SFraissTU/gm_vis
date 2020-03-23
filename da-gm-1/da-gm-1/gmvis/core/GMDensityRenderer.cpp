@@ -1,6 +1,8 @@
 #include "GMDensityRenderer.h"
 #include "DataLoader.h"
 
+using namespace gmvis::core;
+
 GMDensityRenderer::GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height) : 
 	m_rasterizeRenderer(GMDensityRasterizeRenderer(gl, camera, width, height)),
 	m_raycastRenderer(GMDensityRaycastRenderer(gl, camera, width, height)),

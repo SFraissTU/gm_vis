@@ -1,5 +1,7 @@
 #include "Gaussian.h"
 
+using namespace gmvis::core;
+
 const GaussianGPU& Gaussian::getGPUData() const
 {
 	return gpudata;

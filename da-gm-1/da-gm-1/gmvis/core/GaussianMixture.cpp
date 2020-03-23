@@ -5,6 +5,8 @@
 #include <QStack>
 #include <QTime>
 
+using namespace gmvis::core;
+
 double GaussianMixture::sample(double x, double y, double z) const
 {
 	Eigen::Vector3d pos = Eigen::Vector3d(x, y, z);

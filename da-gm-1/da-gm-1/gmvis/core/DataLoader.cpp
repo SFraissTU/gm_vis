@@ -4,6 +4,8 @@
 #include <qdebug.h>
 #include <QColor>
 
+using namespace gmvis::core;
+
 std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(QFile& file, bool convertCoordinateSystem)
 {
 	if (file.open(QIODevice::ReadOnly)) {
