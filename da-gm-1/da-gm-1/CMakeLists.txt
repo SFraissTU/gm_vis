@@ -2,23 +2,9 @@ cmake_minimum_required(VERSION 3.1.0)
 
 project(visualizer)
 
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(PYTHON_H_PATH "D:/Programme/Anaconda3/include")
 
-if(CMAKE_VERSION VERSION_LESS "3.7.0")
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
-endif()
-
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
-
-include_directories(.)
-include_directories(../include)
-
-add_executable(visualizer
+set(UI_FILES
     gmvis/ui/VisualizerWindow.ui
     gmvis/ui/VisualizerWindow.qrc
     gmvis/ui/VisualizerWindow.h
@@ -26,6 +12,9 @@ add_executable(visualizer
     gmvis/ui/main.cpp
     gmvis/ui/DisplayWidget.h
     gmvis/ui/DisplayWidget.cpp
+)
+
+set(CORE_FILES
     gmvis/core/DataLoader.h
     gmvis/core/DataLoader.cpp
     gmvis/core/Camera.h
@@ -51,7 +40,38 @@ add_executable(visualizer
     gmvis/core/ScreenFBO.cpp
 )
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(CMAKE_VERSION VERSION_LESS "3.7.0")
+    set(CMAKE_INCLUDE_CURRENT_DIR ON)
+endif()
+
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+
+include_directories(.)
+include_directories(../include)
+include_directories(pybind11/include)
+include_directories(${PYTHON_H_PATH})
+
+add_subdirectory(pybind11)
+pybind11_add_module(pygmvis
+    gmvis/pylib/PythonInterface.cpp
+    ${UI_FILES}
+    ${CORE_FILES}
+   )
+
+add_executable(visualizer
+    ${UI_FILES}
+    ${CORE_FILES}
+)
+
 target_link_libraries(visualizer Qt5::Widgets)
+target_link_libraries(pygmvis PRIVATE Qt5::Widgets)
 
 add_custom_command(TARGET visualizer POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
