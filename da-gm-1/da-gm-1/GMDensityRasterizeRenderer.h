@@ -16,8 +16,7 @@ public:
 	void initialize();
 	void setMixture(GaussianMixture* mixture, double accThreshold);
 	void updateAccelerationData(double accThreshold);
-	void setSize(int width, int height);
-	void render(GLuint preTexture, bool blend, double& densityMin, double& densityMax, bool densityAuto, double autoPercentage);
+	void render(int screenWidth, int screenHeight);
 	void cleanup();
 
 private:
@@ -35,9 +34,6 @@ private:
 	QOpenGLBuffer m_indices_vbo = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
 	QOpenGLBuffer m_transf_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 	
-	ScreenFBO m_fbo_projection;
-	ScreenFBO m_fbo_final;
-
 	GLuint m_proj_locProjMatrix;
 	GLuint m_proj_locViewMatrix;
 	GLuint m_proj_locInvViewMatrix;
@@ -47,21 +43,9 @@ private:
 	GLuint m_proj_locGaussTex;
 	GLuint m_proj_bindingMixture;
 
-	GLuint m_col_bindingOutimg;
-	GLuint m_col_bindingSumimg;
-	GLuint m_col_bindingPreimg;
-	GLuint m_col_locWidth;
-	GLuint m_col_locHeight;
-	GLuint m_col_locBlend;
-	GLuint m_col_locTransferTex;
-	GLuint m_col_locDensityMin;
-	GLuint m_col_locDensityMax;
-
 	GLuint m_ssboMixture;
 	GLuint m_texGauss;
-	GLuint m_texTransfer;
 	GLuint m_nrValidMixtureComponents;
 
 	std::unique_ptr<QOpenGLShaderProgram> m_program_projection;
-	std::unique_ptr<QOpenGLShaderProgram> m_program_coloring;
 };

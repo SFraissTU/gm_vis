@@ -34,6 +34,9 @@ public:
 	static bool isAccelerated(GMDensityRenderMode mode);
 
 private:
+	QOpenGLFunctions_4_5_Core* m_gl;
+	GaussianMixture* m_mixture = nullptr;
+
 	GMDensityRasterizeRenderer m_rasterizeRenderer;
 	GMDensityRaycastRenderer m_raycastRenderer;
 
@@ -45,5 +48,22 @@ private:
 	double m_sDensityAutoPerc = 0.9;
 	double m_sAccThreshold  = 0.0000005;
 	bool   m_sAccThreshAuto = true;
+
+	ScreenFBO m_fbo_intermediate;
+	ScreenFBO m_fbo_final;
+
+	GLuint m_col_bindingOutimg;
+	GLuint m_col_bindingSumimg;
+	GLuint m_col_bindingPreimg;
+	GLuint m_col_locWidth;
+	GLuint m_col_locHeight;
+	GLuint m_col_locBlend;
+	GLuint m_col_locTransferTex;
+	GLuint m_col_locDensityMin;
+	GLuint m_col_locDensityMax;
+
+	GLuint m_texTransfer;
+
+	std::unique_ptr<QOpenGLShaderProgram> m_program_coloring;
 	
 };

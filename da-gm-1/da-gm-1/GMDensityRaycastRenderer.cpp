@@ -3,14 +3,12 @@
 #include <cmath>
 #include <QtMath>
 
-GMDensityRaycastRenderer::GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height) : m_gl(gl), m_camera(camera), m_fbo(ScreenFBO(gl, width, height, false)) {
+GMDensityRaycastRenderer::GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height) : m_gl(gl), m_camera(camera) {
 	
 }
 
 void GMDensityRaycastRenderer::initialize()
 {
-	m_fbo.initialize();
-
 	m_program_regular = std::make_unique<QOpenGLShaderProgram>();
 	m_program_regular->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_exact.comp");
 	m_program_regular->link();
@@ -33,15 +31,8 @@ void GMDensityRaycastRenderer::initialize()
 	m_locHeight = m_program_regular->uniformLocation("height");
 	m_locFov = m_program_regular->uniformLocation("fov");
 	m_locGaussTex = m_program_regular->uniformLocation("gaussTex");
-	m_locTransferTex = m_program_regular->uniformLocation("transferTex");
-	m_locPreImg = m_program_regular->uniformLocation("img_pre");
-	m_locBlend = m_program_regular->uniformLocation("blend");
-	m_locDensityMin = m_program_regular->uniformLocation("densitymin");
-	m_locDensityMax = m_program_regular->uniformLocation("densitymax");
 
 	m_program_regular->release();
-
-	m_fbo.attachColorTexture();
 
 	double factor = 1.0 / sqrt(0.5);
 	float* gaussdata = new float[1001];
@@ -60,15 +51,6 @@ void GMDensityRaycastRenderer::initialize()
 	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, 1001, 0, GL_RED, GL_FLOAT, gaussdata);
 	delete[] gaussdata;
 
-	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
-	m_gl->glGenTextures(1, &m_texTransfer);
-	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
-	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
-
 	m_gl->glCreateBuffers(1, &m_ssboMixture);
 	m_gl->glCreateBuffers(1, &m_ssboOctree);
 }
@@ -85,22 +67,11 @@ void GMDensityRaycastRenderer::setMixture(GaussianMixture* mixture)
 	}
 }
 
-void GMDensityRaycastRenderer::setSize(int width, int height)
-{
-	m_fbo.setSize(width, height);
-}
-
-void GMDensityRaycastRenderer::render(GLuint preTexture, bool blend, double& densityMin, double& densityMax, bool densityAuto, double autoPercentage)
+void GMDensityRaycastRenderer::render(GLuint outTexture, int screenWidth, int screenHeight)
 {
 	if (!m_mixture) {
 		return;
 	}
-
-	/*m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, depthTexture);
-
-	m_gl->glBlitFramebuffer(0, 0, m_fbo.getWidth(), m_fbo.getHeight(), 0, 0, m_fbo.getWidth(), m_fbo.getHeight(),
-		GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	return;*/
 
 	auto& currentProgram = m_useAccelerationStructure ? 
 		(m_useSampling ? m_program_sampling : m_program_accelerated)
@@ -108,17 +79,11 @@ void GMDensityRaycastRenderer::render(GLuint preTexture, bool blend, double& den
 	
 	currentProgram->bind();
 	m_gl->glActiveTexture(GL_TEXTURE0);
-	m_gl->glBindImageTexture(0, m_fbo.getColorTexture(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+	m_gl->glBindImageTexture(0, outTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 	currentProgram->setUniformValue(m_locOuttex, 0);
 	m_gl->glActiveTexture(GL_TEXTURE1);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
 	currentProgram->setUniformValue(m_locGaussTex, 1);
-	m_gl->glActiveTexture(GL_TEXTURE2);
-	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
-	currentProgram->setUniformValue(m_locTransferTex, 2);
-	m_gl->glActiveTexture(GL_TEXTURE3);
-	m_gl->glBindImageTexture(3, preTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
-	currentProgram->setUniformValue(m_locPreImg, 3);
 
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_bindingMixture, m_ssboMixture);
@@ -130,22 +95,12 @@ void GMDensityRaycastRenderer::render(GLuint preTexture, bool blend, double& den
 
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-	int screenWidth = m_fbo.getWidth();
-	int screenHeight = m_fbo.getHeight();
 	m_program_regular->setUniformValue(m_locWidth, screenWidth);
 	m_program_regular->setUniformValue(m_locHeight, screenHeight);
 	m_program_regular->setUniformValue(m_locInvViewMatrix, m_camera->getViewMatrix().inverted());
 	m_program_regular->setUniformValue(m_locFov, qDegreesToRadians(m_camera->getFoV()));
-	m_program_regular->setUniformValue(m_locBlend, blend ? 0.5f : 1.0f);
-	m_program_regular->setUniformValue(m_locDensityMin, (float)densityMin);
-	m_program_regular->setUniformValue(m_locDensityMax, (float)densityMax);
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
-	m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo.getID());
-
-	m_gl->glBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight,
-		GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }
 
 void GMDensityRaycastRenderer::enableAccelerationStructure()
@@ -193,7 +148,6 @@ void GMDensityRaycastRenderer::setAccelerationThreshold(double threshold)
 
 void GMDensityRaycastRenderer::cleanup()
 {
-	m_fbo.cleanup();
 	m_program_regular.reset();
 	m_program_accelerated.reset();
 	m_program_sampling.reset();

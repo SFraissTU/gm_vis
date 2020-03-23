@@ -14,8 +14,7 @@ public:
 	GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height);
 	void initialize();
 	void setMixture(GaussianMixture* mixture);
-	void setSize(int width, int height);
-	void render(GLuint preTexture, bool blend, double& densityMin, double& densityMax, bool densityAuto, double autoPercentage);
+	void render(GLuint outTexture, int screenWidth, int screenHeight);
 	void enableAccelerationStructure();
 	void disableAccelerationStructure();
 	void rebuildAccelerationStructure();
@@ -29,26 +28,18 @@ private:
 	Camera* m_camera;
 	GaussianMixture* m_mixture = nullptr;
 
-	ScreenFBO m_fbo;
-
 	GLuint m_locOuttex;
 	GLuint m_locInvViewMatrix;
 	GLuint m_locFov;
 	GLuint m_locWidth;
 	GLuint m_locHeight;
 	GLuint m_locGaussTex;
-	GLuint m_locTransferTex;
-	GLuint m_locPreImg;
-	GLuint m_locBlend;
-	GLuint m_locDensityMin;
-	GLuint m_locDensityMax;
 	GLuint m_bindingMixture;
 	GLuint m_bindingOctree;
 
 	GLuint m_ssboMixture;
 	GLuint m_ssboOctree;
 	GLuint m_texGauss;
-	GLuint m_texTransfer;
 
 	bool m_useSampling = false;
 	bool m_validAccelerationStructure = false;
