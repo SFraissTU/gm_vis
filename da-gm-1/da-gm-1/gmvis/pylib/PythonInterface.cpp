@@ -5,7 +5,8 @@
 #include <pybind11/pybind11.h>
 #pragma pop_macro("slots")
 
-#include <qapplication.h>
+#include <QApplication>
+#include <QDate>
 
 using namespace gmvis::pylib;
 
@@ -24,6 +25,7 @@ int main(int argc, char* argv[])
 	context->setFormat(surface->format());
 	context->create();
 	context->makeCurrent(surface);
+	
 }
 
 void PythonInterface::startVisualizer() {
@@ -33,6 +35,8 @@ void PythonInterface::startVisualizer() {
 
 void PythonInterface::initialize() {
 	//visualizer->initialize(500, 500);
+	QDate d = QDate();
+	qDebug() << d.day() << "\n";
 }
 
 PYBIND11_MODULE(pygmvis, m) {

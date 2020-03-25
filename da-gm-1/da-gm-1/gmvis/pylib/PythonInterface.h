@@ -1,6 +1,5 @@
 #pragma once
 #include <memory>
-#include <QObject>
 #include "gmvis/pylib/OffscreenRenderSurface.h"
 
 namespace gmvis::pylib {
