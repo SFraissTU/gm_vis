@@ -13,7 +13,7 @@ DisplayWidget::DisplayWidget(QWidget* parent) : QOpenGLWidget(parent)
 {
 	QSurfaceFormat format;
 	format.setMajorVersion(4);
-	format.setMinorVersion(6);
+	format.setMinorVersion(5);
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	format.setOption(QSurfaceFormat::DebugContext);
 	setFormat(format);
@@ -93,6 +93,8 @@ void DisplayWidget::cleanup() {
 		m_densityRenderer->cleanup();
 		m_densityRenderer.reset();
 		m_debugLogger.reset();
+		m_fboIntermediate->cleanup();
+		m_fboIntermediate.reset();
 	}
 	doneCurrent();
 }

@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.1.0)
 project(visualizer)
 
 set(PYTHON_H_PATH "D:/Programme/Anaconda3/include")
+#PYTHON_LIB_PATH is only needed for test app for python lib
+set(PYTHON_LIB_PATH "D:/Programme/Anaconda3/pkgs/python-3.6.9-h5500b2f_0/libs/python36.lib")
 
 set(UI_FILES
     gmvis/ui/VisualizerWindow.ui
@@ -12,6 +14,13 @@ set(UI_FILES
     gmvis/ui/main.cpp
     gmvis/ui/DisplayWidget.h
     gmvis/ui/DisplayWidget.cpp
+)
+
+set(PY_FILES
+    gmvis/pylib/PythonInterface.h
+    gmvis/pylib/PythonInterface.cpp
+    gmvis/pylib/OffscreenRenderSurface.h
+    gmvis/pylib/OffscreenRenderSurface.cpp
 )
 
 set(CORE_FILES
@@ -60,8 +69,7 @@ include_directories(${PYTHON_H_PATH})
 
 add_subdirectory(pybind11)
 pybind11_add_module(pygmvis
-    gmvis/pylib/PythonInterface.cpp
-    ${UI_FILES}
+    ${PY_FILES}
     ${CORE_FILES}
    )
 
@@ -70,7 +78,13 @@ add_executable(visualizer
     ${CORE_FILES}
 )
 
-target_link_libraries(visualizer Qt5::Widgets)
+add_executable(pythontest
+    ${PY_FILES}
+    ${CORE_FILES}
+)
+
+target_link_libraries(visualizer Qt5::Widgets ${PYTHON_LIB_PATH})
+target_link_libraries(pythontest Qt5::Widgets ${PYTHON_LIB_PATH})
 target_link_libraries(pygmvis PRIVATE Qt5::Widgets)
 
 add_custom_command(TARGET visualizer POST_BUILD
