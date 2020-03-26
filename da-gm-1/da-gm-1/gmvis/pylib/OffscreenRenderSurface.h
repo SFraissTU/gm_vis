@@ -11,12 +11,12 @@
 
 namespace gmvis::pylib {
 
-	class OffscreenRenderSurface : public QOffscreenSurface, public QObject, public QOpenGLFunctions_4_5_Core {
+	class OffscreenRenderSurface : public QOffscreenSurface, public QOpenGLFunctions_4_5_Core {
 		Q_OBJECT
 
 	public:
 		OffscreenRenderSurface();
-		~OffscreenRenderSurface() {};
+		~OffscreenRenderSurface();
 
 		void initialize(int width, int height);
 		void render();

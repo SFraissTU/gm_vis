@@ -5,42 +5,38 @@
 #include <pybind11/pybind11.h>
 #pragma pop_macro("slots")
 
-#include <QApplication>
 #include <QDate>
 
 using namespace gmvis::pylib;
 
+std::unique_ptr<QApplication> PythonInterface::application;
 std::unique_ptr<OffscreenRenderSurface> PythonInterface::visualizer;
 
 
 int main(int argc, char* argv[])
 {
-	QApplication a(argc, (char**)nullptr);
-
-	QOffscreenSurface* surface = new QOffscreenSurface();
-	surface->requestedFormat().setVersion(4, 5);
-	surface->setFormat(surface->requestedFormat());
-
-	QOpenGLContext* context = new QOpenGLContext();
-	context->setFormat(surface->format());
-	context->create();
-	context->makeCurrent(surface);
-	
+	PythonInterface::startVisualizer();
+	PythonInterface::initialize();
+	PythonInterface::exit();
 }
 
 void PythonInterface::startVisualizer() {
-	main(0, nullptr);
-	//visualizer = std::make_unique<OffscreenRenderSurface>();
+	int argc = 0;
+	application = std::make_unique<QApplication>(argc, nullptr);
+	visualizer = std::make_unique<OffscreenRenderSurface>();
 }
 
 void PythonInterface::initialize() {
-	//visualizer->initialize(500, 500);
-	QDate d = QDate();
-	qDebug() << d.day() << "\n";
+	visualizer->initialize(500, 500);
+}
+
+void PythonInterface::exit() {
+	application->exit();
 }
 
 PYBIND11_MODULE(pygmvis, m) {
 	m.doc() = "pybind11 example plugin";
 	m.def("start_visualizer", &PythonInterface::startVisualizer, "Starts a new visualizer instance");
 	m.def("initialize", &PythonInterface::initialize, "Initializes the Visualizer");
+	m.def("exit", &PythonInterface::exit, "Stops the visualizer");
 }

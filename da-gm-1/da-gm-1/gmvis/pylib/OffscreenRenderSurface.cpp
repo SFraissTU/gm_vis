@@ -5,57 +5,51 @@ using namespace gmvis::pylib;
 using namespace gmvis::core;
 
 OffscreenRenderSurface::OffscreenRenderSurface() : 
-	QOffscreenSurface(QGuiApplication::primaryScreen()) {
-	/*QSurfaceFormat format;
-	format.setMajorVersion(4);
-	format.setMinorVersion(5);
-	format.setProfile(QSurfaceFormat::CoreProfile);
-	format.setOption(QSurfaceFormat::DebugContext);
-	setFormat(format);*/
-}
-
-void OffscreenRenderSurface::initialize(int width, int height) {
-	qDebug() << "1\n";
-	//create();
-	m_context = std::make_unique<QOpenGLContext>();
+	QOffscreenSurface() {
 	QSurfaceFormat format;
 	format.setMajorVersion(4);
 	format.setMinorVersion(5);
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	format.setOption(QSurfaceFormat::DebugContext);
-	m_context->setFormat(format);
-	qDebug() << "2\n";
+	setFormat(format);
+}
+
+OffscreenRenderSurface::~OffscreenRenderSurface() {
+	cleanup();
+}
+
+void OffscreenRenderSurface::initialize(int width, int height) {
+	create();
+	m_context = std::make_unique<QOpenGLContext>();
+	m_context->setFormat(format());
 	m_context->create();
-	qDebug() << "2\n";
 	m_context->makeCurrent(static_cast<QOffscreenSurface*>(this));
-	qDebug() << "2\n";
+	setOwningContext(m_context.get());
+
 	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width) / height, 0.01f, 1000.0f);
 	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get(), width, height);
-	qDebug() << "3\n";
+	
 	initializeOpenGLFunctions();
-	qDebug() << "4\n";
-	(void)QObject::connect(m_context.get(), &QOpenGLContext::aboutToBeDestroyed, this, &OffscreenRenderSurface::cleanup);
-	qDebug() << "5\n";
+	
 	m_pointcloudRenderer->initialize();
 	m_isoellipsoidRenderer->initialize();
 	m_densityRenderer->initialize();
-	qDebug() << "6\n";
+	
 	m_fbo = std::make_unique<ScreenFBO>(static_cast<QOpenGLFunctions_4_5_Core*>(this), width, height);
 	m_fbo->initialize();
 	m_fbo->attachColorTexture();
 	m_fbo->attachDepthTexture();
-	qDebug() << "7\n";
+	
 	m_debugLogger = std::make_unique<QOpenGLDebugLogger>(this);
 	if (m_debugLogger->initialize()) {
 		qDebug() << "GL_DEBUG Debug Logger " << m_debugLogger.get() << "\n";
 		(void)QObject::connect(m_debugLogger.get(), &QOpenGLDebugLogger::messageLogged, this, &OffscreenRenderSurface::messageLogged);
 		m_debugLogger->startLogging();
 	}
-	qDebug() << "8\n";
+	
 	glClearColor(0, 0, 0, 1);
-	qDebug() << "9\n";
 }
 
 void OffscreenRenderSurface::render() {
@@ -86,10 +80,12 @@ void OffscreenRenderSurface::render() {
 }
 
 void OffscreenRenderSurface::cleanup() {
+	m_context->makeCurrent(this);
 	m_pointcloudRenderer->cleanup();
 	m_isoellipsoidRenderer->cleanup();
 	m_densityRenderer->cleanup();
 	m_fbo->cleanup();
+	m_context->doneCurrent();
 }
 
 
