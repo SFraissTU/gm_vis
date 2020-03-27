@@ -1,5 +1,6 @@
 #include "OffscreenRenderSurface.h"
 #include <QGuiApplication>
+#include "lodepng.h"
 
 using namespace gmvis::pylib;
 using namespace gmvis::core;
@@ -60,7 +61,9 @@ void OffscreenRenderSurface::render() {
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glDisable(GL_BLEND);
-		glViewport(0, 0, m_fbo->getWidth(), m_fbo->getHeight());
+		int width = m_fbo->getWidth();
+		int height = m_fbo->getHeight();
+		glViewport(0, 0, width, height);
 
 		if (m_sDisplayPoints) {
 			m_pointcloudRenderer->render();
@@ -68,15 +71,51 @@ void OffscreenRenderSurface::render() {
 		if (m_sDisplayEllipsoids) {
 			m_isoellipsoidRenderer->render();
 		}
-
-		//ToDo: STORE!
+		storeImage("C:/Users/SimonFraiss/Desktop/elli.png");
 	}
 
 	if (m_sDisplayDensity) {
 		m_densityRenderer->render(m_fbo->getColorTexture(), false);
 
-		//ToDo: STORE!
+		storeImage("C:/Users/SimonFraiss/Desktop/dens.png");
 	}
+}
+
+PointCloudRenderer* OffscreenRenderSurface::getPointCloudRenderer()
+{
+	return m_pointcloudRenderer.get();
+}
+
+GMIsoellipsoidRenderer* OffscreenRenderSurface::getGMIsoellipsoidRenderer()
+{
+	return m_isoellipsoidRenderer.get();
+}
+
+GMDensityRenderer* OffscreenRenderSurface::getGMDensityRenderer()
+{
+	return m_densityRenderer.get();
+}
+
+void OffscreenRenderSurface::storeImage(std::string filename)
+{
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo->getID());
+	int width = m_fbo->getWidth();
+	int height = m_fbo->getHeight();
+	float* pixels = new float[width * height * 4];
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, pixels);
+	std::vector<unsigned char> image;
+	image.resize(width * height * 4);
+	for (int x = 0; x < width; ++x) {
+		for (int y = 0; y < height; ++y) {
+			int idx = (4 * width * y) + (4 * x);
+			int glidx = (4 * width * (height - 1 -y)) + 4 * x;
+			image[idx + 0] = std::min(int(pixels[glidx + 0]*255.0f), 255);
+			image[idx + 1] = std::min(int(pixels[glidx + 1]*255.0f), 255);
+			image[idx + 2] = std::min(int(pixels[glidx + 2]*255.0f), 255);
+			image[idx + 3] = 255;
+		}
+	}
+	lodepng::encode(filename, image, width, height);
 }
 
 void OffscreenRenderSurface::cleanup() {

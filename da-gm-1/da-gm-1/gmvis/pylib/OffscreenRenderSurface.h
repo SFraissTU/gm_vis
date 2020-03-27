@@ -8,6 +8,7 @@
 #include "gmvis/core/PointCloudRenderer.h"
 #include "gmvis/core/GMIsoellipsoidRenderer.h"
 #include "gmvis/core/GMDensityRenderer.h"
+#include "gmvis/core/GaussianMixture.h"
 
 namespace gmvis::pylib {
 
@@ -19,7 +20,12 @@ namespace gmvis::pylib {
 		~OffscreenRenderSurface();
 
 		void initialize(int width, int height);
+		void setMixture(core::GaussianMixture* mixture);
 		void render();
+
+		core::PointCloudRenderer* getPointCloudRenderer();
+		core::GMIsoellipsoidRenderer* getGMIsoellipsoidRenderer();
+		core::GMDensityRenderer* getGMDensityRenderer();
 
 	public slots:
 		void cleanup();
@@ -46,5 +52,7 @@ namespace gmvis::pylib {
 
 		//Matrices (TODO)
 		std::unique_ptr<core::Camera> m_camera;
+
+		void storeImage(std::string filename);
 	};
 }
