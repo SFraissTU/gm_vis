@@ -53,32 +53,47 @@ void OffscreenRenderSurface::initialize(int width, int height) {
 	glClearColor(0, 0, 0, 1);
 }
 
-void OffscreenRenderSurface::render() {
+void gmvis::pylib::OffscreenRenderSurface::setSize(int width, int height)
+{
+	m_camera->setAspectRatio(GLfloat(width) / height);
+	m_fbo->setSize(width, height);
+	m_densityRenderer->setSize(width, height);
+}
+
+void gmvis::pylib::OffscreenRenderSurface::setMixture(core::GaussianMixture* mixture)
+{
+	m_isoellipsoidRenderer->setMixture(mixture);
+	m_densityRenderer->setMixture(mixture);
+}
+
+std::vector<Image> OffscreenRenderSurface::render() {
+	std::vector<Image> images;
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo->getID());
-	if (m_sDisplayPoints || m_sDisplayEllipsoids) {
+	int width = m_fbo->getWidth();
+	int height = m_fbo->getHeight();
+	if (m_sDisplayEllipsoids) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glDisable(GL_BLEND);
-		int width = m_fbo->getWidth();
-		int height = m_fbo->getHeight();
 		glViewport(0, 0, width, height);
 
 		if (m_sDisplayPoints) {
 			m_pointcloudRenderer->render();
 		}
-		if (m_sDisplayEllipsoids) {
-			m_isoellipsoidRenderer->render();
-		}
-		storeImage("C:/Users/SimonFraiss/Desktop/elli.png");
+		m_isoellipsoidRenderer->render();
+		images.emplace_back(width, height, 4);
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[0].data());
 	}
 
 	if (m_sDisplayDensity) {
 		m_densityRenderer->render(m_fbo->getColorTexture(), false);
 
-		storeImage("C:/Users/SimonFraiss/Desktop/dens.png");
+		images.emplace_back(0, 0, width, height);
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[m_sDisplayEllipsoids].data());
 	}
+	return images;
 }
 
 PointCloudRenderer* OffscreenRenderSurface::getPointCloudRenderer()
@@ -94,6 +109,36 @@ GMIsoellipsoidRenderer* OffscreenRenderSurface::getGMIsoellipsoidRenderer()
 GMDensityRenderer* OffscreenRenderSurface::getGMDensityRenderer()
 {
 	return m_densityRenderer.get();
+}
+
+void OffscreenRenderSurface::setPointDisplayEnabled(bool enabled)
+{
+	m_sDisplayPoints = enabled;
+}
+
+void OffscreenRenderSurface::setEllipsoidDisplayEnabled(bool enabled)
+{
+	m_sDisplayEllipsoids = enabled;
+}
+
+void OffscreenRenderSurface::setDensityDisplayEnabled(bool enabled)
+{
+	m_sDisplayDensity = enabled;
+}
+
+bool OffscreenRenderSurface::isPointDisplayEnabled()
+{
+	return m_sDisplayPoints;
+}
+
+bool OffscreenRenderSurface::isEllipsoidDisplayEnabled()
+{
+	return m_sDisplayEllipsoids;
+}
+
+bool OffscreenRenderSurface::isDensityDisplayEnabled()
+{
+	return m_sDisplayDensity;
 }
 
 void OffscreenRenderSurface::storeImage(std::string filename)
@@ -116,6 +161,7 @@ void OffscreenRenderSurface::storeImage(std::string filename)
 		}
 	}
 	lodepng::encode(filename, image, width, height);
+	delete pixels;
 }
 
 void OffscreenRenderSurface::cleanup() {

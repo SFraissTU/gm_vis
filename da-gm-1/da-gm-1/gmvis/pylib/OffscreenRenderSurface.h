@@ -9,6 +9,7 @@
 #include "gmvis/core/GMIsoellipsoidRenderer.h"
 #include "gmvis/core/GMDensityRenderer.h"
 #include "gmvis/core/GaussianMixture.h"
+#include "gmvis/pylib/Image.h"
 
 namespace gmvis::pylib {
 
@@ -20,12 +21,21 @@ namespace gmvis::pylib {
 		~OffscreenRenderSurface();
 
 		void initialize(int width, int height);
+		void setSize(int width, int height);
 		void setMixture(core::GaussianMixture* mixture);
-		void render();
+		std::vector<Image> render();
 
 		core::PointCloudRenderer* getPointCloudRenderer();
 		core::GMIsoellipsoidRenderer* getGMIsoellipsoidRenderer();
 		core::GMDensityRenderer* getGMDensityRenderer();
+
+		void setPointDisplayEnabled(bool enabled);
+		void setEllipsoidDisplayEnabled(bool enabled);
+		void setDensityDisplayEnabled(bool enabled);
+
+		bool isPointDisplayEnabled();
+		bool isEllipsoidDisplayEnabled();
+		bool isDensityDisplayEnabled();
 
 	public slots:
 		void cleanup();
