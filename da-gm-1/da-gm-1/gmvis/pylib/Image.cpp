@@ -10,7 +10,7 @@ Image::Image(size_t width, size_t height, size_t channels)
 
 Image::~Image()
 {
-	delete m_data;
+	delete[] m_data;
 }
 
 float* Image::data()
@@ -33,14 +33,23 @@ size_t Image::channels() const
 	return m_channels;
 }
 
-py::buffer_info Image::bufferInfo(Image& i)
+//py::buffer_info Image::bufferInfo(Image& i)
+//{
+//	return py::buffer_info(
+//		i.data(),
+//		sizeof(float),
+//		py::format_descriptor<float>::format(),
+//		3,
+//		{ i.m_height, i.m_width, i.m_channels},
+//		{ sizeof(float) * i.m_channels * i.m_width, sizeof(float) * i.m_channels, sizeof(float) }
+//	);
+//}
+
+py::array_t<float> Image::toNpArray()
 {
-	return py::buffer_info(
-		i.data(),
-		sizeof(float),
-		py::format_descriptor<float>::format(),
-		3,
-		{ i.m_height, i.m_width, i.m_channels},
-		{ sizeof(float) * i.m_channels * i.m_width, sizeof(float) * i.m_channels, sizeof(float) }
+	return py::array_t<float>(
+		{ m_height, m_width, m_channels },
+		{ sizeof(float) * m_channels * m_width, sizeof(float) * m_channels, sizeof(float) },
+		m_data
 	);
 }

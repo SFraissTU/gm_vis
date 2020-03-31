@@ -23,7 +23,7 @@ namespace gmvis::pylib {
 		void initialize(int width, int height);
 		void setSize(int width, int height);
 		void setMixture(core::GaussianMixture* mixture);
-		std::vector<Image> render();
+		std::vector<std::unique_ptr<Image>> render();
 
 		core::PointCloudRenderer* getPointCloudRenderer();
 		core::GMIsoellipsoidRenderer* getGMIsoellipsoidRenderer();

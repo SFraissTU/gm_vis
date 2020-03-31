@@ -16,6 +16,14 @@
 
 namespace py = pybind11;
 
+void pyprint(std::string str) {
+#ifdef PY_LIB
+	py::print(str);
+#else
+	qDebug() << QString(str.c_str()) << "\n";
+#endif
+}
+
 namespace gmvis::pylib {
 
 	class PythonInterface {
@@ -35,8 +43,11 @@ namespace gmvis::pylib {
 		static void set_tensorboard_writer(py::object writer);
 		static void start_rendering();
 		static void render(std::string gmpath, int epoch);
+		static void finish_rendering();
 		static void stop_rendering();
 		static void shutdown();
+
+		static py::array_t<float> buffertest();
 
 	private:
 		static PythonInterface pinterface;

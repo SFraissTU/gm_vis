@@ -66,8 +66,8 @@ void gmvis::pylib::OffscreenRenderSurface::setMixture(core::GaussianMixture* mix
 	m_densityRenderer->setMixture(mixture);
 }
 
-std::vector<Image> OffscreenRenderSurface::render() {
-	std::vector<Image> images;
+std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
+	std::vector<std::unique_ptr<Image>> images;
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo->getID());
 	int width = m_fbo->getWidth();
 	int height = m_fbo->getHeight();
@@ -83,17 +83,21 @@ std::vector<Image> OffscreenRenderSurface::render() {
 			m_pointcloudRenderer->render();
 		}
 		m_isoellipsoidRenderer->render();
-		images.emplace_back(width, height, 4);
-		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[0].data());
+		images.push_back(std::make_unique<Image>(width, height, 4));
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[0]->data());
 	}
 
 	if (m_sDisplayDensity) {
 		m_densityRenderer->render(m_fbo->getColorTexture(), false);
 
-		images.emplace_back(0, 0, width, height);
-		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[m_sDisplayEllipsoids].data());
+		if (m_densityRenderer->getDensityAuto() && m_densityRenderer->getAccelerationThresholdAuto()) {
+			m_densityRenderer->render(m_fbo->getColorTexture(), false);
+		}
+
+		images.push_back(std::make_unique<Image>(width, height, 4));
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[m_sDisplayEllipsoids]->data());
 	}
-	return images;
+	return std::move(images);
 }
 
 PointCloudRenderer* OffscreenRenderSurface::getPointCloudRenderer()

@@ -3,7 +3,7 @@
 namespace gmvis::core {
 
 	enum class GMDensityRenderMode {
-		ADDITIVE = 1,
+		ADDITIVE_EXACT = 1,
 		ADDITIVE_ACC_OCTREE = 2,
 		ADDITIVE_ACC_PROJECTED = 3,
 		ADDITIVE_SAMPLING_OCTREE = 4

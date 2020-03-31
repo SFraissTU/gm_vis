@@ -132,7 +132,7 @@ void GMDensityRenderer::setRenderMode(GMDensityRenderMode mode)
 {
 	m_sRenderMode = mode;
 	switch (m_sRenderMode) {
-	case GMDensityRenderMode::ADDITIVE:
+	case GMDensityRenderMode::ADDITIVE_EXACT:
 		m_raycastRenderer.disableAccelerationStructure();
 		break;
 	case GMDensityRenderMode::ADDITIVE_SAMPLING_OCTREE:

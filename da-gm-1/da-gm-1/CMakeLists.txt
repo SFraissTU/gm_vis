@@ -90,6 +90,7 @@ add_executable(pythontest
 target_link_libraries(visualizer Qt5::Widgets ${PYTHON_LIB_PATH})
 target_link_libraries(pythontest Qt5::Widgets ${PYTHON_LIB_PATH})
 target_link_libraries(pygmvis PRIVATE Qt5::Widgets)
+target_compile_definitions(pygmvis PUBLIC PY_LIB)
 
 add_custom_command(TARGET visualizer POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
