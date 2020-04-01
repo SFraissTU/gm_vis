@@ -21,6 +21,11 @@ namespace gmvis::core {
 		void zoom(float amount);
 		void translateAlongScreen(const float x, const float y);
 
+		void setTranslation(QVector3D translation);
+		void setXRotation(float xRot);
+		void setYRotation(float yRot);
+		void setRadius(float radius);
+
 		const QMatrix4x4& getViewMatrix();
 		const QMatrix4x4& getProjMatrix() const;
 
@@ -41,7 +46,7 @@ namespace gmvis::core {
 		QMatrix4x4 m_view;
 		bool m_viewDirty = true;
 
-		//Control stuff
+		//Control stuff (From these the view matrix is calculated!)
 		float m_xRot = 90.0f;
 		float m_yRot = 0;
 		float m_radius = 40.0f;

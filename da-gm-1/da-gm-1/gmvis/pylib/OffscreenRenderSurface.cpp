@@ -53,6 +53,11 @@ void OffscreenRenderSurface::initialize(int width, int height) {
 	glClearColor(0, 0, 0, 1);
 }
 
+Camera* gmvis::pylib::OffscreenRenderSurface::getCamera()
+{
+	return m_camera.get();
+}
+
 void gmvis::pylib::OffscreenRenderSurface::setSize(int width, int height)
 {
 	m_camera->setAspectRatio(GLfloat(width) / height);

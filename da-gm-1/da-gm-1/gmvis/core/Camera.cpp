@@ -90,6 +90,30 @@ void Camera::translateAlongScreen(const float x, const float y)
 	m_viewDirty = true;
 }
 
+void gmvis::core::Camera::setTranslation(QVector3D translation)
+{
+	m_translation = translation;
+	m_viewDirty = true;
+}
+
+void gmvis::core::Camera::setXRotation(float xRot)
+{
+	m_xRot = xRot;
+	m_viewDirty = true;
+}
+
+void gmvis::core::Camera::setYRotation(float yRot)
+{
+	m_yRot = yRot;
+	m_viewDirty = true;
+}
+
+void gmvis::core::Camera::setRadius(float radius)
+{
+	m_radius = radius;
+	m_viewDirty = true;
+}
+
 const QMatrix4x4& Camera::getViewMatrix()
 {
 	if (m_viewDirty) {

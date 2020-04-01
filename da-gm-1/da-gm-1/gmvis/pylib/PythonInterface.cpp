@@ -1,6 +1,7 @@
 
 #include "PythonInterface.h"
 #include "gmvis/core/DataLoader.h"
+#include "gmvis/core/Camera.h"
 #include <thread>
 
 using namespace gmvis::pylib;
@@ -40,17 +41,23 @@ void PythonInterface::set_image_size(int width, int height)
 
 void gmvis::pylib::PythonInterface::set_camera_auto(bool mode)
 {
-	//TODO
+	pushCommand([mode]() {
+		pinterface.cameraAuto = mode;
+		if (pinterface.pointcloud) {
+			calculateCameraPositionByPointcloud();
+		}
+	});
 }
 
-void gmvis::pylib::PythonInterface::set_camera_position(float x, float y, float z)
+void gmvis::pylib::PythonInterface::set_camera_position(float lookat_x, float lookat_y, float lookat_z, float xRot, float yRot, float radius)
 {
-	//TODO
-}
-
-void gmvis::pylib::PythonInterface::set_camera_lookat(float x, float y, float z)
-{
-	//TODO
+	pushCommand([=]() {
+		auto camera = pinterface.visualizer->getCamera();
+		camera->setTranslation(QVector3D(lookat_x, lookat_y, lookat_z));
+		camera->setXRotation(xRot);
+		camera->setYRotation(yRot);
+		camera->setRadius(radius);
+	});
 }
 
 void PythonInterface::set_ellipsoid_rendering(bool ellipsoids, bool pointcloud)
@@ -117,6 +124,9 @@ void gmvis::pylib::PythonInterface::set_pointcloud(std::string path)
 		if (newPC) {
 			pinterface.pointcloud = std::move(newPC);
 			pinterface.visualizer->getPointCloudRenderer()->setPointCloud(pinterface.pointcloud.get());
+			if (pinterface.cameraAuto) {
+				calculateCameraPositionByPointcloud();
+			}
 		}
 	});
 }
@@ -253,14 +263,28 @@ void gmvis::pylib::PythonInterface::visThread()
 	pyprint("Visualizer: Thread stopped");
 }
 
+void gmvis::pylib::PythonInterface::calculateCameraPositionByPointcloud()
+{
+	if (pinterface.pointcloud) {
+		QVector3D min = pinterface.pointcloud->getBBMin();
+		QVector3D max = pinterface.pointcloud->getBBMax();
+		QVector3D center = (min + max) / 2.0;
+		QVector3D extend = (min - max) / 2.0;
+		auto cam = pinterface.visualizer->getCamera();
+		cam->setTranslation(center);
+		cam->setRadius(std::max(extend.x(), std::max(extend.y(), extend.z())) * 5);
+		cam->setXRotation(45);
+		cam->setYRotation(-135);
+	}
+}
+
 PYBIND11_MODULE(pygmvis, m) {
 	m.doc() = "GM Visualizer";
 
 	m.def("initialize", &PythonInterface::initialize, "Initializes the Visualizer", py::arg("width") = 500, py::arg("height") = 500);
 	m.def("set_mage_size", &PythonInterface::set_image_size, "width"_a, "height"_a);
 	m.def("set_camera_auto", &PythonInterface::set_camera_auto, "mode"_a);
-	m.def("set_camera_position", &PythonInterface::set_camera_position, "x"_a, "y"_a, "z"_a);
-	m.def("set_camera_lookat", &PythonInterface::set_camera_lookat, "x"_a, "y"_a, "z"_a);
+	m.def("set_camera_position", &PythonInterface::set_camera_position, "lookat_x"_a, "lookat_y"_a, "lookat_z"_a, "xRot"_a, "yRot"_a, "radius"_a);
 	m.def("set_ellipsoid_rendering", &PythonInterface::set_ellipsoid_rendering, "ellipsoids"_a, "pointcloud"_a = true);
 	py::enum_<GMIsoellipsoidRenderMode>(m, "GMIsoellipsoidRenderMode")
 		.value("COLOR_AMPLITUDE", GMIsoellipsoidRenderMode::COLOR_AMPLITUDE)

@@ -32,8 +32,7 @@ namespace gmvis::pylib {
 		static void initialize(int width, int height);
 		static void set_image_size(int width, int height);
 		static void set_camera_auto(bool mode);
-		static void set_camera_position(float x, float y, float z);
-		static void set_camera_lookat(float x, float y, float z);
+		static void set_camera_position(float lookat_x, float lookat_y, float lookat_z, float xRot, float yRot, float radius);
 		static void set_ellipsoid_rendering(bool ellipsoids, bool pointcloud);
 		static void set_ellipsoid_coloring(gmvis::core::GMIsoellipsoidRenderMode colorMode, gmvis::core::GMIsoellipsoidColorRangeMode rangeMode, float min, float max);
 		static void set_density_rendering(bool density, gmvis::core::GMDensityRenderMode renderMode);
@@ -62,7 +61,11 @@ namespace gmvis::pylib {
 		std::queue<std::pair<std::string, int>> renderrequests;
 		std::mutex renderrequests_mutex;
 
+		bool cameraAuto = false;
+
 		static void pushCommand(std::function<void()> cmd);
 		static void visThread();
+		static void calculateCameraPositionByPointcloud();
+		//static void calculateCameraPositionByGM(); (Nice to Have)
 	};
 }

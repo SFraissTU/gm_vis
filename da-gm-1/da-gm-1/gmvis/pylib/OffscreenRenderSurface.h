@@ -25,6 +25,8 @@ namespace gmvis::pylib {
 		void setMixture(core::GaussianMixture* mixture);
 		std::vector<std::unique_ptr<Image>> render();
 
+		core::Camera* getCamera();
+
 		core::PointCloudRenderer* getPointCloudRenderer();
 		core::GMIsoellipsoidRenderer* getGMIsoellipsoidRenderer();
 		core::GMDensityRenderer* getGMDensityRenderer();
