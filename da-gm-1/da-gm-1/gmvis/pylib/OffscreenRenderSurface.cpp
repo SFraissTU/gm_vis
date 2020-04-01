@@ -84,7 +84,10 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 		}
 		m_isoellipsoidRenderer->render();
 		images.push_back(std::make_unique<Image>(width, height, 4));
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo->getID());
 		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[0]->data());
+		images[0]->clamp({ 0.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f });
+		images[0]->invertHeight();
 	}
 
 	if (m_sDisplayDensity) {
@@ -95,7 +98,10 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 		}
 
 		images.push_back(std::make_unique<Image>(width, height, 4));
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo->getID());
 		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[m_sDisplayEllipsoids]->data());
+		images[m_sDisplayEllipsoids]->clamp({ 0.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f });
+		images[m_sDisplayEllipsoids]->invertHeight();
 	}
 	return std::move(images);
 }
@@ -176,8 +182,6 @@ void OffscreenRenderSurface::cleanup() {
 	m_fbo->cleanup();
 	m_context->doneCurrent();
 }
-
-
 
 
 void OffscreenRenderSurface::messageLogged(const QOpenGLDebugMessage& msg) {

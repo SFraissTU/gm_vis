@@ -16,7 +16,8 @@ public:
 	size_t height() const;
 	size_t channels() const;
 
-	/*static py::buffer_info bufferInfo(Image& i);*/
+	void clamp(std::vector<float> min, std::vector<float> max);
+	void invertHeight();
 
 	py::array_t<float> toNpArray();
 

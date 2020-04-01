@@ -41,10 +41,8 @@ namespace gmvis::pylib {
 		static void set_density_accthreshold(bool automatic, float threshold);
 		static void set_pointcloud(std::string path);
 		static void set_tensorboard_writer(py::object writer);
-		static void start_rendering();
 		static void render(std::string gmpath, int epoch);
-		static void finish_rendering();
-		static void stop_rendering();
+		static void finish();
 		static void shutdown();
 
 		static py::array_t<float> buffertest();
@@ -59,9 +57,12 @@ namespace gmvis::pylib {
 		std::unique_ptr<py::object> writer;
 		std::unique_ptr<std::thread> thread;
 		bool threadrunning = false;
+		std::queue<std::function<void()>> commandrequests;
+		std::mutex commandrequests_mutex;
 		std::queue<std::pair<std::string, int>> renderrequests;
 		std::mutex renderrequests_mutex;
 
-		static void processRenderRequests();
+		static void pushCommand(std::function<void()> cmd);
+		static void visThread();
 	};
 }

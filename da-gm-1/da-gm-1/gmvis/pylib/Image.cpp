@@ -33,17 +33,30 @@ size_t Image::channels() const
 	return m_channels;
 }
 
-//py::buffer_info Image::bufferInfo(Image& i)
-//{
-//	return py::buffer_info(
-//		i.data(),
-//		sizeof(float),
-//		py::format_descriptor<float>::format(),
-//		3,
-//		{ i.m_height, i.m_width, i.m_channels},
-//		{ sizeof(float) * i.m_channels * i.m_width, sizeof(float) * i.m_channels, sizeof(float) }
-//	);
-//}
+void Image::clamp(std::vector<float> min, std::vector<float> max)
+{
+	for (int x = 0; x < m_width; x++) {
+		for (int y = 0; y < m_height; y++) {
+			for (int c = 0; c < m_channels; ++c) {
+				m_data[y * m_channels * m_width + m_channels * x + c] = 
+					std::clamp(m_data[y * m_channels * m_width + m_channels * x + c], min[c], max[c]);
+			}
+		}
+	}
+}
+
+void Image::invertHeight()
+{
+	for (int y = 0; y < m_height / 2; y++) {
+		for (int x = 0; x < m_width; x++) {
+			for (int c = 0; c < m_channels; ++c) {
+				float temp = m_data[y * m_channels * m_width + m_channels * x + c];
+				m_data[y * m_channels * m_width + m_channels * x + c] = m_data[(m_height - 1 - y) * m_channels * m_width + m_channels * x + c];
+				m_data[(m_height - 1 - y) * m_channels * m_width + m_channels * x + c] = temp;
+			}
+		}
+	}
+}
 
 py::array_t<float> Image::toNpArray()
 {

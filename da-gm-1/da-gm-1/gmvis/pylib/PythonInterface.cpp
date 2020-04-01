@@ -13,19 +13,18 @@ PythonInterface PythonInterface::pinterface;
 int main(int argc, char* argv[])
 {
 	PythonInterface::initialize(500, 500);
-	PythonInterface::start_rendering();
 	PythonInterface::render("D:/Simon/Studium/S-11 (WS19-20)/Diplomarbeit/da-gm-1/da-gm-1/data/c_30fix.ply", 1);
-	PythonInterface::finish_rendering();
-	PythonInterface::shutdown();
+	PythonInterface::finish();
 }
 
 void PythonInterface::initialize(int width, int height) {
 	if (pinterface.application) return;
-	int argc = 0;
-	pinterface.application = std::make_unique<QApplication>(argc, nullptr);
-	pinterface.visualizer = std::make_unique<OffscreenRenderSurface>();
-	pinterface.visualizer->initialize(width, height);
+	pinterface.threadrunning = true;
+	pinterface.thread = std::make_unique<std::thread>(visThread);
 	//Default values
+	pushCommand([width, height] {
+		pinterface.visualizer->initialize(width, height);
+	});
 	set_ellipsoid_rendering(true, true);
 	set_ellipsoid_coloring(GMIsoellipsoidRenderMode::COLOR_UNIFORM, GMIsoellipsoidColorRangeMode::RANGE_MANUAL, 0.0f, 1.0f);
 	set_density_rendering(true, GMDensityRenderMode::ADDITIVE_EXACT);
@@ -34,8 +33,9 @@ void PythonInterface::initialize(int width, int height) {
 
 void PythonInterface::set_image_size(int width, int height)
 {
-	if (pinterface.threadrunning) return;
-	pinterface.visualizer->setSize(width, height);
+	pushCommand([width, height]() {
+		pinterface.visualizer->setSize(width, height);
+	});
 }
 
 void gmvis::pylib::PythonInterface::set_camera_auto(bool mode)
@@ -55,76 +55,77 @@ void gmvis::pylib::PythonInterface::set_camera_lookat(float x, float y, float z)
 
 void PythonInterface::set_ellipsoid_rendering(bool ellipsoids, bool pointcloud)
 {
-	if (pinterface.threadrunning) return;
-	pinterface.visualizer->setEllipsoidDisplayEnabled(ellipsoids);
-	pinterface.visualizer->setPointDisplayEnabled(ellipsoids && pointcloud);
+	pushCommand([ellipsoids, pointcloud] {
+		pinterface.visualizer->setEllipsoidDisplayEnabled(ellipsoids);
+		pinterface.visualizer->setPointDisplayEnabled(ellipsoids && pointcloud);
+	});
 }
 
 void PythonInterface::set_ellipsoid_coloring(GMIsoellipsoidRenderMode colorMode, GMIsoellipsoidColorRangeMode rangeMode, float min, float max)
 {
-	if (pinterface.threadrunning) return;
-	pinterface.visualizer->getGMIsoellipsoidRenderer()->setRenderMode(colorMode);
-	pinterface.visualizer->getGMIsoellipsoidRenderer()->setRangeMode(rangeMode);
-	if (rangeMode == GMIsoellipsoidColorRangeMode::RANGE_MANUAL) {
-		pinterface.visualizer->getGMIsoellipsoidRenderer()->setEllMin(min);
-		pinterface.visualizer->getGMIsoellipsoidRenderer()->setEllMax(max);
-	}
+	pushCommand([colorMode, rangeMode, min, max] {
+		pinterface.visualizer->getGMIsoellipsoidRenderer()->setRenderMode(colorMode);
+		pinterface.visualizer->getGMIsoellipsoidRenderer()->setRangeMode(rangeMode);
+		if (rangeMode == GMIsoellipsoidColorRangeMode::RANGE_MANUAL) {
+			pinterface.visualizer->getGMIsoellipsoidRenderer()->setEllMin(min);
+			pinterface.visualizer->getGMIsoellipsoidRenderer()->setEllMax(max);
+		}
+	});
 }
 
 void gmvis::pylib::PythonInterface::set_density_rendering(bool density, GMDensityRenderMode renderMode)
 {
-	if (pinterface.threadrunning) return;
-	pinterface.visualizer->setDensityDisplayEnabled(density);
-	if (density) {
-		pinterface.visualizer->getGMDensityRenderer()->setRenderMode(renderMode);
-	}
+	pushCommand([density, renderMode] {
+		pinterface.visualizer->setDensityDisplayEnabled(density);
+		if (density) {
+			pinterface.visualizer->getGMDensityRenderer()->setRenderMode(renderMode);
+		}
+	});
+	
 }
 
 void gmvis::pylib::PythonInterface::set_density_coloring(bool automatic, float autoperc, float min, float max)
 {
-	if (pinterface.threadrunning) return;
-	pinterface.visualizer->getGMDensityRenderer()->setDensityAuto(automatic);
-	if (automatic) {
-		pinterface.visualizer->getGMDensityRenderer()->setDensityAutoPercentage(autoperc);
-	}
-	else {
-		pinterface.visualizer->getGMDensityRenderer()->setDensityMin(min);
-		pinterface.visualizer->getGMDensityRenderer()->setDensityMax(max);
-	}
+	pushCommand([automatic, autoperc, min, max] {
+		pinterface.visualizer->getGMDensityRenderer()->setDensityAuto(automatic);
+		if (automatic) {
+			pinterface.visualizer->getGMDensityRenderer()->setDensityAutoPercentage(autoperc);
+		}
+		else {
+			pinterface.visualizer->getGMDensityRenderer()->setDensityMin(min);
+			pinterface.visualizer->getGMDensityRenderer()->setDensityMax(max);
+		}
+	});
+	
 	
 }
 
 void gmvis::pylib::PythonInterface::set_density_accthreshold(bool automatic, float threshold)
 {
-	if (pinterface.threadrunning) return;
-	pinterface.visualizer->getGMDensityRenderer()->setAccelerationThresholdAuto(automatic);
-	if (automatic) {
-		pinterface.visualizer->getGMDensityRenderer()->setAccelerationThreshold(threshold);
-	}
+	pushCommand([automatic, threshold] {
+		pinterface.visualizer->getGMDensityRenderer()->setAccelerationThresholdAuto(automatic);
+		if (automatic) {
+			pinterface.visualizer->getGMDensityRenderer()->setAccelerationThreshold(threshold);
+		}
+	});	
 }
 
 void gmvis::pylib::PythonInterface::set_pointcloud(std::string path)
 {
-	if (pinterface.threadrunning) return;
-	auto newPC = DataLoader::readPCDfromOFF(QString(path.c_str()), false);
-	if (newPC) {
-		pinterface.pointcloud = std::move(newPC);
-		pinterface.visualizer->getPointCloudRenderer()->setPointCloud(pinterface.pointcloud.get());
-	}
+	pushCommand([path] {
+		auto newPC = DataLoader::readPCDfromOFF(QString(path.c_str()), false);
+		if (newPC) {
+			pinterface.pointcloud = std::move(newPC);
+			pinterface.visualizer->getPointCloudRenderer()->setPointCloud(pinterface.pointcloud.get());
+		}
+	});
 }
 
 void gmvis::pylib::PythonInterface::set_tensorboard_writer(py::object writer)
 {
-	if (pinterface.threadrunning) return;
-	pinterface.writer = std::make_unique<py::object>(writer);
-}
-
-void gmvis::pylib::PythonInterface::start_rendering()
-{
-	if (!pinterface.threadrunning && !pinterface.thread) {
-		pinterface.threadrunning = true;
-		pinterface.thread = std::make_unique<std::thread>(processRenderRequests);
-	}
+	pushCommand([writer] {
+		pinterface.writer = std::make_unique<py::object>(writer);
+	});
 }
 
 void gmvis::pylib::PythonInterface::render(std::string gmpath, int epoch)
@@ -134,7 +135,7 @@ void gmvis::pylib::PythonInterface::render(std::string gmpath, int epoch)
 	pinterface.renderrequests_mutex.unlock();
 }
 
-void gmvis::pylib::PythonInterface::finish_rendering()
+void gmvis::pylib::PythonInterface::finish()
 {
 	if (pinterface.threadrunning && pinterface.thread) {
 		bool waiting = true;
@@ -143,15 +144,12 @@ void gmvis::pylib::PythonInterface::finish_rendering()
 			waiting = !pinterface.renderrequests.empty();
 			pinterface.renderrequests_mutex.unlock();
 		}
-		pinterface.threadrunning = false;
-		pinterface.thread->join();
-		pinterface.thread.reset();
-	}
-}
-
-void gmvis::pylib::PythonInterface::stop_rendering()
-{
-	if (pinterface.threadrunning && pinterface.thread) {
+		waiting = true;
+		while (waiting) {
+			pinterface.commandrequests_mutex.lock();
+			waiting = !pinterface.commandrequests.empty();
+			pinterface.commandrequests_mutex.unlock();
+		}
 		pinterface.threadrunning = false;
 		pinterface.thread->join();
 		pinterface.thread.reset();
@@ -160,8 +158,11 @@ void gmvis::pylib::PythonInterface::stop_rendering()
 
 void gmvis::pylib::PythonInterface::shutdown()
 {
-	stop_rendering();
-	pinterface.application->exit();
+	if (pinterface.threadrunning && pinterface.thread) {
+		pinterface.threadrunning = false;
+		pinterface.thread->join();
+		pinterface.thread.reset();
+	}
 }
 
 py::array_t<float> gmvis::pylib::PythonInterface::buffertest()
@@ -175,10 +176,41 @@ py::array_t<float> gmvis::pylib::PythonInterface::buffertest()
 	return image.toNpArray();
 }
 
-void gmvis::pylib::PythonInterface::processRenderRequests()
+void gmvis::pylib::PythonInterface::pushCommand(std::function<void()> cmd)
 {
-	pyprint("Visualizer: Render Thread started!");
+	pinterface.commandrequests_mutex.lock();
+	pinterface.commandrequests.push(cmd);
+	pinterface.commandrequests_mutex.unlock();
+}
+
+void gmvis::pylib::PythonInterface::visThread()
+{
+	pyprint("Visualizer: Thread started!");
+	//Start Application
+	int argc = 0;
+	pinterface.application = std::make_unique<QApplication>(argc, nullptr);
+	pinterface.visualizer = std::make_unique<OffscreenRenderSurface>();
+
+	//As long as thread is still running
 	while (pinterface.threadrunning) {
+
+		//Process current commands, until none are left
+		pinterface.commandrequests_mutex.lock();
+		while (pinterface.threadrunning && !pinterface.commandrequests.empty()) {
+			if (!pinterface.commandrequests.empty()) {
+				std::function<void()> func = pinterface.commandrequests.front();
+				pinterface.commandrequests.pop();
+				pinterface.commandrequests_mutex.unlock();
+				func();
+			}
+			else {
+				pinterface.commandrequests_mutex.unlock();
+			}
+			pinterface.commandrequests_mutex.lock();
+		}
+		pinterface.commandrequests_mutex.unlock();
+
+		//Process one render request
 		pinterface.renderrequests_mutex.lock();
 		if (!pinterface.renderrequests.empty()) {
 			std::pair<std::string, int> request = pinterface.renderrequests.front();
@@ -192,7 +224,7 @@ void gmvis::pylib::PythonInterface::processRenderRequests()
 				pinterface.mixture = std::move(newGauss);
 				pinterface.visualizer->setMixture(pinterface.mixture.get());
 				std::vector<std::unique_ptr<Image>> pixeldata = pinterface.visualizer->render();
-				//Abspeichern!
+				//Save!
 				if (pinterface.writer) {
 					py::object add_image = pinterface.writer->attr("add_image");
 					if (pinterface.visualizer->isEllipsoidDisplayEnabled()) {
@@ -201,6 +233,7 @@ void gmvis::pylib::PythonInterface::processRenderRequests()
 					if (pinterface.visualizer->isDensityDisplayEnabled()) {
 						add_image("b. density", pixeldata[pixeldata.size() == 2]->toNpArray(), epoch, "dataformats"_a = "HWC");
 					}
+					pinterface.writer->attr("flush")();
 				}
 				pyprint("Visualizer: GM rendered");
 			}
@@ -212,13 +245,16 @@ void gmvis::pylib::PythonInterface::processRenderRequests()
 			pinterface.renderrequests_mutex.unlock();
 		}
 	}
-	pyprint("Visualizer: Render Thread stopped");
+	pinterface.application->exit();
+	pinterface.mixture.reset();
+	pinterface.pointcloud.reset();
+	pinterface.visualizer.reset();
+	pinterface.application.reset();
+	pyprint("Visualizer: Thread stopped");
 }
 
 PYBIND11_MODULE(pygmvis, m) {
-	m.doc() = "pybind11 example plugin";
-
-	//py::class_<Image>(m, "Image", py::buffer_protocol()).def_buffer(&Image::bufferInfo);
+	m.doc() = "GM Visualizer";
 
 	m.def("initialize", &PythonInterface::initialize, "Initializes the Visualizer", py::arg("width") = 500, py::arg("height") = 500);
 	m.def("set_mage_size", &PythonInterface::set_image_size, "width"_a, "height"_a);
@@ -247,10 +283,8 @@ PYBIND11_MODULE(pygmvis, m) {
 	m.def("set_density_accthreshold", &PythonInterface::set_density_accthreshold, "automatic"_a = true, "threshold"_a = 0.00001);
 	m.def("set_pointcloud", &PythonInterface::set_pointcloud, "path"_a);
 	m.def("set_tensorboard_writer", &PythonInterface::set_tensorboard_writer, "writer"_a);
-	m.def("start_rendering", &PythonInterface::start_rendering);
 	m.def("render", &PythonInterface::render, "gmpath"_a, "epoch"_a);
-	m.def("finish_rendering", &PythonInterface::finish_rendering);
-	m.def("stop_rendering", &PythonInterface::stop_rendering);
+	m.def("finish", &PythonInterface::finish);
 	m.def("shutdown", &PythonInterface::shutdown);
 	m.def("buffertest", &PythonInterface::buffertest);
 }
