@@ -86,6 +86,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 		int remainingGaussians = 0;
 		QList<QString> properties;
 		QList<QString> supportedProperties = {"x", "y", "z", "covxx", "covxy", "covxz", "covyy", "covyz", "covzz", "weight"};
+		QList<QString> ignoredProperties = { "nvx", "nvy", "nvz" };
 		//Process Header
 		bool processing_header = true;
 		while (processing_header && !in.atEnd()) {
@@ -125,7 +126,9 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 					properties.append(words[2]);
 				}
 				else {
-					qDebug() << "Unknown property " << words[2] << " in ply file " << file.fileName() << ". Ignoring.\n";
+					if (!ignoredProperties.contains(words[2])) {
+						qDebug() << "Unknown property " << words[2] << " in ply file " << file.fileName() << ". Ignoring.\n";
+					}
 					properties.append(QString());
 				}
 			}
