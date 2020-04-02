@@ -23,7 +23,11 @@ namespace gmvis::pylib {
 		void initialize(int width, int height);
 		void setSize(int width, int height);
 		void setMixture(core::GaussianMixture* mixture);
+		void setPointcloud(core::PointCloud* pointcloud);
 		std::vector<std::unique_ptr<Image>> render();
+
+		int getWidth() const;
+		int getHeight() const;
 
 		core::Camera* getCamera();
 

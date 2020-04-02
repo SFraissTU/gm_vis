@@ -11,6 +11,14 @@ using namespace pybind11::literals;
 
 PythonInterface PythonInterface::pinterface;
 
+void pyprint(std::string str)
+{
+#ifdef PY_LIB
+	py::print(str);
+#else
+	qDebug() << QString(str.c_str()) << "\n";
+#endif
+}
 
 int main(int argc, char* argv[])
 {

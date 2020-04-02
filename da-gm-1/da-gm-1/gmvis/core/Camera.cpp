@@ -90,6 +90,12 @@ void Camera::translateAlongScreen(const float x, const float y)
 	m_viewDirty = true;
 }
 
+void gmvis::core::Camera::setViewMatrix(const QMatrix4x4& matrix)
+{
+	m_view = matrix;
+	m_viewDirty = false;
+}
+
 void gmvis::core::Camera::setTranslation(QVector3D translation)
 {
 	m_translation = translation;

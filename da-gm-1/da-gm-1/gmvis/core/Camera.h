@@ -20,6 +20,8 @@ namespace gmvis::core {
 		void rotateY(float amount);
 		void zoom(float amount);
 		void translateAlongScreen(const float x, const float y);
+		//To set the view matrix directly. radius, angle, translation etc are not adapted
+		void setViewMatrix(const QMatrix4x4& matrix);
 
 		void setTranslation(QVector3D translation);
 		void setXRotation(float xRot);

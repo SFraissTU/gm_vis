@@ -23,6 +23,9 @@ set(PY_FILES
     gmvis/pylib/OffscreenRenderSurface.cpp
     gmvis/pylib/Image.h
     gmvis/pylib/Image.cpp
+    gmvis/pylib/Visualizer.h
+    gmvis/pylib/Visualizer.cpp
+    gmvis/pylib/pyimport.h
     lodepng.h
     lodepng.cpp
 )

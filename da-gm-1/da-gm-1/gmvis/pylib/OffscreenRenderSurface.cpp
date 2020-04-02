@@ -71,6 +71,11 @@ void gmvis::pylib::OffscreenRenderSurface::setMixture(core::GaussianMixture* mix
 	m_densityRenderer->setMixture(mixture);
 }
 
+void gmvis::pylib::OffscreenRenderSurface::setPointcloud(core::PointCloud* pointcloud)
+{
+	m_pointcloudRenderer->setPointCloud(pointcloud);
+}
+
 std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 	std::vector<std::unique_ptr<Image>> images;
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo->getID());
@@ -109,6 +114,16 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 		images[m_sDisplayEllipsoids]->invertHeight();
 	}
 	return std::move(images);
+}
+
+int gmvis::pylib::OffscreenRenderSurface::getWidth() const
+{
+	return m_fbo->getWidth();
+}
+
+int gmvis::pylib::OffscreenRenderSurface::getHeight() const
+{
+	return m_fbo->getHeight();
 }
 
 PointCloudRenderer* OffscreenRenderSurface::getPointCloudRenderer()

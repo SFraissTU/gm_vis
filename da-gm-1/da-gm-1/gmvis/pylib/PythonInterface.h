@@ -1,9 +1,6 @@
 #pragma once
 
-//#pragma push_macro("slots")
-//#undef slots
-#include <pybind11/pybind11.h>
-//#pragma pop_macro("slots")
+#include "pyimport.h"
 
 #include <memory>
 #include <queue>
@@ -13,16 +10,9 @@
 #include "gmvis/core/PointCloud.h"
 #include "gmvis/core/GaussianMixture.h"
 #include "gmvis/core/GMRenderModes.h"
+#include "gmvis/pylib/Visualizer.h"
 
 namespace py = pybind11;
-
-void pyprint(std::string str) {
-#ifdef PY_LIB
-	py::print(str);
-#else
-	qDebug() << QString(str.c_str()) << "\n";
-#endif
-}
 
 namespace gmvis::pylib {
 
