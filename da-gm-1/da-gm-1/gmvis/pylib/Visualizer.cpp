@@ -1,8 +1,14 @@
 #include "Visualizer.h"
 #include <QElapsedTimer>
+#include <strstream>
 
 using namespace gmvis::pylib;
 using namespace gmvis::core;
+
+Visualizer gmvis::pylib::Visualizer::create(bool async, int width, int height)
+{
+	return Visualizer(async, width, height);
+}
 
 Visualizer::Visualizer(bool async, int width, int height)
 {
@@ -39,13 +45,14 @@ void Visualizer::set_view_matrix(py::array_t<float> viewmat)
 	pushCommand([this, viewmat]() {
 		auto mat = viewmat.unchecked<2>();
 		float values[16] = {
-			mat(0, 0), mat(0, 1), mat(0, 2), 0.0f,
-			mat(1, 0), mat(1, 1), mat(1, 2), 0.0f,
-			mat(2, 0), mat(2, 1), mat(2, 2), 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
+			mat(0, 0), mat(0, 1), mat(0, 2), mat(0, 3),
+			mat(1, 0), mat(1, 1), mat(1, 2), mat(1, 3),
+			mat(2, 0), mat(2, 1), mat(2, 2), mat(2, 3),
+			mat(3, 0), mat(3, 1), mat(3, 2), mat(3, 3)
 		};
 		QMatrix4x4 qmat = QMatrix4x4(values);
 		m_surface->getCamera()->setViewMatrix(qmat);
+		m_cameraAuto = false;
 	});
 }
 
@@ -144,7 +151,7 @@ void Visualizer::set_pointclouds_from_paths(py::list paths)
 	});
 }
 
-void Visualizer::set_gaussian_mixture(py::array_t<float> mixtures)
+void Visualizer::set_gaussian_mixtures(py::array_t<float> mixtures)
 {
 	//THIS EXPECTS WEIGHTS TO BE GMM-WEIGHTS, NOT AMPLITUDES!
 	pushCommand([this, mixtures] {
@@ -175,7 +182,7 @@ void Visualizer::set_gaussian_mixture(py::array_t<float> mixtures)
 	});
 }
 
-void gmvis::pylib::Visualizer::set_gaussian_mixture_from_paths(py::list paths)
+void gmvis::pylib::Visualizer::set_gaussian_mixtures_from_paths(py::list paths)
 {
 	pushCommand([this, paths] {
 		m_mixtures.clear();
@@ -195,13 +202,17 @@ void Visualizer::set_callback(py::object callback)
 	});
 }
 
-//TODO
-py::array Visualizer::render(int epoch)
+py::array_t<float> Visualizer::render(int epoch)
 {
-	py::array result;
-	pushCommand([this, epoch, &result] {
+	py::array_t<float> result = py::array_t<float>();
+	if (m_async) {
+		pushCommand([this, epoch] {
+			processRenderRequest(epoch);
+		});
+	}
+	else {
 		result = processRenderRequest(epoch);
-	});
+	}
 	return result;
 }
 
@@ -245,7 +256,7 @@ void Visualizer::pushCommand(std::function<void()> cmd)
 }
 
 //TODO
-py::array Visualizer::processRenderRequest(int epoch)
+py::array_t<float> Visualizer::processRenderRequest(int epoch)
 {
 	float* retdata;
 	size_t imagesize = m_surface->getWidth() * m_surface->getHeight() * 4;
@@ -267,10 +278,10 @@ py::array Visualizer::processRenderRequest(int epoch)
 		//Save!
 		if (m_callback) {
 			if (m_surface->isEllipsoidDisplayEnabled()) {
-				(*m_callback)(epoch, pixeldata[0]->toNpArray(), 0);
+				(*m_callback)(epoch, pixeldata[0]->toNpArray(), i, 0);
 			}
 			if (m_surface->isDensityDisplayEnabled()) {
-				(*m_callback)(epoch, pixeldata[pixeldata.size() == 2]->toNpArray(), 1);
+				(*m_callback)(epoch, pixeldata[pixeldata.size() == 2]->toNpArray(), i, 1);
 			}
 		}
 		else if (!m_async) {
@@ -298,7 +309,7 @@ py::array Visualizer::processRenderRequest(int epoch)
 			);
 	}
 	else {
-		return py::array();
+		return py::array_t<float>();
 	}
 }
 
@@ -326,7 +337,6 @@ void Visualizer::visThread()
 
 void Visualizer::calculateCameraPositionByPointcloud(int index)
 {
-	//TODO
 	if (m_pointclouds.size() > index) {
 		PointCloud* pc = m_pointclouds[index].get();
 		QVector3D min = pc->getBBMin();

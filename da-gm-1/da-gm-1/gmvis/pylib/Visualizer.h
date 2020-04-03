@@ -15,6 +15,8 @@ namespace gmvis::pylib {
 
 	class Visualizer {
 	public:
+		static Visualizer create(bool async, int width, int height);
+
 		Visualizer(bool async, int width, int height);
 		void set_image_size(int width, int height);
 		void set_view_matrix(py::array_t<float> viewmat);
@@ -26,10 +28,10 @@ namespace gmvis::pylib {
 		void set_density_accthreshold(bool automatic, float threshold);
 		void set_pointclouds(py::array_t<float> pointclouds);
 		void set_pointclouds_from_paths(py::list paths);
-		void set_gaussian_mixture(py::array_t<float> mixtures);
-		void set_gaussian_mixture_from_paths(py::list paths);
+		void set_gaussian_mixtures(py::array_t<float> mixtures);
+		void set_gaussian_mixtures_from_paths(py::list paths);
 		void set_callback(py::object callback);
-		py::array render(int epoch);
+		py::array_t<float> render(int epoch);
 		void finish();
 		void forceStop();
 
@@ -47,7 +49,7 @@ namespace gmvis::pylib {
 		bool m_cameraAuto = false;
 
 		void pushCommand(std::function<void()> cmd);
-		py::array processRenderRequest(int epoch);
+		py::array_t<float> processRenderRequest(int epoch);
 		void visThread();
 		void calculateCameraPositionByPointcloud(int index);
 		void cleanup();
