@@ -5,9 +5,9 @@
 using namespace gmvis::pylib;
 using namespace gmvis::core;
 
-Visualizer gmvis::pylib::Visualizer::create(bool async, int width, int height)
+std::shared_ptr<Visualizer> gmvis::pylib::Visualizer::create(bool async, int width, int height)
 {
-	return Visualizer(async, width, height);
+	return std::make_shared<Visualizer>(async, width, height);
 }
 
 Visualizer::Visualizer(bool async, int width, int height)
@@ -31,6 +31,20 @@ Visualizer::Visualizer(bool async, int width, int height)
 	set_ellipsoid_coloring(GMIsoellipsoidRenderMode::COLOR_UNIFORM, GMIsoellipsoidColorRangeMode::RANGE_MANUAL, 0.0f, 1.0f);
 	set_density_rendering(true, GMDensityRenderMode::ADDITIVE_EXACT);
 	set_density_coloring(true, 0.9f, 0.0f, 0.5f);
+}
+
+gmvis::pylib::Visualizer::Visualizer(Visualizer& v)
+{
+	m_application = std::move(v.m_application);
+	m_surface = std::move(v.m_surface);
+	m_pointclouds = std::move(v.m_pointclouds);
+	m_mixtures = std::move(v.m_mixtures);
+	m_callback = std::move(v.m_callback);
+	m_thread = std::move(v.m_thread);
+	m_async = v.m_async;
+	m_threadrunning = v.m_threadrunning;
+	m_commandrequests = v.m_commandrequests;
+	m_cameraAuto = v.m_cameraAuto;
 }
 
 void Visualizer::set_image_size(int width, int height)
@@ -151,43 +165,46 @@ void Visualizer::set_pointclouds_from_paths(py::list paths)
 	});
 }
 
-void Visualizer::set_gaussian_mixtures(py::array_t<float> mixtures)
+void Visualizer::set_gaussian_mixtures(py::array_t<float> mixtures, bool isgmm)
 {
-	//THIS EXPECTS WEIGHTS TO BE GMM-WEIGHTS, NOT AMPLITUDES!
-	pushCommand([this, mixtures] {
-		auto gms = mixtures.unchecked<3>();
+	pushCommand([this, mixtures, isgmm] {
 		auto shape = mixtures.shape();
-		size_t batchsize = shape[0];
-		size_t gausscount = shape[1];
+		size_t batchsize = shape[1];
+		size_t gausscount = shape[2];
+		pyprint("GM: (" + std::to_string(shape[0]) + "," + std::to_string(shape[1]) + "," + std::to_string(shape[2]) + "," + std::to_string(shape[3]) + ")");
+		auto gms = mixtures.unchecked<4>();
 		m_mixtures.clear();
 		for (int i = 0; i < batchsize; ++i) {
-			GaussianMixture* mixture = new GaussianMixture();
+			std::vector<RawGaussian> gaussians;
 			for (int j = 0; j < gausscount; ++j) {
-				Gaussian gauss;
-				gauss.weight = gms(i, j, 0);
-				gauss.mux = gms(i, j, 1);
-				gauss.muy = gms(i, j, 2);
-				gauss.muz = gms(i, j, 3);
-				gauss.covxx = gms(i, j, 4);
-				gauss.covxy = gms(i, j, 5);
-				gauss.covxz = gms(i, j, 6);
-				gauss.covyy = gms(i, j, 8);
-				gauss.covyz = gms(i, j, 9);
-				gauss.covzz = gms(i, j, 12);
-				gauss.finalizeInitialization();
-				mixture->addGaussian(gauss);
+				RawGaussian gauss;
+				gauss.weight = gms(0, i, j, 0);
+				gauss.mux = gms(0, i, j, 1);
+				gauss.muy = gms(0, i, j, 2);
+				gauss.muz = gms(0, i, j, 3);
+				gauss.covxx = gms(0, i, j, 4);
+				gauss.covxy = gms(0, i, j, 5);
+				gauss.covxz = gms(0, i, j, 6);
+				gauss.covyy = gms(0, i, j, 8);
+				gauss.covyz = gms(0, i, j, 9);
+				gauss.covzz = gms(0, i, j, 12);
+				gaussians.push_back(gauss);
 			}
+			if (isgmm) {
+				RawGaussian::normalize(gaussians);
+			}
+			GaussianMixture* mixture = new GaussianMixture(gaussians, isgmm);
 			m_mixtures.push_back(std::unique_ptr<GaussianMixture>(mixture));
 		}
 	});
 }
 
-void gmvis::pylib::Visualizer::set_gaussian_mixtures_from_paths(py::list paths)
+void gmvis::pylib::Visualizer::set_gaussian_mixtures_from_paths(py::list paths, bool isgmm)
 {
-	pushCommand([this, paths] {
+	pushCommand([this, paths, isgmm] {
 		m_mixtures.clear();
 		for (int i = 0; i < paths.size(); ++i) {
-			auto newGM = DataLoader::readGMfromPLY(QString(paths[i].cast<std::string>().c_str()), false);
+			auto newGM = DataLoader::readGMfromPLY(QString(paths[i].cast<std::string>().c_str()), isgmm, false);
 			if (newGM) {
 				m_mixtures.push_back(std::move(newGM));
 			}

@@ -1,4 +1,5 @@
 #pragma once
+#include "RawGaussian.h"
 #include <cmath>
 #include <QVector3D>
 #include <QVector4D>
@@ -12,16 +13,13 @@
 
 namespace gmvis::core {
 
-	const double GAUSS_PI_FACTOR = 1.0 / pow(2 * M_PI, 3.0 / 2.0);
-	const double SQRT_TWO_PI = sqrt(2 * M_PI);
-
 	/*
 	Representation of a Gaussian that will be passed to the shader.
 	*/
 	struct GaussianGPU {
 		/* First three components represent the center of the Gaussian.
-		The fourth value is beta, so the value with which exp(...) is multiplied times sqrt(2pi). Necessary for shader calculations */
-		QVector4D mu_beta;
+		The fourth value is the amplitude. Necessary for shader calculations */
+		QVector4D mu_alpha;
 		/* The inverse covariance matrix */
 		QMatrix4x4 invsigma;
 	};
@@ -30,59 +28,13 @@ namespace gmvis::core {
 	Represents a single Gaussian.
 	*/
 	struct Gaussian {
-		/* x coordinate of the mean */
-		double mux;
-		/* y coordinate of the mean */
-		double muy;
-		/* z coordinate of the mean */
-		double muz;
-		/* variance of x */
-		double covxx;
-		/* covariance of x and y */
-		double covxy;
-		/* covariance of x and z */
-		double covxz;
-		/* variance of y */
-		double covyy;
-		/* covariance of y and z */
-		double covyz;
-		/* variance of z */
-		double covzz;
-		/* weight of this gaussian (commonly referred to as pi_k) */
-		double weight;
-
-		const GaussianGPU& getGPUData() const;
-
-	private:
-		/* GPU data */
-		GaussianGPU gpudata;
-		/* Inverse covariance matrix */
-		Eigen::Matrix3d inversecovariance;
-		/* Amplitude of this Gaussian, meaning what exp is multiplied with: pi_k/((2pi)^(3/2) * det(sigma)^(1/2)  */
-		double amplitude;
-		/* Mean of this Gaussian */
-		Eigen::Vector3d mu;
-		/* Vectors containing the eigenvectors multiplied by their eigenvalues. */
-		QGenericMatrix<3, 3, double> eigenmatrix;
-
+		
 	public:
-		/*
-		To initialize a Gaussian, the public values have to be set,
-		and then this function has to be called.
-		It initializes the private help members.
-		Other functions will not work correctly if this function has not been called.
-		*/
-		void finalizeInitialization();
+		Gaussian() {};	//please don't use this
 
-		/*
-		Sets the weight and updates the GPU data and private members.
-		*/
-		void updateWeight(double weight);
-
-		/*
-		Returns the amplitude of the Gaussian (everything that's multiplied with exp(...)).
-		*/
-		const double& getAmplitude() const;
+		static Gaussian createGaussian(const RawGaussian& original, bool normalizedWeight = false);
+		
+		const GaussianGPU& getGPUData() const;
 
 		/*
 		Samples the Gaussian at the given coordinate and returns the corresponding density value.
@@ -93,6 +45,12 @@ namespace gmvis::core {
 		Returns a matrix containing the eigenvectors multiplied by the eigenvalues
 		*/
 		const QGenericMatrix<3, 3, double>& getEigenMatrix() const;
+
+		const Eigen::Vector3d& getPosition() const;
+
+		const double& getAmplitude() const;
+
+		const double& getNormalizedWeight() const;
 
 		/*
 		Takes the isoellipsoid of this gaussian with the constant density value
@@ -112,6 +70,25 @@ namespace gmvis::core {
 		of the AABB are stored in the parameters. Otherwise, false is returned.
 		*/
 		bool getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const;
+		
+	private:
+		/* GPU data */
+		GaussianGPU m_gpudata;
+		/* Covariance matrix */
+		Eigen::Matrix3d m_covariancematrix;
+		/* Inverse covariance matrix */
+		Eigen::Matrix3d m_inversecovariance;
+		/* Mean of this Gaussian */
+		Eigen::Vector3d m_mu;
+		/* Amplitude of this Gaussian */
+		double m_amplitude;
+		double m_pi;
+		/* Vectors containing the eigenvectors multiplied by their eigenvalues. */
+		QGenericMatrix<3, 3, double> m_eigenmatrix;
 
+		Gaussian(Eigen::Vector3d mu, Eigen::Matrix3d covariancematrix, Eigen::Matrix3d inversecovariance, double amplitude, double beta);
 	};
+
+
+	const double GAUSS_PI_FACTOR = 1.0 / pow(2 * M_PI, 3.0 / 2.0);
 }

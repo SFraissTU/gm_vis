@@ -15,9 +15,10 @@ namespace gmvis::pylib {
 
 	class Visualizer {
 	public:
-		static Visualizer create(bool async, int width, int height);
+		static std::shared_ptr<Visualizer> create(bool async, int width, int height);
 
 		Visualizer(bool async, int width, int height);
+		Visualizer(Visualizer& v);
 		void set_image_size(int width, int height);
 		void set_view_matrix(py::array_t<float> viewmat);
 		void set_camera_auto(bool camauto);
@@ -28,8 +29,8 @@ namespace gmvis::pylib {
 		void set_density_accthreshold(bool automatic, float threshold);
 		void set_pointclouds(py::array_t<float> pointclouds);
 		void set_pointclouds_from_paths(py::list paths);
-		void set_gaussian_mixtures(py::array_t<float> mixtures);
-		void set_gaussian_mixtures_from_paths(py::list paths);
+		void set_gaussian_mixtures(py::array_t<float> mixtures, bool isgmm);
+		void set_gaussian_mixtures_from_paths(py::list paths, bool isgmm);
 		void set_callback(py::object callback);
 		py::array_t<float> render(int epoch);
 		void finish();

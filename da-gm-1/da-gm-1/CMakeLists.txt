@@ -35,6 +35,7 @@ set(CORE_FILES
     gmvis/core/DataLoader.cpp
     gmvis/core/Camera.h
     gmvis/core/Camera.cpp
+    gmvis/core/RawGaussian.h
     gmvis/core/Gaussian.h
     gmvis/core/Gaussian.cpp
     gmvis/core/GaussianMixture.h

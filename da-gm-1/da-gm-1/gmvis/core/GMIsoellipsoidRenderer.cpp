@@ -125,10 +125,11 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 		const Gaussian* gauss = (*mixture)[i];
 
 		auto eigenMatrix = gauss->getEigenMatrix();
+		auto mu = gauss->getPosition();
 		transforms[i] = QMatrix4x4(
-			(float)eigenMatrix(0, 0), (float)eigenMatrix(0,1),  (float)eigenMatrix(0,2),  (float)gauss->mux,
-			(float)eigenMatrix(1, 0), (float)eigenMatrix(1,1),  (float)eigenMatrix(1, 2), (float)gauss->muy,
-			(float)eigenMatrix(2, 0), (float)eigenMatrix(2, 1), (float)eigenMatrix(2, 2), (float)gauss->muz,
+			(float)eigenMatrix(0, 0), (float)eigenMatrix(0,1),  (float)eigenMatrix(0,2),  (float)mu.x(),
+			(float)eigenMatrix(1, 0), (float)eigenMatrix(1,1),  (float)eigenMatrix(1, 2), (float)mu.y(),
+			(float)eigenMatrix(2, 0), (float)eigenMatrix(2, 1), (float)eigenMatrix(2, 2), (float)mu.z(),
 			0, 0, 0, 1
 		);
 		if (transforms[i].determinant() < 0) {
@@ -247,7 +248,7 @@ void GMIsoellipsoidRenderer::updateColors()
 			maxVal = -minVal;
 			for (int i = 0; i < n; ++i) {
 				const Gaussian* gauss = (*m_mixture)[i];
-				double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
+				double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 				if (val < minVal) {
 					minVal = val;
 				}
@@ -262,7 +263,7 @@ void GMIsoellipsoidRenderer::updateColors()
 			values.resize(n);
 			for (int i = 0; i < n; ++i) {
 				const Gaussian* gauss = (*m_mixture)[i];
-				double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
+				double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 				values[i] = val;
 			}
 			qSort(values);
@@ -282,7 +283,7 @@ void GMIsoellipsoidRenderer::updateColors()
 		double range = maxVal - minVal;
 		for (int i = 0; i < n; ++i) {
 			const Gaussian* gauss = (*m_mixture)[i];
-			double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->weight : gauss->getAmplitude();
+			double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 			float t = std::min(1.0f, float((val - minVal) / range));
 			t = std::max(t, 0.0f);
 			colors[i] = t;

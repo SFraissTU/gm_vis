@@ -71,7 +71,7 @@ std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(const QString& path, bool
 	return readPCDfromOFF(file, convertCoordinateSystem);
 }
 
-std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool convertCoordinateSystem)
+std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem)
 {
 	if (file.open(QIODevice::ReadOnly)) {
 		QTextStream in(&file);
@@ -81,7 +81,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 			qDebug() << "Invalid format in file " << file.fileName() << "\n";
 			return {};
 		}
-		std::unique_ptr<GaussianMixture> mixture = std::make_unique<GaussianMixture>();
+		std::vector<RawGaussian> rawGaussians;
 		int numberOfGaussians = 0;
 		int remainingGaussians = 0;
 		QList<QString> properties;
@@ -157,7 +157,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 				qDebug() << "Not every property was given for an entry in ply file " << file.fileName() << "\n.";
 				return {};
 			}
-			Gaussian newGaussian;
+			RawGaussian newGaussian;
 			for (int i = 0; i < words.length(); ++i) {
 				if (!properties[i].isNull()) {
 					bool ok;
@@ -232,8 +232,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 					}
 				}
 			}
-			newGaussian.finalizeInitialization();
-			mixture->addGaussian(newGaussian);
+			rawGaussians.push_back(newGaussian);
 			--remainingGaussians;
 		}
 		if (remainingGaussians > 0) {
@@ -241,7 +240,10 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 			return {};
 		}
 		//The weights are multiplied by the amount of points, so we have to normalize them
-		mixture->normalize();
+		if (isgmm) {
+			RawGaussian::normalize(rawGaussians);
+		}
+		std::unique_ptr<GaussianMixture> mixture = std::make_unique<GaussianMixture>(rawGaussians, isgmm);
 		qDebug() << "Successfully read " << mixture->numberOfGaussians() << " Gaussians from " << file.fileName() << ".\n";
 		return std::move(mixture);
 	}
@@ -251,10 +253,10 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool con
 	return std::unique_ptr<GaussianMixture>();
 }
 
-std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(const QString& path, bool convertCoordinateSystem)
+std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem)
 {
 	QFile file(path);
-	return readGMfromPLY(file, convertCoordinateSystem);
+	return readGMfromPLY(file, isgmm, convertCoordinateSystem);
 }
 
 QVector<QVector3D> DataLoader::readTransferFunction(const QString& path)

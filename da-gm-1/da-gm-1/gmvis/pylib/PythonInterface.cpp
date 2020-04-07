@@ -22,9 +22,10 @@ void pyprint(std::string str)
 int main(int argc, char* argv[])
 {
 	Visualizer visualizer = Visualizer(true, 500, 500);
+	//Visualizer visualizer = Visualizer::create(true, 500, 500);
 	py::list strlist = py::list();
 	strlist.append("D:/Simon/Studium/S-11 (WS19-20)/Diplomarbeit/da-gm-1/da-gm-1/data/c_30fix.ply");
-	visualizer.set_gaussian_mixtures_from_paths(strlist);
+	visualizer.set_gaussian_mixtures_from_paths(strlist, true);
 	//visualizer.render(1);
 	visualizer.finish();
 	strlist.release();
@@ -48,7 +49,7 @@ PYBIND11_MODULE(pygmvis, m) {
 		.value("ADDITIVE_ACC_OCTREE", GMDensityRenderMode::ADDITIVE_ACC_OCTREE)
 		.value("ADDITIVE_ACC_PROJECTED", GMDensityRenderMode::ADDITIVE_ACC_PROJECTED);
 	
-	py::class_<Visualizer>(m, "Visualizer")
+	py::class_<Visualizer, std::shared_ptr<Visualizer>>(m, "Visualizer")
 		.def("set_image_size", &Visualizer::set_image_size, "width"_a, "height"_a)
 		.def("set_camera_auto", &Visualizer::set_camera_auto, "mode"_a)
 		.def("set_view_matrix", &Visualizer::set_view_matrix, "viewmat"_a)
@@ -60,8 +61,8 @@ PYBIND11_MODULE(pygmvis, m) {
 		.def("set_density_accthreshold", &Visualizer::set_density_accthreshold, "automatic"_a = true, "threshold"_a = 0.00001)
 		.def("set_pointclouds", &Visualizer::set_pointclouds, "pointclouds"_a)
 		.def("set_pointclouds_from_paths", &Visualizer::set_pointclouds_from_paths, "paths"_a)
-		.def("set_gaussian_mixtures", &Visualizer::set_gaussian_mixtures, "mixtures"_a)
-		.def("set_gaussian_mixtures_from_paths", &Visualizer::set_gaussian_mixtures_from_paths, "paths"_a)
+		.def("set_gaussian_mixtures", &Visualizer::set_gaussian_mixtures, "mixtures"_a, "isgmm"_a)
+		.def("set_gaussian_mixtures_from_paths", &Visualizer::set_gaussian_mixtures_from_paths, "paths"_a, "isgmm"_a)
 		.def("set_callback", &Visualizer::set_callback, "callback"_a)
 		.def("render", &Visualizer::render, "epoch"_a)
 		.def("finish", &Visualizer::finish)

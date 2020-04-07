@@ -7,6 +7,18 @@
 
 using namespace gmvis::core;
 
+GaussianMixture::GaussianMixture(const std::vector<RawGaussian>& gaussians, bool isgmm)
+{
+	for (auto it = gaussians.cbegin(); it != gaussians.cend(); ++it) {
+		addGaussian(Gaussian::createGaussian(*it, isgmm));
+	}
+}
+
+void GaussianMixture::addGaussian(const RawGaussian& gauss)
+{
+	addGaussian(Gaussian::createGaussian(gauss, false));
+}
+
 double GaussianMixture::sample(double x, double y, double z) const
 {
 	Eigen::Vector3d pos = Eigen::Vector3d(x, y, z);
@@ -27,7 +39,7 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize) const
 	char* gaussmem = result;
 	for (int i = 0; i < n; i++) {
 		const GaussianGPU& gpudata = gaussians[i].getGPUData();
-		memcpy(gaussmem, &gpudata.mu_beta, 16);
+		memcpy(gaussmem, &gpudata.mu_alpha, 16);
 		gaussmem += 16;
 		memcpy(gaussmem, gpudata.invsigma.constData(), 64);
 		gaussmem += 64;
@@ -49,7 +61,7 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize, double thresho
 	for (int i = 0; i < n; i++) {
 		const GaussianGPU& gpudata = gaussians[i].getGPUData();
 		if (gaussians[i].getAmplitude() > threshold) {
-			memcpy(gaussmem, &gpudata.mu_beta, 16);
+			memcpy(gaussmem, &gpudata.mu_alpha, 16);
 			gaussmem += 16;
 			memcpy(gaussmem, gpudata.invsigma.constData(), 64);
 			gaussmem += 64;
@@ -240,7 +252,7 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 	char* gaussmem = gaussRes;
 	for (int i = 0; i < gaussN; i++) {
 		GaussianGPU gpudata = gaussianList[i];
-		memcpy(gaussmem, &gpudata.mu_beta, 16);
+		memcpy(gaussmem, &gpudata.mu_alpha, 16);
 		gaussmem += 16;
 		memcpy(gaussmem, gpudata.invsigma.constData(), 64);
 		gaussmem += 64;
@@ -248,16 +260,4 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 	qDebug() << "Time for building the octree: " << time.elapsed() << "ms (" << n << " Gaussians)";
 
 	return std::shared_ptr<char[]>(gaussRes);
-}
-
-void GaussianMixture::normalize()
-{
-	double sum = 0.0f;
-	for (int i = 0; i < gaussians.size(); ++i) {
-		sum += gaussians[i].weight;
-	}
-	double factor = 1.0 / sum;
-	for (int i = 0; i < gaussians.size(); ++i) {
-		gaussians[i].updateWeight(gaussians[i].weight * factor);
-	}
 }

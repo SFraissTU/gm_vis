@@ -29,6 +29,11 @@ namespace gmvis::core {
 		QVector<Gaussian> gaussians;
 
 	public:
+		GaussianMixture() {};
+
+		GaussianMixture(const std::vector<RawGaussian>& gaussians, bool isgmm);
+
+		void addGaussian(const RawGaussian& gauss);
 
 		void addGaussian(const Gaussian& gauss) {
 			gaussians.push_back(gauss);
@@ -54,8 +59,6 @@ namespace gmvis::core {
 
 		//Returns the Gaussians-Data as return value and the octree nodes per parameter
 		std::shared_ptr<char[]> buildOctree(double threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const;
-
-		void normalize();
 	};
 
 }

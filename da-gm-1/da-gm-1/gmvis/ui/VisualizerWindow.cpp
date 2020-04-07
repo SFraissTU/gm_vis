@@ -73,7 +73,7 @@ void VisualizerWindow::slotLoadMixture()
 {
 	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", QString(), "*.ply");
 	if (!filename.isNull()) {
-		auto newGauss = DataLoader::readGMfromPLY(filename, false);
+		auto newGauss = DataLoader::readGMfromPLY(filename, true, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
 			ui.openGLWidget->getGMDensityRenderer()->setMixture(mixture.get());
