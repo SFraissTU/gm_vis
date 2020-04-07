@@ -169,25 +169,24 @@ void Visualizer::set_gaussian_mixtures(py::array_t<float> mixtures, bool isgmm)
 {
 	pushCommand([this, mixtures, isgmm] {
 		auto shape = mixtures.shape();
-		size_t batchsize = shape[1];
+		size_t batchsize = shape[0];
 		size_t gausscount = shape[2];
-		pyprint("GM: (" + std::to_string(shape[0]) + "," + std::to_string(shape[1]) + "," + std::to_string(shape[2]) + "," + std::to_string(shape[3]) + ")");
 		auto gms = mixtures.unchecked<4>();
 		m_mixtures.clear();
 		for (int i = 0; i < batchsize; ++i) {
 			std::vector<RawGaussian> gaussians;
 			for (int j = 0; j < gausscount; ++j) {
 				RawGaussian gauss;
-				gauss.weight = gms(0, i, j, 0);
-				gauss.mux = gms(0, i, j, 1);
-				gauss.muy = gms(0, i, j, 2);
-				gauss.muz = gms(0, i, j, 3);
-				gauss.covxx = gms(0, i, j, 4);
-				gauss.covxy = gms(0, i, j, 5);
-				gauss.covxz = gms(0, i, j, 6);
-				gauss.covyy = gms(0, i, j, 8);
-				gauss.covyz = gms(0, i, j, 9);
-				gauss.covzz = gms(0, i, j, 12);
+				gauss.weight = gms(i, 0, j, 0);
+				gauss.mux = gms(i, 0, j, 1);
+				gauss.muy = gms(i, 0, j, 2);
+				gauss.muz = gms(i, 0, j, 3);
+				gauss.covxx = gms(i, 0, j, 4);
+				gauss.covxy = gms(i, 0, j, 5);
+				gauss.covxz = gms(i, 0, j, 6);
+				gauss.covyy = gms(i, 0, j, 8);
+				gauss.covyz = gms(i, 0, j, 9);
+				gauss.covzz = gms(i, 0, j, 12);
 				gaussians.push_back(gauss);
 			}
 			if (isgmm) {
