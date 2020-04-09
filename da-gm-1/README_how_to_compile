@@ -1,0 +1,4 @@
+mkdir build
+cd build
+cmake -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -S ../da-gm-1/da-gm-1/ -B .
+# -DCMAKE_PREFIX_PATH=$CONDA_PREFIX is important so that cmake finds the correct version of python and numpy

@@ -1,6 +1,5 @@
 #include "Visualizer.h"
 #include <QElapsedTimer>
-#include <strstream>
 
 using namespace gmvis::pylib;
 using namespace gmvis::core;

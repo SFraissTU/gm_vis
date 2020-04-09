@@ -586,7 +586,7 @@
   <customwidget>
    <class>DisplayWidget</class>
    <extends>QOpenGLWidget</extends>
-   <header>DisplayWidget.h</header>
+   <header>gmvis/ui/DisplayWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>
