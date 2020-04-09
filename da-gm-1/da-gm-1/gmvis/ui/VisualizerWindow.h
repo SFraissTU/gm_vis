@@ -17,7 +17,8 @@ namespace gmvis::ui {
 
 	public slots:
 		void slotLoadPointcloud();
-		void slotLoadMixture();
+		void slotLoadMixtureModel();
+		void slotLoadPureMixture();
 		void slotDisplayOptionsChanged();
 		void slotEllValuesChanged();
 		void slotEllAutoValueChanged();

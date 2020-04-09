@@ -146,11 +146,12 @@ void DisplayWidget::paintGL()
 		glDisable(GL_BLEND);
 		glViewport(0, 0, m_fboIntermediate->getWidth(), m_fboIntermediate->getHeight());
 
-		if (m_sDisplayPoints) {
-			m_pointcloudRenderer->render();
-		}
 		if (m_sDisplayEllipsoids) {
 			m_isoellipsoidRenderer->render();
+		}
+
+		if (m_sDisplayPoints) {
+			m_pointcloudRenderer->render(m_sDisplayEllipsoids);
 		}
 	}
 

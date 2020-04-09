@@ -19,7 +19,7 @@ namespace gmvis::core {
 		void initialize();
 
 		void setPointCloud(PointCloud* pointCloud);
-		void render();
+		void render(bool transparent);
 		void cleanup();
 
 		const QColor& getPointColor() const;
@@ -47,6 +47,7 @@ namespace gmvis::core {
 		int m_locViewMatrix;
 		int m_colorLoc;
 		int m_circlesLoc;
+		int m_opacityLoc;
 
 		//Settings
 		QColor m_sPointColor = QColor(255, 255, 255);

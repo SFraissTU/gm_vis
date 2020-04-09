@@ -89,10 +89,10 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 		glDisable(GL_BLEND);
 		glViewport(0, 0, width, height);
 
-		if (m_sDisplayPoints) {
-			m_pointcloudRenderer->render();
-		}
 		m_isoellipsoidRenderer->render();
+		if (m_sDisplayPoints) {
+			m_pointcloudRenderer->render(true);
+		}
 		images.push_back(std::make_unique<Image>(width, height, 4));
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo->getID());
 		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[0]->data());
