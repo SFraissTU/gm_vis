@@ -146,11 +146,12 @@ void DisplayWidget::paintGL()
 		glDisable(GL_BLEND);
 		glViewport(0, 0, m_fboIntermediate->getWidth(), m_fboIntermediate->getHeight());
 
-		if (m_sDisplayPoints) {
-			m_pointcloudRenderer->render();
-		}
 		if (m_sDisplayEllipsoids) {
 			m_isoellipsoidRenderer->render();
+		}
+
+		if (m_sDisplayPoints) {
+			m_pointcloudRenderer->render(m_sDisplayEllipsoids);
 		}
 	}
 
@@ -218,6 +219,9 @@ void DisplayWidget::mouseMoveEvent(QMouseEvent* event)
 
 //This function is copied from http://www.trentreed.net/blog/qt5-opengl-part-5-debug-logging/
 void DisplayWidget::messageLogged(const QOpenGLDebugMessage& msg) {
+	if (msg.id() == 131169 || msg.id() == 131185 || msg.id() == 131218 || msg.id() == 131204) {
+		return;
+	}
 	QString error;
 	
 	// Format based on severity

@@ -35,7 +35,8 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.cb_accthauto->setChecked(densrenderer->getAccelerationThresholdAuto());
 
 	(void)connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(slotLoadPointcloud()));
-	(void)connect(ui.loadMixtureAction, SIGNAL(triggered()), this, SLOT(slotLoadMixture()));
+	(void)connect(ui.loadMixtureModelAction, SIGNAL(triggered()), this, SLOT(slotLoadMixtureModel()));
+	(void)connect(ui.loadPureMixtureAction, SIGNAL(triggered()), this, SLOT(slotLoadPureMixture()));
 
 	(void)connect(ui.cb_displayPointcloud, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayEllipsoids, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
@@ -69,11 +70,27 @@ void VisualizerWindow::slotLoadPointcloud() {
 	}
 }
 
-void VisualizerWindow::slotLoadMixture()
+void VisualizerWindow::slotLoadMixtureModel()
+{
+	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture Model", QString(), "*.ply");
+	if (!filename.isNull()) {
+		auto newGauss = DataLoader::readGMfromPLY(filename, true, false);
+		if (newGauss) {
+			mixture = std::move(newGauss);
+			ui.openGLWidget->getGMDensityRenderer()->setMixture(mixture.get());
+			auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
+			isoren->setMixture(mixture.get());
+			ui.spin_ellmin->setValue(isoren->getEllMin());
+			ui.spin_ellmax->setValue(isoren->getEllMax());
+		}
+	}
+}
+
+void VisualizerWindow::slotLoadPureMixture()
 {
 	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", QString(), "*.ply");
 	if (!filename.isNull()) {
-		auto newGauss = DataLoader::readGMfromPLY(filename, true, false);
+		auto newGauss = DataLoader::readGMfromPLY(filename, false, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
 			ui.openGLWidget->getGMDensityRenderer()->setMixture(mixture.get());

@@ -18,6 +18,7 @@ void PointCloudRenderer::initialize()
 	m_locViewMatrix = m_program->uniformLocation("viewMatrix");
 	m_colorLoc = m_program->uniformLocation("pointcloudColor");
 	m_circlesLoc = m_program->uniformLocation("circles");
+	m_opacityLoc = m_program->uniformLocation("opacity");
 
 	m_program->release();
 
@@ -44,7 +45,7 @@ void PointCloudRenderer::setPointCloud(PointCloud* pointcloud)
 	m_pointcloud = pointcloud;
 }
 
-void PointCloudRenderer::render()
+void PointCloudRenderer::render(bool transparent)
 {
 	if (!m_pointcloud) {
 		return;
@@ -52,6 +53,10 @@ void PointCloudRenderer::render()
 
 	m_pc_vao.bind();
 	m_program->bind();
+	
+	m_gl->glEnable(GL_BLEND);
+	m_gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	m_program->setUniformValue(m_opacityLoc, transparent ? 0.5f : 1.0f);
 	m_program->setUniformValue(m_colorLoc, m_sPointColor);
 	m_program->setUniformValue(m_circlesLoc, m_sPointCircles);
 	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
@@ -61,6 +66,8 @@ void PointCloudRenderer::render()
 	m_gl->glDrawArrays(GL_POINTS, 0, m_pointcloud->getPointCount());
 	m_program->release();
 	m_pc_vao.release();
+
+	m_gl->glDisable(GL_BLEND);
 }
 
 void PointCloudRenderer::cleanup()
