@@ -205,8 +205,12 @@ void OffscreenRenderSurface::cleanup() {
 
 
 void OffscreenRenderSurface::messageLogged(const QOpenGLDebugMessage& msg) {
-	QString error;
+	if (msg.id() == 131169 || msg.id() == 131185 || msg.id() == 131218 || msg.id() == 131204) {
+		return;
+	}
 
+	QString error;
+	
 	// Format based on severity
 	switch (msg.severity())
 	{

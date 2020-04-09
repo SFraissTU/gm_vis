@@ -219,6 +219,9 @@ void DisplayWidget::mouseMoveEvent(QMouseEvent* event)
 
 //This function is copied from http://www.trentreed.net/blog/qt5-opengl-part-5-debug-logging/
 void DisplayWidget::messageLogged(const QOpenGLDebugMessage& msg) {
+	if (msg.id() == 131169 || msg.id() == 131185 || msg.id() == 131218 || msg.id() == 131204) {
+		return;
+	}
 	QString error;
 	
 	// Format based on severity
