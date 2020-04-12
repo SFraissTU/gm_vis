@@ -43,6 +43,15 @@ void PointCloudRenderer::setPointCloud(PointCloud* pointcloud)
 	m_pc_vbo.release();
 	m_pc_vao.release();
 	m_pointcloud = pointcloud;
+
+	/*QVector3D min = pointcloud->getBBMin();
+	QVector3D max = pointcloud->getBBMax();
+	QVector3D center = (min + max) / 2.0;
+	QVector3D extend = (max - min) / 2.0;
+	m_camera->setTranslation(center);
+	m_camera->setRadius(-std::max(extend.x(), std::max(extend.y(), extend.z())) * 5);
+	m_camera->setXRotation(45);
+	m_camera->setYRotation(-135);*/
 }
 
 void PointCloudRenderer::render(bool transparent)
