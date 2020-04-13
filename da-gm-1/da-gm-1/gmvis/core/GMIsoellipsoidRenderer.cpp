@@ -118,7 +118,6 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 	int n = mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	QVector<QMatrix4x4> normalTransfs;
-	QVector<QVector3D> colors;
 	transforms.resize(n);
 	normalTransfs.resize(n);
 	for (int i = 0; i < n; ++i) {
@@ -156,7 +155,7 @@ void GMIsoellipsoidRenderer::setUniformColor(const QColor& uniformColor)
 }
 
 //updateColors needs to be called manually!!
-void GMIsoellipsoidRenderer::setRenderMode(GMIsoellipsoidRenderMode renderMode)
+void GMIsoellipsoidRenderer::setRenderMode(GMColoringRenderMode renderMode)
 {
 	m_sRenderMode = renderMode;
 }
@@ -171,7 +170,7 @@ void GMIsoellipsoidRenderer::setEllMax(double max)
 	m_sEllMax = max;
 }
 
-void GMIsoellipsoidRenderer::setRangeMode(GMIsoellipsoidColorRangeMode rangeMode)
+void GMIsoellipsoidRenderer::setRangeMode(GMColorRangeMode rangeMode)
 {
 	m_sRangeMode = rangeMode;
 }
@@ -187,7 +186,7 @@ void GMIsoellipsoidRenderer::render()
 	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
 	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
 	m_program->setUniformValue(m_locSurfaceColor, m_sUniformColor);
-	m_program->setUniformValue(m_locUseInColor, (m_sRenderMode != GMIsoellipsoidRenderMode::COLOR_UNIFORM));
+	m_program->setUniformValue(m_locUseInColor, (m_sRenderMode != GMColoringRenderMode::COLOR_UNIFORM));
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
 	m_program->setUniformValue(m_locTransferTex, 0);
@@ -210,7 +209,7 @@ const QColor& GMIsoellipsoidRenderer::getUniformColor() const
 	return m_sUniformColor;
 }
 
-const GMIsoellipsoidRenderMode& GMIsoellipsoidRenderer::getRenderMode() const
+const GMColoringRenderMode& GMIsoellipsoidRenderer::getRenderMode() const
 {
 	return m_sRenderMode;
 }
@@ -225,7 +224,7 @@ const double& GMIsoellipsoidRenderer::getEllMax() const
 	return m_sEllMax;
 }
 
-const GMIsoellipsoidColorRangeMode& GMIsoellipsoidRenderer::getRangeMode() const
+const GMColorRangeMode& GMIsoellipsoidRenderer::getRangeMode() const
 {
 	return m_sRangeMode;
 }
@@ -239,16 +238,16 @@ void GMIsoellipsoidRenderer::updateColors()
 	int n = m_mixture->numberOfGaussians();
 	QVector<float> colors;
 	colors.resize(n);
-	if (m_sRenderMode != GMIsoellipsoidRenderMode::COLOR_UNIFORM) {
+	if (m_sRenderMode != GMColoringRenderMode::COLOR_UNIFORM) {
 		//Find min and max Values
 		double minVal = m_sEllMin;
 		double maxVal = m_sEllMax;
-		if (m_sRangeMode == GMIsoellipsoidColorRangeMode::RANGE_MINMAX) {
+		if (m_sRangeMode == GMColorRangeMode::RANGE_MINMAX) {
 			minVal = std::numeric_limits<double>::infinity();
 			maxVal = -minVal;
 			for (int i = 0; i < n; ++i) {
 				const Gaussian* gauss = (*m_mixture)[i];
-				double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
+				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 				if (val < minVal) {
 					minVal = val;
 				}
@@ -257,13 +256,13 @@ void GMIsoellipsoidRenderer::updateColors()
 				}
 			}
 		}
-		else if (m_sRangeMode == GMIsoellipsoidColorRangeMode::RANGE_MEDMED) {
+		else if (m_sRangeMode == GMColorRangeMode::RANGE_MEDMED) {
 			double sum = 0;
 			QVector<double> values;
 			values.resize(n);
 			for (int i = 0; i < n; ++i) {
 				const Gaussian* gauss = (*m_mixture)[i];
-				double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
+				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 				values[i] = val;
 			}
 			qSort(values);
@@ -283,7 +282,7 @@ void GMIsoellipsoidRenderer::updateColors()
 		double range = maxVal - minVal;
 		for (int i = 0; i < n; ++i) {
 			const Gaussian* gauss = (*m_mixture)[i];
-			double val = (m_sRenderMode == GMIsoellipsoidRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
+			double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 			float t = std::min(1.0f, float((val - minVal) / range));
 			t = std::max(t, 0.0f);
 			colors[i] = t;

@@ -11,10 +11,10 @@
 
 namespace gmvis::core {
 
-	class GMIsoellipsoidRenderer {
+	class GMPositionsRenderer {
 
 	public:
-		GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera);
+		GMPositionsRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera);
 		void initialize();
 		void setMixture(GaussianMixture* mixture);
 		void updateColors();
@@ -37,19 +37,10 @@ namespace gmvis::core {
 		QOpenGLFunctions_4_5_Core* m_gl;
 		Camera* m_camera;
 		GaussianMixture* m_mixture = nullptr;
-
-		//Geometry Data per Sphere
-		QVector<QVector3D> m_geoVertices;
-		QVector<QVector3D> m_geoNormals;
-		QVector<GLuint> m_geoIndices;
-
+		
 		//Buffers
 		QOpenGLVertexArrayObject m_gm_vao;
 		QOpenGLBuffer m_pos_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-		QOpenGLBuffer m_norm_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-		QOpenGLBuffer m_indices_vbo = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
-		QOpenGLBuffer m_transf_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-		QOpenGLBuffer m_normtr_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 		QOpenGLBuffer m_color_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 		GLuint m_texTransfer;
 
@@ -59,17 +50,16 @@ namespace gmvis::core {
 		//Locations
 		int m_locProjMatrix;
 		int m_locViewMatrix;
-		int m_locLightDir;
 		int m_locUseInColor;
 		int m_locSurfaceColor;
 		int m_locTransferTex;
 
 		//Settings
-		QColor					 m_sUniformColor = QColor(100, 100, 255);
-		QVector3D				 m_sLightDirection = QVector3D(0.f, -0.7f, -1.0f).normalized();
+		QColor					 m_sUniformColor = QColor(255, 0, 0);
 		GMColoringRenderMode m_sRenderMode = GMColoringRenderMode::COLOR_UNIFORM;
 		double m_sEllMin = 0;
 		double m_sEllMax = 0.05;
 		GMColorRangeMode m_sRangeMode = GMColorRangeMode::RANGE_MINMAX;
+		float  m_sPointSize = 5.0f;
 	};
 }

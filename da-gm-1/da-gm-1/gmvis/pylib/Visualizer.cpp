@@ -27,7 +27,7 @@ Visualizer::Visualizer(bool async, int width, int height)
 		m_surface->initialize(width, height);
 	});
 	set_ellipsoid_rendering(true, true);
-	set_ellipsoid_coloring(GMIsoellipsoidRenderMode::COLOR_UNIFORM, GMIsoellipsoidColorRangeMode::RANGE_MANUAL, 0.0f, 1.0f);
+	set_ellipsoid_coloring(GMColoringRenderMode::COLOR_UNIFORM, GMColorRangeMode::RANGE_MANUAL, 0.0f, 1.0f);
 	set_density_rendering(true, GMDensityRenderMode::ADDITIVE_EXACT);
 	set_density_coloring(true, 0.9f, 0.0f, 0.5f);
 }
@@ -79,19 +79,37 @@ void Visualizer::set_camera_auto(bool camauto)
 void Visualizer::set_ellipsoid_rendering(bool ellipsoids, bool pointcloud)
 {
 	pushCommand([this, ellipsoids, pointcloud] {
-		m_surface->setPointDisplayEnabled(ellipsoids && pointcloud);
-		m_surface->setEllipsoidDisplayEnabled(ellipsoids);
+		m_surface->setEllipsoidDisplayEnabled(ellipsoids, pointcloud);
 	});
 }
 
-void Visualizer::set_ellipsoid_coloring(GMIsoellipsoidRenderMode colorMode, GMIsoellipsoidColorRangeMode rangeMode, float min, float max)
+void Visualizer::set_ellipsoid_coloring(GMColoringRenderMode colorMode, GMColorRangeMode rangeMode, float min, float max)
 {
 	pushCommand([this, colorMode, rangeMode, min, max] {
 		m_surface->getGMIsoellipsoidRenderer()->setRenderMode(colorMode);
 		m_surface->getGMIsoellipsoidRenderer()->setRangeMode(rangeMode);
-		if (rangeMode == GMIsoellipsoidColorRangeMode::RANGE_MANUAL) {
+		if (rangeMode == GMColorRangeMode::RANGE_MANUAL) {
 			m_surface->getGMIsoellipsoidRenderer()->setEllMin(min);
 			m_surface->getGMIsoellipsoidRenderer()->setEllMax(max);
+		}
+	});
+}
+
+void gmvis::pylib::Visualizer::set_positions_rendering(bool positions, bool pointcloud)
+{
+	pushCommand([this, positions, pointcloud] {
+		m_surface->setGMPositionsDisplayEnabled(positions, pointcloud);
+		});
+}
+
+void Visualizer::set_positions_coloring(GMColoringRenderMode colorMode, GMColorRangeMode rangeMode, float min, float max)
+{
+	pushCommand([this, colorMode, rangeMode, min, max] {
+		m_surface->getGMPositionsRenderer()->setRenderMode(colorMode);
+		m_surface->getGMPositionsRenderer()->setRangeMode(rangeMode);
+		if (rangeMode == GMColorRangeMode::RANGE_MANUAL) {
+			m_surface->getGMPositionsRenderer()->setEllMin(min);
+			m_surface->getGMPositionsRenderer()->setEllMax(max);
 		}
 	});
 }
@@ -275,7 +293,7 @@ py::array_t<float> Visualizer::processRenderRequest(int epoch)
 {
 	float* retdata;
 	size_t imagesize = m_surface->getWidth() * m_surface->getHeight() * 4;
-	int famount = m_surface->isEllipsoidDisplayEnabled() + m_surface->isDensityDisplayEnabled();
+	int famount = m_surface->isEllipsoidDisplayEnabled() + m_surface->isGMPositionsDisplayEnabled() + m_surface->isDensityDisplayEnabled();
 	if (!m_async && !m_callback) {
 		retdata = new float[imagesize * famount * m_mixtures.size()];
 	}
@@ -292,22 +310,36 @@ py::array_t<float> Visualizer::processRenderRequest(int epoch)
 		std::vector<std::unique_ptr<Image>> pixeldata = m_surface->render();
 		//Save!
 		if (m_callback) {
+			int index = 0;
 			if (m_surface->isEllipsoidDisplayEnabled()) {
-				(*m_callback)(epoch, pixeldata[0]->toNpArray(), i, 0);
+				(*m_callback)(epoch, pixeldata[index]->toNpArray(), i, 0);
+				index++;
+			}
+			if (m_surface->isGMPositionsDisplayEnabled()) {
+				(*m_callback)(epoch, pixeldata[index]->toNpArray(), i, 1);
+				index++;
 			}
 			if (m_surface->isDensityDisplayEnabled()) {
-				(*m_callback)(epoch, pixeldata[pixeldata.size() == 2]->toNpArray(), i, 1);
+				(*m_callback)(epoch, pixeldata[index]->toNpArray(), i, 2);
+				index++;
 			}
 		}
 		else if (!m_async) {
+			int idx = 0;
 			if (m_surface->isEllipsoidDisplayEnabled()) {
-				float* imgdata = pixeldata[0]->data();
-				memcpy(&retdata[i * imagesize * famount], imgdata, sizeof(float) * imagesize);
-			}
-			if (m_surface->isDensityDisplayEnabled()) {
-				int idx = (pixeldata.size() == 2);
 				float* imgdata = pixeldata[idx]->data();
 				memcpy(&retdata[i * imagesize * famount + idx * imagesize], imgdata, sizeof(float) * imagesize);
+				idx++;
+			}
+			if (m_surface->isGMPositionsDisplayEnabled()) {
+				float* imgdata = pixeldata[idx]->data();
+				memcpy(&retdata[i * imagesize * famount + idx * imagesize], imgdata, sizeof(float) * imagesize);
+				idx++;
+			}
+			if (m_surface->isDensityDisplayEnabled()) {
+				float* imgdata = pixeldata[idx]->data();
+				memcpy(&retdata[i * imagesize * famount + idx * imagesize], imgdata, sizeof(float) * imagesize);
+				idx++;
 			}
 		}
 	}
@@ -360,7 +392,7 @@ void Visualizer::calculateCameraPositionByPointcloud(int index)
 		QVector3D extend = (max - min) / 2.0;
 		auto cam = m_surface->getCamera();
 		cam->setTranslation(center);
-		cam->setRadius(-std::max(extend.x(), std::max(extend.y(), extend.z())) * 5);
+		cam->setRadius(-std::max(extend.x(), std::max(extend.y(), extend.z())) * 3);
 		cam->setXRotation(45);
 		cam->setYRotation(-135);
 	}

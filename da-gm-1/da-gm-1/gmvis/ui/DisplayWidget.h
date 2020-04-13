@@ -13,6 +13,7 @@
 #include "gmvis/core/PointCloudRenderer.h"
 #include "gmvis/core/GMIsoellipsoidRenderer.h"
 #include "gmvis/core/GMDensityRenderer.h"
+#include "gmvis/core/GMPositionsRenderer.h"
 
 namespace gmvis::ui {
 
@@ -28,14 +29,17 @@ namespace gmvis::ui {
 
 		void setPointDisplayEnabled(bool enabled);
 		void setEllipsoidDisplayEnabled(bool enabled);
+		void setGMPositionsDisplayEnabled(bool enabled);
 		void setDensityDisplayEnabled(bool enabled);
 
-		bool isPointDisplayEnabled();
-		bool isEllipsoidDisplayEnabled();
-		bool isDensityDisplayEnabled();
+		bool isPointDisplayEnabled() const;
+		bool isEllipsoidDisplayEnabled() const;
+		bool isGMPositionsDisplayEnabled() const;
+		bool isDensityDisplayEnabled() const;
 
 		core::PointCloudRenderer* getPointCloudRenderer();
 		core::GMIsoellipsoidRenderer* getGMIsoellipsoidRenderer();
+		core::GMPositionsRenderer* getGMPositionsRenderer();
 		core::GMDensityRenderer* getGMDensityRenderer();
 
 	public slots:
@@ -58,11 +62,13 @@ namespace gmvis::ui {
 		//Settings
 		bool m_sDisplayPoints = false;
 		bool m_sDisplayEllipsoids = false;
+		bool m_sDisplayGMPositions = false;
 		bool m_sDisplayDensity = true;
 
 		//Renderers
 		std::unique_ptr<core::PointCloudRenderer> m_pointcloudRenderer;
 		std::unique_ptr<core::GMIsoellipsoidRenderer> m_isoellipsoidRenderer;
+		std::unique_ptr<core::GMPositionsRenderer> m_positionsRenderer;
 		std::unique_ptr<core::GMDensityRenderer> m_densityRenderer;
 
 		std::unique_ptr<core::ScreenFBO> m_fboIntermediate;

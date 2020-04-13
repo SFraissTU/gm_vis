@@ -8,6 +8,7 @@
 #include "gmvis/core/PointCloudRenderer.h"
 #include "gmvis/core/GMIsoellipsoidRenderer.h"
 #include "gmvis/core/GMDensityRenderer.h"
+#include "gmvis/core/GMPositionsRenderer.h"
 #include "gmvis/core/GaussianMixture.h"
 #include "gmvis/pylib/Image.h"
 
@@ -33,15 +34,16 @@ namespace gmvis::pylib {
 
 		core::PointCloudRenderer* getPointCloudRenderer();
 		core::GMIsoellipsoidRenderer* getGMIsoellipsoidRenderer();
+		core::GMPositionsRenderer * getGMPositionsRenderer();
 		core::GMDensityRenderer* getGMDensityRenderer();
 
-		void setPointDisplayEnabled(bool enabled);
-		void setEllipsoidDisplayEnabled(bool enabled);
+		void setEllipsoidDisplayEnabled(bool enabled, bool displayPoints);
+		void setGMPositionsDisplayEnabled(bool enabled, bool displayPoints);
 		void setDensityDisplayEnabled(bool enabled);
 
-		bool isPointDisplayEnabled();
-		bool isEllipsoidDisplayEnabled();
-		bool isDensityDisplayEnabled();
+		bool isEllipsoidDisplayEnabled() const;
+		bool isGMPositionsDisplayEnabled() const;
+		bool isDensityDisplayEnabled() const;
 
 	public slots:
 		void cleanup();
@@ -55,13 +57,16 @@ namespace gmvis::pylib {
 		std::unique_ptr<QOpenGLDebugLogger> m_debugLogger;
 
 		//Settings
-		bool m_sDisplayPoints = true;
 		bool m_sDisplayEllipsoids = true;
+		bool m_sDisplayEllipsoids_Points = true;
+		bool m_sDisplayGMPositions = false;
+		bool m_sDisplayGMPositions_Points = true;
 		bool m_sDisplayDensity = true;
 
 		//Renderers
 		std::unique_ptr<core::PointCloudRenderer> m_pointcloudRenderer;
 		std::unique_ptr<core::GMIsoellipsoidRenderer> m_isoellipsoidRenderer;
+		std::unique_ptr<core::GMPositionsRenderer> m_positionRenderer;
 		std::unique_ptr<core::GMDensityRenderer> m_densityRenderer;
 
 		std::unique_ptr<core::ScreenFBO> m_fbo;

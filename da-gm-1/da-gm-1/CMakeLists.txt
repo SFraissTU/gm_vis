@@ -49,6 +49,8 @@ set(CORE_FILES
     gmvis/core/GaussianMixture.cpp
     gmvis/core/GMIsoellipsoidRenderer.h
     gmvis/core/GMIsoellipsoidRenderer.cpp
+    gmvis/core/GMPositionsRenderer.h
+    gmvis/core/GMPositionsRenderer.cpp
     gmvis/core/GMRenderModes.h
     gmvis/core/GMDensityRenderer.h
     gmvis/core/GMDensityRenderer.cpp

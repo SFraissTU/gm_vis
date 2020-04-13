@@ -56,6 +56,7 @@ namespace gmvis::core {
 
 		std::shared_ptr<char[]> gpuData(size_t& arrsize) const;
 		std::shared_ptr<char[]> gpuData(size_t& arrsize, double threshold, GLuint& numberOfComponents) const;
+		std::shared_ptr<char[]> gpuPositionData(size_t& arrsize) const;
 
 		//Returns the Gaussians-Data as return value and the octree nodes per parameter
 		std::shared_ptr<char[]> buildOctree(double threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const;

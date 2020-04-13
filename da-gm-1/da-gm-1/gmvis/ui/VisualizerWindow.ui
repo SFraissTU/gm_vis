@@ -80,7 +80,7 @@
               <x>10</x>
               <y>20</y>
               <width>149</width>
-              <height>65</height>
+              <height>70</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout">
@@ -91,6 +91,13 @@
                </property>
               </widget>
              </item>
+              <item>
+                <widget class="QCheckBox" name="cb_displayGMPositions">
+                  <property name="text">
+                    <string>GM Positions</string>
+                  </property>
+                </widget>
+              </item>
              <item>
               <widget class="QCheckBox" name="cb_displayEllipsoids">
                <property name="text">

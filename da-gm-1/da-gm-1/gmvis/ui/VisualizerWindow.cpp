@@ -18,9 +18,9 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 
 	auto ellrenderer = widget->getGMIsoellipsoidRenderer();
 	ui.spin_ellmin->setValue(ellrenderer->getEllMin());
-	ui.spin_ellmin->setEnabled(ellrenderer->getRangeMode() == GMIsoellipsoidColorRangeMode::RANGE_MANUAL);
+	ui.spin_ellmin->setEnabled(ellrenderer->getRangeMode() == GMColorRangeMode::RANGE_MANUAL);
 	ui.spin_ellmax->setValue(ellrenderer->getEllMax());
-	ui.spin_ellmax->setEnabled(ellrenderer->getRangeMode() == GMIsoellipsoidColorRangeMode::RANGE_MANUAL);
+	ui.spin_ellmax->setEnabled(ellrenderer->getRangeMode() == GMColorRangeMode::RANGE_MANUAL);
 	ui.co_ellrangemode->setCurrentIndex((int)ellrenderer->getRangeMode() - 1);
 	ui.co_ellrendermode->setCurrentIndex((int)ellrenderer->getRenderMode() - 1);
 
@@ -39,6 +39,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.loadPureMixtureAction, SIGNAL(triggered()), this, SLOT(slotLoadPureMixture()));
 
 	(void)connect(ui.cb_displayPointcloud, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
+	(void)connect(ui.cb_displayGMPositions, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayEllipsoids, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayDensity, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 
@@ -78,6 +79,7 @@ void VisualizerWindow::slotLoadMixtureModel()
 		if (newGauss) {
 			mixture = std::move(newGauss);
 			ui.openGLWidget->getGMDensityRenderer()->setMixture(mixture.get());
+			ui.openGLWidget->getGMPositionsRenderer()->setMixture(mixture.get());
 			auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
 			isoren->setMixture(mixture.get());
 			ui.spin_ellmin->setValue(isoren->getEllMin());
@@ -94,6 +96,7 @@ void VisualizerWindow::slotLoadPureMixture()
 		if (newGauss) {
 			mixture = std::move(newGauss);
 			ui.openGLWidget->getGMDensityRenderer()->setMixture(mixture.get());
+			ui.openGLWidget->getGMPositionsRenderer()->setMixture(mixture.get());
 			auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
 			isoren->setMixture(mixture.get());
 			ui.spin_ellmin->setValue(isoren->getEllMin());
@@ -105,6 +108,7 @@ void VisualizerWindow::slotLoadPureMixture()
 void VisualizerWindow::slotDisplayOptionsChanged()
 {
 	ui.openGLWidget->setPointDisplayEnabled(ui.cb_displayPointcloud->isChecked());
+	ui.openGLWidget->setGMPositionsDisplayEnabled(ui.cb_displayGMPositions->isChecked());
 	ui.openGLWidget->setEllipsoidDisplayEnabled(ui.cb_displayEllipsoids->isChecked());
 	ui.openGLWidget->setDensityDisplayEnabled(ui.cb_displayDensity->isChecked());
 	ui.openGLWidget->update();
@@ -121,13 +125,16 @@ void VisualizerWindow::slotEllValuesChanged()
 
 void VisualizerWindow::slotEllAutoValueChanged()
 {
-	auto renderer = ui.openGLWidget->getGMIsoellipsoidRenderer();
-	GMIsoellipsoidColorRangeMode val = GMIsoellipsoidColorRangeMode(ui.co_ellrangemode->currentIndex() + 1);
-	renderer->setRangeMode(val);
-	renderer->updateColors();
-	if (val != GMIsoellipsoidColorRangeMode::RANGE_MANUAL) {
-		ui.spin_ellmin->setValue(renderer->getEllMin());
-		ui.spin_ellmax->setValue(renderer->getEllMax());
+	auto renderer1 = ui.openGLWidget->getGMIsoellipsoidRenderer();
+	auto renderer2 = ui.openGLWidget->getGMPositionsRenderer();
+	GMColorRangeMode val = GMColorRangeMode(ui.co_ellrangemode->currentIndex() + 1);
+	renderer1->setRangeMode(val);
+	renderer1->updateColors();
+	renderer2->setRangeMode(val);
+	renderer2->updateColors();
+	if (val != GMColorRangeMode::RANGE_MANUAL) {
+		ui.spin_ellmin->setValue(renderer1->getEllMin());
+		ui.spin_ellmax->setValue(renderer1->getEllMax());
 		ui.spin_ellmin->setEnabled(false);
 		ui.spin_ellmax->setEnabled(false);
 	}
@@ -140,11 +147,14 @@ void VisualizerWindow::slotEllAutoValueChanged()
 
 void VisualizerWindow::slotEllipsoidRenderModeChanged()
 {
-	auto renderer = ui.openGLWidget->getGMIsoellipsoidRenderer();
-	renderer->setRenderMode(GMIsoellipsoidRenderMode(ui.co_ellrendermode->currentIndex() + 1));
-	renderer->updateColors();
-	ui.spin_ellmin->setValue(renderer->getEllMin());
-	ui.spin_ellmax->setValue(renderer->getEllMax());
+	auto renderer1 = ui.openGLWidget->getGMIsoellipsoidRenderer();
+	auto renderer2 = ui.openGLWidget->getGMPositionsRenderer();
+	renderer1->setRenderMode(GMColoringRenderMode(ui.co_ellrendermode->currentIndex() + 1));
+	renderer1->updateColors();
+	renderer2->setRenderMode(GMColoringRenderMode(ui.co_ellrendermode->currentIndex() + 1));
+	renderer2->updateColors();
+	ui.spin_ellmin->setValue(renderer1->getEllMin());
+	ui.spin_ellmax->setValue(renderer1->getEllMax());
 	ui.openGLWidget->update();
 }
 

@@ -9,13 +9,13 @@ namespace gmvis::core {
 		ADDITIVE_SAMPLING_OCTREE = 4
 	};
 
-	enum class GMIsoellipsoidRenderMode {
+	enum class GMColoringRenderMode {
 		COLOR_UNIFORM = 1,
 		COLOR_WEIGHT = 2,
 		COLOR_AMPLITUDE = 3
 	};
 
-	enum class GMIsoellipsoidColorRangeMode {
+	enum class GMColorRangeMode {
 		RANGE_MANUAL = 1,
 		RANGE_MINMAX = 2,
 		RANGE_MEDMED = 3

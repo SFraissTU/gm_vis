@@ -70,6 +70,22 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize, double thresho
 	return std::shared_ptr<char[]>(result);
 }
 
+std::shared_ptr<char[]> gmvis::core::GaussianMixture::gpuPositionData(size_t& arrsize) const
+{
+	GLint n = (GLint)numberOfGaussians();
+	arrsize = 16 * n;
+	char* result = new char[arrsize];
+	char* gaussmem = result;
+	float one = 1.0f;
+	for (int i = 0; i < n; i++) {
+		const GaussianGPU& gpudata = gaussians[i].getGPUData();
+		memcpy(gaussmem, &gpudata.mu_alpha, 12);
+		memcpy(gaussmem+12, &one, 4);
+		gaussmem += 16;
+	}
+	return std::shared_ptr<char[]>(result);
+}
+
 std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const
 {
 	QTime time;

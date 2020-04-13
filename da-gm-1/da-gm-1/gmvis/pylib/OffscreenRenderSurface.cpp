@@ -30,12 +30,14 @@ void OffscreenRenderSurface::initialize(int width, int height) {
 	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width) / height, 0.01f, 1000.0f);
 	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
+	m_positionRenderer = std::make_unique<GMPositionsRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get(), width, height);
 	
 	initializeOpenGLFunctions();
 	
 	m_pointcloudRenderer->initialize();
 	m_isoellipsoidRenderer->initialize();
+	m_positionRenderer->initialize();
 	m_densityRenderer->initialize();
 	
 	m_fbo = std::make_unique<ScreenFBO>(static_cast<QOpenGLFunctions_4_5_Core*>(this), width, height);
@@ -68,6 +70,7 @@ void gmvis::pylib::OffscreenRenderSurface::setSize(int width, int height)
 void gmvis::pylib::OffscreenRenderSurface::setMixture(core::GaussianMixture* mixture)
 {
 	m_isoellipsoidRenderer->setMixture(mixture);
+	m_positionRenderer->setMixture(mixture);
 	m_densityRenderer->setMixture(mixture);
 }
 
@@ -81,6 +84,7 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo->getID());
 	int width = m_fbo->getWidth();
 	int height = m_fbo->getHeight();
+	int index = 0;
 	if (m_sDisplayEllipsoids) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
@@ -90,14 +94,34 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 		glViewport(0, 0, width, height);
 
 		m_isoellipsoidRenderer->render();
-		if (m_sDisplayPoints) {
+		if (m_sDisplayEllipsoids_Points) {
 			m_pointcloudRenderer->render(true);
 		}
 		images.push_back(std::make_unique<Image>(width, height, 4));
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo->getID());
-		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[0]->data());
-		images[0]->clamp({ 0.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f });
-		images[0]->invertHeight();
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[index]->data());
+		images[index]->clamp({ 0.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f });
+		images[index]->invertHeight();
+		index++;
+	}
+
+	if (m_sDisplayGMPositions) {
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		glDisable(GL_BLEND);
+		glViewport(0, 0, width, height);
+
+		if (m_sDisplayGMPositions_Points) {
+			m_pointcloudRenderer->render(false);
+		}
+		m_positionRenderer->render();
+
+		images.push_back(std::make_unique<Image>(width, height, 4));
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo->getID());
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[index]->data());
+		images[index]->clamp({ 0.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f });
+		images[index]->invertHeight();
+		index++;
 	}
 
 	if (m_sDisplayDensity) {
@@ -109,9 +133,10 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 
 		images.push_back(std::make_unique<Image>(width, height, 4));
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo->getID());
-		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[m_sDisplayEllipsoids]->data());
-		images[m_sDisplayEllipsoids]->clamp({ 0.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f });
-		images[m_sDisplayEllipsoids]->invertHeight();
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, images[index]->data());
+		images[index]->clamp({ 0.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f });
+		images[index]->invertHeight();
+		index++;
 	}
 	return std::move(images);
 }
@@ -136,19 +161,26 @@ GMIsoellipsoidRenderer* OffscreenRenderSurface::getGMIsoellipsoidRenderer()
 	return m_isoellipsoidRenderer.get();
 }
 
+GMPositionsRenderer* OffscreenRenderSurface::getGMPositionsRenderer()
+{
+	return m_positionRenderer.get();
+}
+
 GMDensityRenderer* OffscreenRenderSurface::getGMDensityRenderer()
 {
 	return m_densityRenderer.get();
 }
 
-void OffscreenRenderSurface::setPointDisplayEnabled(bool enabled)
-{
-	m_sDisplayPoints = enabled;
-}
-
-void OffscreenRenderSurface::setEllipsoidDisplayEnabled(bool enabled)
+void OffscreenRenderSurface::setEllipsoidDisplayEnabled(bool enabled, bool displayPoints)
 {
 	m_sDisplayEllipsoids = enabled;
+	m_sDisplayEllipsoids_Points = displayPoints;
+}
+
+void gmvis::pylib::OffscreenRenderSurface::setGMPositionsDisplayEnabled(bool enabled, bool displayPoints)
+{
+	m_sDisplayGMPositions = enabled;
+	m_sDisplayGMPositions_Points = displayPoints;
 }
 
 void OffscreenRenderSurface::setDensityDisplayEnabled(bool enabled)
@@ -156,17 +188,17 @@ void OffscreenRenderSurface::setDensityDisplayEnabled(bool enabled)
 	m_sDisplayDensity = enabled;
 }
 
-bool OffscreenRenderSurface::isPointDisplayEnabled()
-{
-	return m_sDisplayPoints;
-}
-
-bool OffscreenRenderSurface::isEllipsoidDisplayEnabled()
+bool gmvis::pylib::OffscreenRenderSurface::isEllipsoidDisplayEnabled() const
 {
 	return m_sDisplayEllipsoids;
 }
 
-bool OffscreenRenderSurface::isDensityDisplayEnabled()
+bool gmvis::pylib::OffscreenRenderSurface::isGMPositionsDisplayEnabled() const
+{
+	return m_sDisplayGMPositions;
+}
+
+bool gmvis::pylib::OffscreenRenderSurface::isDensityDisplayEnabled() const
 {
 	return m_sDisplayDensity;
 }

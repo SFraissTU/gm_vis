@@ -22,8 +22,10 @@ namespace gmvis::pylib {
 		void set_image_size(int width, int height);
 		void set_view_matrix(py::array_t<float> viewmat);
 		void set_camera_auto(bool camauto);
-		void set_ellipsoid_rendering(bool ellipsoids = true, bool pointcloud = true);
-		void set_ellipsoid_coloring(core::GMIsoellipsoidRenderMode colorMode, gmvis::core::GMIsoellipsoidColorRangeMode rangeMode, float min, float max);
+		void set_ellipsoid_rendering(bool ellipsoids, bool pointcloud = true);
+		void set_ellipsoid_coloring(core::GMColoringRenderMode colorMode, gmvis::core::GMColorRangeMode rangeMode, float min, float max);
+		void set_positions_rendering(bool positions, bool pointcloud = true);
+		void set_positions_coloring(core::GMColoringRenderMode colorMode, gmvis::core::GMColorRangeMode rangeMode, float min, float max);
 		void set_density_rendering(bool density, gmvis::core::GMDensityRenderMode renderMode);
 		void set_density_coloring(bool automatic, float autoperc, float min, float max);
 		void set_density_accthreshold(bool automatic, float threshold);

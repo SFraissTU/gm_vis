@@ -34,15 +34,15 @@ int main(int argc, char* argv[])
 
 PYBIND11_MODULE(pygmvis, m) {
 	m.doc() = "GM Visualizer";
-	py::enum_<GMIsoellipsoidRenderMode>(m, "GMIsoellipsoidRenderMode")
-		.value("COLOR_AMPLITUDE", GMIsoellipsoidRenderMode::COLOR_AMPLITUDE)
-		.value("COLOR_UNIFORM", GMIsoellipsoidRenderMode::COLOR_UNIFORM)
-		.value("COLOR_WEIGHT", GMIsoellipsoidRenderMode::COLOR_WEIGHT)
+	py::enum_<GMColoringRenderMode>(m, "GMColoringRenderMode")
+		.value("COLOR_AMPLITUDE", GMColoringRenderMode::COLOR_AMPLITUDE)
+		.value("COLOR_UNIFORM", GMColoringRenderMode::COLOR_UNIFORM)
+		.value("COLOR_WEIGHT", GMColoringRenderMode::COLOR_WEIGHT)
 		.export_values();
-	py::enum_<GMIsoellipsoidColorRangeMode>(m, "GMIsoellipsoidColorRangeMode")
-		.value("RANGE_MANUAL", GMIsoellipsoidColorRangeMode::RANGE_MANUAL)
-		.value("RANGE_MINMAX", GMIsoellipsoidColorRangeMode::RANGE_MINMAX)
-		.value("RANGE_MEDMED", GMIsoellipsoidColorRangeMode::RANGE_MEDMED)
+	py::enum_<GMColorRangeMode>(m, "GMColorRangeMode")
+		.value("RANGE_MANUAL", GMColorRangeMode::RANGE_MANUAL)
+		.value("RANGE_MINMAX", GMColorRangeMode::RANGE_MINMAX)
+		.value("RANGE_MEDMED", GMColorRangeMode::RANGE_MEDMED)
 		.export_values();
 	py::enum_<GMDensityRenderMode>(m, "GMDensityRenderMode")
 		.value("ADDITIVE_EXACT", GMDensityRenderMode::ADDITIVE_EXACT)
@@ -54,8 +54,11 @@ PYBIND11_MODULE(pygmvis, m) {
 		.def("set_camera_auto", &Visualizer::set_camera_auto, "mode"_a)
 		.def("set_view_matrix", &Visualizer::set_view_matrix, "viewmat"_a)
 		.def("set_ellipsoid_rendering", &Visualizer::set_ellipsoid_rendering, "ellipsoids"_a, "pointcloud"_a = true)
-		.def("set_ellipsoid_coloring", &Visualizer::set_ellipsoid_coloring, "colorMode"_a = GMIsoellipsoidRenderMode::COLOR_UNIFORM,
-			"rangeMode"_a = GMIsoellipsoidColorRangeMode::RANGE_MANUAL, "min"_a=0.0f, "max"_a = 0.0f)
+		.def("set_ellipsoid_coloring", &Visualizer::set_ellipsoid_coloring, "colorMode"_a = GMColoringRenderMode::COLOR_UNIFORM,
+			"rangeMode"_a = GMColorRangeMode::RANGE_MANUAL, "min"_a=0.0f, "max"_a = 0.0f)
+		.def("set_positions_rendering", &Visualizer::set_positions_rendering, "positions"_a, "pointcloud"_a = true)
+		.def("set_positions_coloring", &Visualizer::set_positions_coloring, "colorMode"_a = GMColoringRenderMode::COLOR_UNIFORM,
+			"rangeMode"_a = GMColorRangeMode::RANGE_MANUAL, "min"_a = 0.0f, "max"_a = 0.0f)
 		.def("set_density_rendering", &Visualizer::set_density_rendering, "density"_a = true, "renderMode"_a = GMDensityRenderMode::ADDITIVE_EXACT)
 		.def("set_density_coloring", &Visualizer::set_density_coloring, "automatic"_a = true, "autoperc"_a = 0.9, "min"_a = 0.0, "max"_a = 0.5)
 		.def("set_density_accthreshold", &Visualizer::set_density_accthreshold, "automatic"_a = true, "threshold"_a = 0.00001)

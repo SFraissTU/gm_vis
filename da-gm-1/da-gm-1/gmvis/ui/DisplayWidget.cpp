@@ -22,6 +22,7 @@ DisplayWidget::DisplayWidget(QWidget* parent) : QOpenGLWidget(parent)
 	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width()) / height(), 0.01f, 1000.0f);
 	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
+	m_positionsRenderer = std::make_unique<GMPositionsRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get(), width(), height());
 }
 
@@ -47,24 +48,34 @@ void DisplayWidget::setEllipsoidDisplayEnabled(bool enabled)
 	m_sDisplayEllipsoids = enabled;
 }
 
+void gmvis::ui::DisplayWidget::setGMPositionsDisplayEnabled(bool enabled)
+{
+	m_sDisplayGMPositions = enabled;
+}
+
 void DisplayWidget::setDensityDisplayEnabled(bool enabled)
 {
 	m_sDisplayDensity = enabled;
 }
 
-bool DisplayWidget::isPointDisplayEnabled()
+bool DisplayWidget::isPointDisplayEnabled() const
 {
 	return m_sDisplayPoints;
 }
 
-bool DisplayWidget::isEllipsoidDisplayEnabled()
+bool DisplayWidget::isEllipsoidDisplayEnabled() const
 {
 	return m_sDisplayEllipsoids;
 }
 
-bool DisplayWidget::isDensityDisplayEnabled()
+bool DisplayWidget::isDensityDisplayEnabled() const
 {
 	return m_sDisplayDensity;
+}
+
+bool gmvis::ui::DisplayWidget::isGMPositionsDisplayEnabled() const
+{
+	return m_sDisplayGMPositions;
 }
 
 PointCloudRenderer* DisplayWidget::getPointCloudRenderer()
@@ -75,6 +86,11 @@ PointCloudRenderer* DisplayWidget::getPointCloudRenderer()
 GMIsoellipsoidRenderer* DisplayWidget::getGMIsoellipsoidRenderer()
 {
 	return m_isoellipsoidRenderer.get();
+}
+
+GMPositionsRenderer* DisplayWidget::getGMPositionsRenderer()
+{
+	return m_positionsRenderer.get();
 }
 
 GMDensityRenderer* DisplayWidget::getGMDensityRenderer()
@@ -90,6 +106,8 @@ void DisplayWidget::cleanup() {
 		m_pointcloudRenderer.reset();
 		m_isoellipsoidRenderer->cleanup();
 		m_isoellipsoidRenderer.reset();
+		m_positionsRenderer->cleanup();
+		m_positionsRenderer.reset();
 		m_densityRenderer->cleanup();
 		m_densityRenderer.reset();
 		m_debugLogger.reset();
@@ -106,6 +124,7 @@ void DisplayWidget::initializeGL() {
 
 	m_pointcloudRenderer->initialize();
 	m_isoellipsoidRenderer->initialize();
+	m_positionsRenderer->initialize();
 	m_densityRenderer->initialize();
 
 	m_fboIntermediate = std::make_unique<ScreenFBO>(static_cast<QOpenGLFunctions_4_5_Core*>(this), width(), height());
@@ -132,7 +151,7 @@ void DisplayWidget::paintGL()
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);
 
 	//Only render points and ellipsoids if blending mode requires it
-	if (m_sDisplayPoints || m_sDisplayEllipsoids) {
+	if (m_sDisplayPoints || m_sDisplayEllipsoids || m_sDisplayGMPositions) {
 		//Only set FBO if we will render volume later on
 		if (m_sDisplayDensity) {
 			//First pass: Render classicaly into texture
@@ -145,6 +164,10 @@ void DisplayWidget::paintGL()
 		glCullFace(GL_BACK);
 		glDisable(GL_BLEND);
 		glViewport(0, 0, m_fboIntermediate->getWidth(), m_fboIntermediate->getHeight());
+
+		if (m_sDisplayGMPositions) {
+			m_positionsRenderer->render();
+		}
 
 		if (m_sDisplayEllipsoids) {
 			m_isoellipsoidRenderer->render();
@@ -164,7 +187,7 @@ void DisplayWidget::paintGL()
 		glGenQueries(1, &query);
 		glBeginQuery(GL_TIME_ELAPSED, query);
 
-		m_densityRenderer->render(m_fboIntermediate->getColorTexture(), m_sDisplayPoints || m_sDisplayEllipsoids);
+		m_densityRenderer->render(m_fboIntermediate->getColorTexture(), m_sDisplayPoints || m_sDisplayEllipsoids || m_sDisplayGMPositions);
 
 		glEndQuery(GL_TIME_ELAPSED);
 
