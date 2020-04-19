@@ -2,7 +2,7 @@
 #include "PythonInterface.h"
 #include "gmvis/core/DataLoader.h"
 #include "gmvis/core/Camera.h"
-#include "gmvis/pylib/Visualizer.h"
+#include "gmvis/pylib/standard/Visualizer.h"
 #include <thread>
 #include <QElapsedTimer>
 
@@ -10,14 +10,6 @@ using namespace gmvis::pylib;
 using namespace gmvis::core;
 using namespace pybind11::literals;
 
-void pyprint(std::string str)
-{
-#ifdef PY_LIB
-	py::print(str);
-#else
-	qDebug() << QString(str.c_str()) << "\n";
-#endif
-}
 
 int main(int argc, char* argv[])
 {

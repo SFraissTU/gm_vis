@@ -24,17 +24,30 @@ set(UI_FILES
 )
 
 set(PY_FILES
-    gmvis/pylib/PythonInterface.h
-    gmvis/pylib/PythonInterface.cpp
-    gmvis/pylib/OffscreenRenderSurface.h
-    gmvis/pylib/OffscreenRenderSurface.cpp
     gmvis/pylib/Image.h
     gmvis/pylib/Image.cpp
-    gmvis/pylib/Visualizer.h
-    gmvis/pylib/Visualizer.cpp
     gmvis/pylib/pyimport.h
+    gmvis/pylib/pyimport.cpp
+)
+
+set(PYSTANDARD_FILES
+    gmvis/pylib/standard/PythonInterface.h
+    gmvis/pylib/standard/PythonInterface.cpp
+    gmvis/pylib/standard/OffscreenRenderSurface.h
+    gmvis/pylib/standard/OffscreenRenderSurface.cpp
+    gmvis/pylib/standard/Visualizer.h
+    gmvis/pylib/standard/Visualizer.cpp
     lodepng.h
     lodepng.cpp
+)
+
+set(PYLIVE_FILES
+    gmvis/pylib/live/LiveVisWindow.h
+    gmvis/pylib/live/LiveVisWindow.cpp
+    gmvis/pylib/live/LiveVisWindow.ui
+    gmvis/pylib/live/LiveVisWindow.qrc
+    gmvis/pylib/live/PythonLiveInterface.h
+    gmvis/pylib/live/PythonLiveInterface.cpp
 )
 
 set(CORE_FILES
@@ -91,8 +104,16 @@ include_directories(
 add_subdirectory(pybind11)
 pybind11_add_module(pygmvis
     ${PY_FILES}
+    ${PYSTANDARD_FILES}
     ${CORE_FILES}
-   )
+)
+
+pybind11_add_module(pygmvislive
+    ${PY_FILES}
+    ${PYLIVE_FILES}
+    ${UI_FILES}
+    ${CORE_FILES}
+)
 
 add_executable(visualizer
     ${UI_FILES}
@@ -101,17 +122,21 @@ add_executable(visualizer
 
 add_executable(pythontest
     ${PY_FILES}
+    ${PYSTANDARD_FILES}
     ${CORE_FILES}
 )
 
 target_link_libraries(visualizer Qt5::Widgets ${PYTHON_LIB_PATH} ${PYTHON_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(pythontest Qt5::Widgets ${PYTHON_LIB_PATH} ${PYTHON_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(pygmvis PRIVATE Qt5::Widgets ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(pygmvislive PRIVATE Qt5::Widgets ${CMAKE_THREAD_LIBS_INIT})
 target_compile_definitions(pythontest PUBLIC PY_LIB)
 target_compile_definitions(pygmvis PUBLIC PY_LIB)
+target_compile_definitions(pygmvislive PUBLIC PY_LIB)
 if(NOT MSVC)
   target_compile_options(pythontest PUBLIC -fvisibility=hidden)
   target_compile_options(pygmvis PUBLIC -fvisibility=hidden)
+  target_compile_options(pygmvislive PUBLIC -fvisibility=hidden)
 endif()
 
 add_custom_command(TARGET visualizer POST_BUILD

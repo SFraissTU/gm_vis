@@ -1,12 +1,12 @@
 #pragma once
-#include "pyimport.h"
+#include "gmvis/pylib/pyimport.h"
 #include <QApplication>
 #include <thread>
 #include <mutex>
 #include <queue>
 #include <memory>
 #include "gmvis/core/GMRenderModes.h"
-#include "gmvis/pylib/OffscreenRenderSurface.h"
+#include "gmvis/pylib/standard/OffscreenRenderSurface.h"
 #include "gmvis/core/PointCloud.h"
 #include "gmvis/core/GaussianMixture.h"
 #include "gmvis/core/DataLoader.h"
