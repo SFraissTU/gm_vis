@@ -14,6 +14,7 @@
 #include "gmvis/core/GMIsoellipsoidRenderer.h"
 #include "gmvis/core/GMDensityRenderer.h"
 #include "gmvis/core/GMPositionsRenderer.h"
+#include "gmvis/core/LineRenderer.h"
 
 namespace gmvis::ui {
 
@@ -41,6 +42,7 @@ namespace gmvis::ui {
 		core::GMIsoellipsoidRenderer* getGMIsoellipsoidRenderer();
 		core::GMPositionsRenderer* getGMPositionsRenderer();
 		core::GMDensityRenderer* getGMDensityRenderer();
+		core::LineRenderer* getLineRenderer();
 
 	public slots:
 		void cleanup();
@@ -70,6 +72,7 @@ namespace gmvis::ui {
 		std::unique_ptr<core::GMIsoellipsoidRenderer> m_isoellipsoidRenderer;
 		std::unique_ptr<core::GMPositionsRenderer> m_positionsRenderer;
 		std::unique_ptr<core::GMDensityRenderer> m_densityRenderer;
+		std::unique_ptr<core::LineRenderer> m_lineRenderer;
 
 		std::unique_ptr<core::ScreenFBO> m_fboIntermediate;
 

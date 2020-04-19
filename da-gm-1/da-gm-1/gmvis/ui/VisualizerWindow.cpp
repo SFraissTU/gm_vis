@@ -37,6 +37,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(slotLoadPointcloud()));
 	(void)connect(ui.loadMixtureModelAction, SIGNAL(triggered()), this, SLOT(slotLoadMixtureModel()));
 	(void)connect(ui.loadPureMixtureAction, SIGNAL(triggered()), this, SLOT(slotLoadPureMixture()));
+	(void)connect(ui.loadLineAction, SIGNAL(triggered()), this, SLOT(slotLoadLine()));
 
 	(void)connect(ui.cb_displayPointcloud, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayGMPositions, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
@@ -101,6 +102,18 @@ void VisualizerWindow::slotLoadPureMixture()
 			isoren->setMixture(mixture.get());
 			ui.spin_ellmin->setValue(isoren->getEllMin());
 			ui.spin_ellmax->setValue(isoren->getEllMax());
+		}
+	}
+}
+
+void gmvis::ui::VisualizerWindow::slotLoadLine()
+{
+	QString filename = QFileDialog::getOpenFileName(this, "Load Line", QString(), "*.txt");
+	if (!filename.isNull()) {
+		auto newLine = DataLoader::readLSfromTXT(filename);
+		if (newLine) {
+			line = std::move(newLine);
+			ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
 		}
 	}
 }

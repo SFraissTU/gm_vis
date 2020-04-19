@@ -566,6 +566,7 @@
     <addaction name="loadPointcloudAction"/>
     <addaction name="loadMixtureModelAction"/>
     <addaction name="loadPureMixtureAction"/>
+    <addaction name="loadLineAction"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -591,8 +592,13 @@
    <action name="loadPureMixtureAction">
      <property name="text">
        <string>Load Mixture</string>
-     </property>"
-   </action>"
+     </property>
+   </action>
+   <action name="loadLineAction">
+     <property name="text">
+       <string>Load Line</string>
+     </property>
+   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

@@ -259,6 +259,29 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(const QString& path, 
 	return readGMfromPLY(file, isgmm, convertCoordinateSystem);
 }
 
+std::unique_ptr<LineStrip> gmvis::core::DataLoader::readLSfromTXT(const QString& path)
+{
+	QFile file(path);
+	if (file.open(QIODevice::ReadOnly)) {
+		QTextStream in(&file);
+		point_list vlist;
+		//Check Format
+		QString line = in.readLine();
+		while (!line.isNull()) {
+			QStringList list = line.split(" ");
+			double x = list[0].toDouble();
+			double y = list[1].toDouble();
+			double z = list[2].toDouble();
+			vlist.push_back(point_item(x, y, z));
+			line = in.readLine();
+		}
+		file.close();
+		return std::make_unique<LineStrip>(vlist);
+	}
+	return nullptr;
+
+}
+
 QVector<QVector3D> DataLoader::readTransferFunction(const QString& path)
 {
 	QVector<QVector3D> result;

@@ -24,6 +24,7 @@ DisplayWidget::DisplayWidget(QWidget* parent) : QOpenGLWidget(parent)
 	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 	m_positionsRenderer = std::make_unique<GMPositionsRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get(), width(), height());
+	m_lineRenderer = std::make_unique<LineRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 }
 
 DisplayWidget::~DisplayWidget() {
@@ -98,12 +99,19 @@ GMDensityRenderer* DisplayWidget::getGMDensityRenderer()
 	return m_densityRenderer.get();
 }
 
+LineRenderer* DisplayWidget::getLineRenderer()
+{
+	return m_lineRenderer.get();
+}
+
 void DisplayWidget::cleanup() {
 	makeCurrent();
 	//This could be called several times, so make sure things are not deleted already
 	if (m_pointcloudRenderer.get()) {
 		m_pointcloudRenderer->cleanup();
 		m_pointcloudRenderer.reset();
+		m_lineRenderer->cleanup();
+		m_lineRenderer.reset();
 		m_isoellipsoidRenderer->cleanup();
 		m_isoellipsoidRenderer.reset();
 		m_positionsRenderer->cleanup();
@@ -126,6 +134,7 @@ void DisplayWidget::initializeGL() {
 	m_isoellipsoidRenderer->initialize();
 	m_positionsRenderer->initialize();
 	m_densityRenderer->initialize();
+	m_lineRenderer->initialize();
 
 	m_fboIntermediate = std::make_unique<ScreenFBO>(static_cast<QOpenGLFunctions_4_5_Core*>(this), width(), height());
 	m_fboIntermediate->initialize();
@@ -167,6 +176,7 @@ void DisplayWidget::paintGL()
 
 		if (m_sDisplayGMPositions) {
 			m_positionsRenderer->render();
+			m_lineRenderer->render(false);
 		}
 
 		if (m_sDisplayEllipsoids) {

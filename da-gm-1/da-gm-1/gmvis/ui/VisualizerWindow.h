@@ -19,6 +19,7 @@ namespace gmvis::ui {
 		void slotLoadPointcloud();
 		void slotLoadMixtureModel();
 		void slotLoadPureMixture();
+		void slotLoadLine();
 		void slotDisplayOptionsChanged();
 		void slotEllValuesChanged();
 		void slotEllAutoValueChanged();
@@ -34,5 +35,6 @@ namespace gmvis::ui {
 		Ui::VisualizerWindowClass ui;
 		std::unique_ptr<core::PointCloud> pointcloud;
 		std::unique_ptr<core::GaussianMixture> mixture;
+		std::unique_ptr<core::LineStrip> line;
 	};
 }

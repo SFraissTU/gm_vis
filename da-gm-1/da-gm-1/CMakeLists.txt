@@ -64,6 +64,9 @@ set(CORE_FILES
     gmvis/core/PointCloudRenderer.cpp
     gmvis/core/ScreenFBO.h
     gmvis/core/ScreenFBO.cpp
+    gmvis/core/LineStrip.h
+    gmvis/core/LineRenderer.h
+    gmvis/core/LineRenderer.cpp
 )
 
 set(CMAKE_AUTOMOC ON)
