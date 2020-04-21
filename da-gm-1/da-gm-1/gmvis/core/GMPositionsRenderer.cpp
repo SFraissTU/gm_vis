@@ -1,5 +1,6 @@
 #include "GMPositionsRenderer.h"
 #include "DataLoader.h"
+#include <QVector2D>
 
 using namespace gmvis::core;
 
@@ -44,7 +45,7 @@ void GMPositionsRenderer::initialize()
 	m_color_vbo.release();
 
 	m_gm_vao.release();
-
+	
 	//Create Transfer Tex
 	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
 	m_gl->glGenTextures(1, &m_texTransfer);
@@ -102,6 +103,10 @@ void GMPositionsRenderer::render()
 	if (!m_mixture) {
 		return;
 	}
+
+	GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+	m_gl->glDrawBuffers(2, buffers);
+
 	m_gm_vao.bind();
 	m_program->bind();
 	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());

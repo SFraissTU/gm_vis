@@ -47,6 +47,9 @@ namespace gmvis::ui {
 	public slots:
 		void cleanup();
 
+	signals:
+		void gaussianSelected(int index);
+
 	protected:
 		void initializeGL() override;
 		void paintGL() override;

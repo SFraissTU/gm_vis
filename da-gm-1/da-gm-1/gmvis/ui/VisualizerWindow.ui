@@ -567,6 +567,7 @@
     <addaction name="loadMixtureModelAction"/>
     <addaction name="loadPureMixtureAction"/>
     <addaction name="loadLineAction"/>
+    <addaction name="chooseLineDirectoryAction"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -597,6 +598,11 @@
    <action name="loadLineAction">
      <property name="text">
        <string>Load Line</string>
+     </property>
+   </action>
+   <action name="chooseLineDirectoryAction">
+     <property name="text">
+       <string>Choose Line Directory</string>
      </property>
    </action>
  </widget>

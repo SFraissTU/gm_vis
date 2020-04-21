@@ -39,6 +39,9 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.loadPureMixtureAction, SIGNAL(triggered()), this, SLOT(slotLoadPureMixture()));
 	(void)connect(ui.loadLineAction, SIGNAL(triggered()), this, SLOT(slotLoadLine()));
 
+	(void)connect(ui.chooseLineDirectoryAction, SIGNAL(triggered()), this, SLOT(slotChooseLineDirectory()));
+	(void)connect(ui.openGLWidget, SIGNAL(gaussianSelected(int)), this, SLOT(slotGaussianSelected(int)));
+
 	(void)connect(ui.cb_displayPointcloud, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayGMPositions, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayEllipsoids, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
@@ -115,6 +118,24 @@ void gmvis::ui::VisualizerWindow::slotLoadLine()
 			line = std::move(newLine);
 			ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
 		}
+	}
+}
+
+void gmvis::ui::VisualizerWindow::slotChooseLineDirectory()
+{
+	lineDirectory = QFileDialog::getExistingDirectory(this, "Open Line Directory");
+}
+
+void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
+{
+	if (lineDirectory.isNull()) return;
+
+	QString path = lineDirectory + "/pos-b0-g" + std::to_string(index).c_str() + ".txt";
+	auto newLine = DataLoader::readLSfromTXT(path);
+	if (newLine) {
+		line = std::move(newLine);
+		ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
+		ui.openGLWidget->repaint();
 	}
 }
 

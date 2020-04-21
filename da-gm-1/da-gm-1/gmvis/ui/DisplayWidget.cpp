@@ -139,6 +139,7 @@ void DisplayWidget::initializeGL() {
 	m_fboIntermediate = std::make_unique<ScreenFBO>(static_cast<QOpenGLFunctions_4_5_Core*>(this), width(), height());
 	m_fboIntermediate->initialize();
 	m_fboIntermediate->attachColorTexture();
+	m_fboIntermediate->attachSinglevalueTexture(1);
 	m_fboIntermediate->attachDepthTexture();
 
 #if _DEBUG
@@ -162,17 +163,16 @@ void DisplayWidget::paintGL()
 	//Only render points and ellipsoids if blending mode requires it
 	if (m_sDisplayPoints || m_sDisplayEllipsoids || m_sDisplayGMPositions) {
 		//Only set FBO if we will render volume later on
-		if (m_sDisplayDensity) {
-			//First pass: Render classicaly into texture
-			glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
-		}
+		glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glDisable(GL_BLEND);
-		glViewport(0, 0, m_fboIntermediate->getWidth(), m_fboIntermediate->getHeight());
+		int width = m_fboIntermediate->getWidth();
+		int height = m_fboIntermediate->getHeight();
+		glViewport(0, 0, width, height);
 
 		if (m_sDisplayGMPositions) {
 			m_positionsRenderer->render();
@@ -185,6 +185,10 @@ void DisplayWidget::paintGL()
 
 		if (m_sDisplayPoints) {
 			m_pointcloudRenderer->render(m_sDisplayEllipsoids);
+		}
+
+		if (!m_sDisplayDensity) {
+			glBlitNamedFramebuffer(m_fboIntermediate->getID(), defaultFbo, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 		}
 	}
 
@@ -223,10 +227,31 @@ void DisplayWidget::resizeGL(int width, int height)
 void DisplayWidget::mousePressEvent(QMouseEvent* event)
 {
 	m_lastPos = event->pos();
+	if (event->modifiers().testFlag(Qt::ShiftModifier) && m_sDisplayGMPositions) {
+
+		GLint defaultFbo = 0;
+		glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &defaultFbo);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboIntermediate->getID());
+		glNamedFramebufferReadBuffer(m_fboIntermediate->getID(), GL_COLOR_ATTACHMENT1);
+		int width = m_fboIntermediate->getWidth();
+		int height = m_fboIntermediate->getHeight();
+		float* data = new float[width * height];
+		glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, data);
+		int glidx = (width * (height - 1 - m_lastPos.y())) + m_lastPos.x();
+		int index = int(data[glidx]);
+		delete[] data;
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFbo);
+		glNamedFramebufferReadBuffer(m_fboIntermediate->getID(), GL_COLOR_ATTACHMENT0);
+		qDebug() << index << "\n";
+		if (index != 0) {
+			emit gaussianSelected(index - 1);
+		}
+	}
 }
 
 void DisplayWidget::mouseMoveEvent(QMouseEvent* event)
 {
+	if (event->modifiers().testFlag(Qt::ShiftModifier)) return;
 	int dx = event->x() - m_lastPos.x();
 	int dy = event->y() - m_lastPos.y();
 
