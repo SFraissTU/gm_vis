@@ -12,6 +12,8 @@ namespace gmvis::core {
 
 	class DataLoader {
 	public:
+		static QMap<QString, QString> readConfigFile(const QString& path);
+
 		static std::unique_ptr<PointCloud> readPCDfromOFF(QFile& file, bool convertCoordinateSystem);
 		static std::unique_ptr<PointCloud> readPCDfromOFF(const QString& path, bool convertCoordinateSystem);
 

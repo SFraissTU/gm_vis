@@ -11,6 +11,10 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 {
 	ui.setupUi(this);
 
+	QMap<QString, QString> config = DataLoader::readConfigFile("res/config.txt");
+	openPcDirectory = config.value("default_pc_path");
+	openGmDirectory = config.value("default_gm_path");
+
 	auto widget = ui.openGLWidget;
 	ui.cb_displayPointcloud->setChecked(widget->isPointDisplayEnabled());
 	ui.cb_displayEllipsoids->setChecked(widget->isEllipsoidDisplayEnabled());
@@ -65,8 +69,9 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 }
 
 void VisualizerWindow::slotLoadPointcloud() {
-	QString filename = QFileDialog::getOpenFileName(this, "Load Pointcloud", QString(), "*.off");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Pointcloud", openPcDirectory, "*.off");
 	if (!filename.isNull()) {
+		openPcDirectory = filename.left(std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\")));
 		auto newPC = DataLoader::readPCDfromOFF(filename, false);
 		if (newPC) {
 			pointcloud = std::move(newPC);
@@ -77,8 +82,10 @@ void VisualizerWindow::slotLoadPointcloud() {
 
 void VisualizerWindow::slotLoadMixtureModel()
 {
-	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture Model", QString(), "*.ply");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture Model", openGmDirectory, "*.ply");
 	if (!filename.isNull()) {
+		int slashidx = std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
+		openGmDirectory = filename.left(slashidx);
 		auto newGauss = DataLoader::readGMfromPLY(filename, true, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
@@ -88,14 +95,24 @@ void VisualizerWindow::slotLoadMixtureModel()
 			isoren->setMixture(mixture.get());
 			ui.spin_ellmin->setValue(isoren->getEllMin());
 			ui.spin_ellmax->setValue(isoren->getEllMax());
+			lineDirectory = openGmDirectory;
+			QRegularExpression re("pcgmm-0-\d{5}.ply$");
+			if (re.match(filename).hasMatch()) {
+				int id = filename.mid(filename.length() - 9, 5).toInt();
+				ui.openGLWidget->getLineRenderer()->setMaxIteration(id);
+			}
+			else {
+				ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
+			}
 		}
 	}
 }
 
 void VisualizerWindow::slotLoadPureMixture()
 {
-	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", QString(), "*.ply");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", openGmDirectory, "*.ply");
 	if (!filename.isNull()) {
+		openGmDirectory = filename.left(std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\")));
 		auto newGauss = DataLoader::readGMfromPLY(filename, false, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
@@ -105,13 +122,22 @@ void VisualizerWindow::slotLoadPureMixture()
 			isoren->setMixture(mixture.get());
 			ui.spin_ellmin->setValue(isoren->getEllMin());
 			ui.spin_ellmax->setValue(isoren->getEllMax());
+			lineDirectory = openGmDirectory;
+			QRegularExpression re("pcgmm-0-\\d{5}.ply$");
+			if (re.match(filename).hasMatch()) {
+				int id = filename.mid(filename.length() - 9, 5).toInt();
+				ui.openGLWidget->getLineRenderer()->setMaxIteration(id);
+			}
+			else {
+				ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
+			}
 		}
 	}
 }
 
 void gmvis::ui::VisualizerWindow::slotLoadLine()
 {
-	QString filename = QFileDialog::getOpenFileName(this, "Load Line", QString(), "*.txt");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Line", openGmDirectory, "*.txt");
 	if (!filename.isNull()) {
 		auto newLine = DataLoader::readLSfromTXT(filename);
 		if (newLine) {
@@ -129,6 +155,12 @@ void gmvis::ui::VisualizerWindow::slotChooseLineDirectory()
 void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
 {
 	if (lineDirectory.isNull()) return;
+
+	if (index == -1) {
+		line = nullptr;
+		ui.openGLWidget->getLineRenderer()->setLineStrip(nullptr);
+		ui.openGLWidget->repaint();
+	}
 
 	QString path = lineDirectory + "/pos-b0-g" + std::to_string(index).c_str() + ".txt";
 	auto newLine = DataLoader::readLSfromTXT(path);

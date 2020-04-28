@@ -6,6 +6,24 @@
 
 using namespace gmvis::core;
 
+QMap<QString, QString> gmvis::core::DataLoader::readConfigFile(const QString& path)
+{
+	QMap<QString, QString> map;
+	QFile file("res/config.txt");
+	if (file.open(QIODevice::ReadOnly)) {
+		QTextStream in(&file);
+		while (!in.atEnd()) {
+			QString line = in.readLine();
+			int idx = line.indexOf("=");
+			if (idx != -1) {
+				map.insert(line.left(idx), line.right(line.length() - idx - 1));
+			}
+		}
+		file.close();
+	}
+	return map;
+}
+
 std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(QFile& file, bool convertCoordinateSystem)
 {
 	if (file.open(QIODevice::ReadOnly)) {

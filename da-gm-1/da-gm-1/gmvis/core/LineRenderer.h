@@ -19,6 +19,7 @@ namespace gmvis::core {
 		void initialize();
 
 		void setLineStrip(LineStrip* linestrip);
+		void setMaxIteration(int iteration);
 		void render(bool transparent);
 		void cleanup();
 
@@ -38,5 +39,8 @@ namespace gmvis::core {
 		int m_locProjMatrix;
 		int m_locViewMatrix;
 		int m_opacityLoc;
+
+		//Settings
+		int m_maxiteration = -1; //-1 = none
 	};
 }

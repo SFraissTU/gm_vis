@@ -228,23 +228,28 @@ void DisplayWidget::mousePressEvent(QMouseEvent* event)
 {
 	m_lastPos = event->pos();
 	if (event->modifiers().testFlag(Qt::ShiftModifier) && m_sDisplayGMPositions) {
-
-		GLint defaultFbo = 0;
-		glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &defaultFbo);
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboIntermediate->getID());
-		glNamedFramebufferReadBuffer(m_fboIntermediate->getID(), GL_COLOR_ATTACHMENT1);
-		int width = m_fboIntermediate->getWidth();
-		int height = m_fboIntermediate->getHeight();
-		float* data = new float[width * height];
-		glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, data);
-		int glidx = (width * (height - 1 - m_lastPos.y())) + m_lastPos.x();
-		int index = int(data[glidx]);
-		delete[] data;
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFbo);
-		glNamedFramebufferReadBuffer(m_fboIntermediate->getID(), GL_COLOR_ATTACHMENT0);
-		qDebug() << index << "\n";
-		if (index != 0) {
-			emit gaussianSelected(index - 1);
+		
+		if (event->button() == Qt::RightButton) {
+			emit gaussianSelected(-1);
+		}
+		else {
+			GLint defaultFbo = 0;
+			glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &defaultFbo);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboIntermediate->getID());
+			glNamedFramebufferReadBuffer(m_fboIntermediate->getID(), GL_COLOR_ATTACHMENT1);
+			int width = m_fboIntermediate->getWidth();
+			int height = m_fboIntermediate->getHeight();
+			float* data = new float[width * height];
+			glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, data);
+			int glidx = (width * (height - 1 - m_lastPos.y())) + m_lastPos.x();
+			int index = int(data[glidx]);
+			delete[] data;
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFbo);
+			glNamedFramebufferReadBuffer(m_fboIntermediate->getID(), GL_COLOR_ATTACHMENT0);
+			qDebug() << index << "\n";
+			if (index != 0) {
+				emit gaussianSelected(index - 1);
+			}
 		}
 	}
 }

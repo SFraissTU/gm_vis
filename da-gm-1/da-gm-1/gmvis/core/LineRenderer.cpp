@@ -33,14 +33,21 @@ void LineRenderer::initialize()
 
 void LineRenderer::setLineStrip(LineStrip* linestrip)
 {
-	m_ls_vao.bind();
-	m_ls_vbo.bind();
-	m_ls_vbo.allocate(linestrip->getData(), linestrip->getDataSize());
-	m_gl->glEnableVertexAttribArray(0);
-	m_gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, linestrip->getSinglePointSize(), 0);
-	m_ls_vbo.release();
-	m_ls_vao.release();
+	if (linestrip) {
+		m_ls_vao.bind();
+		m_ls_vbo.bind();
+		m_ls_vbo.allocate(linestrip->getData(), linestrip->getDataSize());
+		m_gl->glEnableVertexAttribArray(0);
+		m_gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, linestrip->getSinglePointSize(), 0);
+		m_ls_vbo.release();
+		m_ls_vao.release();
+	}
 	m_linestrip = linestrip;
+}
+
+void LineRenderer::setMaxIteration(int iteration)
+{
+	m_maxiteration = iteration;
 }
 
 void LineRenderer::render(bool transparent)
@@ -58,7 +65,7 @@ void LineRenderer::render(bool transparent)
 	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
 	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
 
-	m_gl->glDrawArrays(GL_LINE_STRIP, 0, m_linestrip->getPointCount());
+	m_gl->glDrawArrays(GL_LINE_STRIP, 0, (m_maxiteration == -1) ? m_linestrip->getPointCount() : m_maxiteration);
 	m_program->release();
 	m_ls_vao.release();
 

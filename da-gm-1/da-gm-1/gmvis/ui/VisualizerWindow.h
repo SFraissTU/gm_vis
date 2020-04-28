@@ -39,6 +39,8 @@ namespace gmvis::ui {
 		std::unique_ptr<core::GaussianMixture> mixture;
 		std::unique_ptr<core::LineStrip> line;
 
+		QString openPcDirectory;
+		QString openGmDirectory;
 		QString lineDirectory;
 	};
 }
