@@ -22,6 +22,7 @@ void GMIsoellipsoidRenderer::initialize()
 	m_locSurfaceColor = m_program->uniformLocation("surfaceColor");
 	m_locTransferTex = m_program->uniformLocation("transferTex");
 	m_locUseInColor = m_program->uniformLocation("useInColor");
+	m_locEyePos = m_program->uniformLocation("eyePos");
 
 	m_program->release();
 
@@ -185,6 +186,7 @@ void GMIsoellipsoidRenderer::render()
 	m_program->setUniformValue(m_locLightDir, m_sLightDirection);
 	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
 	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
+	m_program->setUniformValue(m_locEyePos, m_camera->getPosition());
 	m_program->setUniformValue(m_locSurfaceColor, m_sUniformColor);
 	m_program->setUniformValue(m_locUseInColor, (m_sRenderMode != GMColoringRenderMode::COLOR_UNIFORM));
 	m_gl->glActiveTexture(GL_TEXTURE0);

@@ -63,6 +63,7 @@ namespace gmvis::core {
 		int m_locUseInColor;
 		int m_locSurfaceColor;
 		int m_locTransferTex;
+		int m_locEyePos;
 
 		//Settings
 		QColor					 m_sUniformColor = QColor(100, 100, 255);

@@ -74,6 +74,11 @@ bool DisplayWidget::isDensityDisplayEnabled() const
 	return m_sDisplayDensity;
 }
 
+bool gmvis::ui::DisplayWidget::isGMVisibleInAnyWay() const
+{
+	return m_sDisplayEllipsoids || m_sDisplayGMPositions || m_sDisplayDensity;
+}
+
 bool gmvis::ui::DisplayWidget::isGMPositionsDisplayEnabled() const
 {
 	return m_sDisplayGMPositions;
@@ -102,6 +107,11 @@ GMDensityRenderer* DisplayWidget::getGMDensityRenderer()
 LineRenderer* DisplayWidget::getLineRenderer()
 {
 	return m_lineRenderer.get();
+}
+
+Camera* gmvis::ui::DisplayWidget::getCamera()
+{
+	return m_camera.get();
 }
 
 void DisplayWidget::cleanup() {
@@ -160,6 +170,8 @@ void DisplayWidget::paintGL()
 	GLint defaultFbo = 0;
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);
 
+	bool renderDensity = m_sDisplayDensity && m_densityRenderer->hasMixture();
+
 	//Only render points and ellipsoids if blending mode requires it
 	if (m_sDisplayPoints || m_sDisplayEllipsoids || m_sDisplayGMPositions) {
 		//Only set FBO if we will render volume later on
@@ -187,13 +199,13 @@ void DisplayWidget::paintGL()
 			m_pointcloudRenderer->render(m_sDisplayEllipsoids);
 		}
 
-		if (!m_sDisplayDensity) {
+		if (!renderDensity) {
 			glBlitNamedFramebuffer(m_fboIntermediate->getID(), defaultFbo, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 		}
 	}
 
 	//Render volume if necessary
-	if (m_sDisplayDensity) {
+	if (renderDensity) {
 		//Second pass: Pass old depth texture to ray marcher and render on screen
 		glBindFramebuffer(GL_FRAMEBUFFER, defaultFbo);
 		

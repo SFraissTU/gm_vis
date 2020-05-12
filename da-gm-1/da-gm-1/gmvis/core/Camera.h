@@ -28,8 +28,11 @@ namespace gmvis::core {
 		void setYRotation(float yRot);
 		void setRadius(float radius);
 
+		void setPositionByBoundingBox(QVector3D min, QVector3D max);
+
 		const QMatrix4x4& getViewMatrix();
 		const QMatrix4x4& getProjMatrix() const;
+		const QVector3D& getPosition() const;
 
 	private:
 		//Camera settings

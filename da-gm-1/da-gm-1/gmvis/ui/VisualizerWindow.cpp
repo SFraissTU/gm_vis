@@ -33,6 +33,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.spin_dscalemax->setValue(densrenderer->getDensityMax() * 100);
 	ui.cb_dscaleauto->setChecked(densrenderer->getDensityAuto());
 	ui.sl_dscalepercentage->setValue(densrenderer->getDensityAutoPercentage() * 100);
+	ui.cb_dscalecutoff->setChecked(densrenderer->getDensityCutoff());
 	ui.co_densrendermode->setCurrentIndex((int)densrenderer->getRenderMode() - 1);
 	ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * 100);
 	ui.spin_accthreshold->setEnabled(!densrenderer->getAccelerationThresholdAuto());
@@ -57,6 +58,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 
 	(void)connect(ui.spin_dscalemin, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
 	(void)connect(ui.spin_dscalemax, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
+	(void)connect(ui.cb_dscalecutoff, SIGNAL(stateChanged(int)), this, SLOT(slotDensityValuesChanged()));
 	(void)connect(ui.cb_dscaleauto, SIGNAL(stateChanged(int)), this, SLOT(slotDensityAutoChanged()));
 	(void)connect(ui.sl_dscalepercentage, SIGNAL(valueChanged(int)), this, SLOT(slotDensityAutoChanged()));
 
@@ -74,8 +76,12 @@ void VisualizerWindow::slotLoadPointcloud() {
 		openPcDirectory = filename.left(std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\")));
 		auto newPC = DataLoader::readPCDfromOFF(filename, false);
 		if (newPC) {
+			bool hasoldpc = pointcloud != nullptr;
 			pointcloud = std::move(newPC);
 			ui.openGLWidget->getPointCloudRenderer()->setPointCloud(pointcloud.get());
+			if (!hasoldpc || !ui.openGLWidget->isGMVisibleInAnyWay() || !mixture) {
+				ui.openGLWidget->getCamera()->setPositionByBoundingBox(pointcloud->getBBMin(), pointcloud->getBBMax());
+			}
 		}
 	}
 }
@@ -104,6 +110,7 @@ void VisualizerWindow::slotLoadMixtureModel()
 			else {
 				ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
 			}
+			setWindowTitle("GMVis: " + filename.right(filename.length() - slashidx - 1));
 		}
 	}
 }
@@ -112,7 +119,8 @@ void VisualizerWindow::slotLoadPureMixture()
 {
 	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", openGmDirectory, "*.ply");
 	if (!filename.isNull()) {
-		openGmDirectory = filename.left(std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\")));
+		int slashidx = std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
+		openGmDirectory = filename.left(slashidx);
 		auto newGauss = DataLoader::readGMfromPLY(filename, false, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
@@ -131,6 +139,7 @@ void VisualizerWindow::slotLoadPureMixture()
 			else {
 				ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
 			}
+			setWindowTitle("GMVis: " + filename.right(filename.length() - slashidx - 1));
 		}
 	}
 }
@@ -229,6 +238,7 @@ void VisualizerWindow::slotDensityValuesChanged()
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
 	renderer->setDensityMin(ui.spin_dscalemin->value() * 0.01);
 	renderer->setDensityMax(ui.spin_dscalemax->value() * 0.01);
+	renderer->setDensityCutoff(ui.cb_dscalecutoff->isChecked());
 	ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
 	if (!ui.cb_dscaleauto->isChecked()) {
 		ui.openGLWidget->update();

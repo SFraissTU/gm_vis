@@ -24,15 +24,21 @@ uniform sampler1D transferTex;
 uniform float densitymin;
 /* Value that maps to the last color from transferTex */
 uniform float densitymax;
+/* If values beneath densitymin should be cut off*/
+uniform bool cutoff;
 
 
 void main() {
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 
 	float sum = imageLoad(img_sum, pixel_coords).r;
-
-	sum = (sum - densitymin)/(densitymax - densitymin);
-	vec3 color = texture(transferTex, sum).rgb;
+	vec3 color;
+	if (cutoff && sum <= densitymin) {
+		color = vec3(0);
+	} else {
+		sum = (sum - densitymin)/(densitymax - densitymin);
+		color = texture(transferTex, cutoff ? 0.4 + 0.6*sum : sum).rgb;
+	}
 	
 	vec4 pixel = vec4(color, 1.0f);
 

@@ -37,12 +37,15 @@ namespace gmvis::ui {
 		bool isEllipsoidDisplayEnabled() const;
 		bool isGMPositionsDisplayEnabled() const;
 		bool isDensityDisplayEnabled() const;
+		bool isGMVisibleInAnyWay() const;
 
 		core::PointCloudRenderer* getPointCloudRenderer();
 		core::GMIsoellipsoidRenderer* getGMIsoellipsoidRenderer();
 		core::GMPositionsRenderer* getGMPositionsRenderer();
 		core::GMDensityRenderer* getGMDensityRenderer();
 		core::LineRenderer* getLineRenderer();
+
+		core::Camera* getCamera();
 
 	public slots:
 		void cleanup();

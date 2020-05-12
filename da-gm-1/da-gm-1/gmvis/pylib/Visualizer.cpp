@@ -388,13 +388,7 @@ void Visualizer::calculateCameraPositionByPointcloud(int index)
 		PointCloud* pc = m_pointclouds[index].get();
 		QVector3D min = pc->getBBMin();
 		QVector3D max = pc->getBBMax();
-		QVector3D center = (min + max) / 2.0;
-		QVector3D extend = (max - min) / 2.0;
-		auto cam = m_surface->getCamera();
-		cam->setTranslation(center);
-		cam->setRadius(-std::max(extend.x(), std::max(extend.y(), extend.z())) * 3);
-		cam->setXRotation(45);
-		cam->setYRotation(-135);
+		m_surface->getCamera()->setPositionByBoundingBox(min, max);
 	}
 }
 

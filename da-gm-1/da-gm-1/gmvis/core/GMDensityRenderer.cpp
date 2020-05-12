@@ -35,6 +35,7 @@ void GMDensityRenderer::initialize()
 	m_col_locTransferTex = m_program_coloring->uniformLocation("transferTex");
 	m_col_locDensityMin = m_program_coloring->uniformLocation("densitymin");
 	m_col_locDensityMax = m_program_coloring->uniformLocation("densitymax");
+	m_col_locCutoff = m_program_coloring->uniformLocation("cutoff");
 	m_program_coloring->release();
 
 	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
@@ -56,6 +57,11 @@ void GMDensityRenderer::setMixture(GaussianMixture* mixture)
 	m_mixture = mixture;
 	m_rasterizeRenderer.setMixture(mixture, m_sAccThreshold);
 	m_raycastRenderer.setMixture(mixture);
+}
+
+bool gmvis::core::GMDensityRenderer::hasMixture() const
+{
+	return m_mixture;
 }
 
 void GMDensityRenderer::setSize(int width, int height)
@@ -117,6 +123,7 @@ void GMDensityRenderer::render(GLuint preTexture, bool blend)
 	m_program_coloring->setUniformValue(m_col_locBlend, blend ? 0.5f : 1.0f);
 	m_program_coloring->setUniformValue(m_col_locDensityMin, (float)m_sDensityMin);
 	m_program_coloring->setUniformValue(m_col_locDensityMax, (float)m_sDensityMax);
+	m_program_coloring->setUniformValue(m_col_locCutoff, m_sDensityCutoff);
 
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -208,6 +215,11 @@ void GMDensityRenderer::setAccelerationThresholdAuto(bool accThreshAuto)
 	}
 }
 
+void gmvis::core::GMDensityRenderer::setDensityCutoff(bool cutoff)
+{
+	m_sDensityCutoff = cutoff;
+}
+
 const GMDensityRenderMode& GMDensityRenderer::getRenderMode() const
 {
 	return m_sRenderMode;
@@ -241,6 +253,11 @@ const double& GMDensityRenderer::getAccelerationThreshold() const
 const bool& GMDensityRenderer::getAccelerationThresholdAuto() const
 {
 	return m_sAccThreshAuto;
+}
+
+const bool& gmvis::core::GMDensityRenderer::getDensityCutoff() const
+{
+	return m_sDensityCutoff;
 }
 
 bool GMDensityRenderer::isAccelerated(GMDensityRenderMode mode)

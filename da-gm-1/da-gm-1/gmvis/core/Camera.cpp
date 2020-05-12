@@ -120,6 +120,16 @@ void gmvis::core::Camera::setRadius(float radius)
 	m_viewDirty = true;
 }
 
+void gmvis::core::Camera::setPositionByBoundingBox(QVector3D min, QVector3D max)
+{
+	QVector3D center = (min + max) / 2.0;
+	QVector3D extend = (max - min) / 2.0;
+	setTranslation(center);
+	setRadius(std::max(extend.x(), std::max(extend.y(), extend.z())) * 3);
+	setXRotation(135);
+	setYRotation(45);
+}
+
 const QMatrix4x4& Camera::getViewMatrix()
 {
 	if (m_viewDirty) {
@@ -135,6 +145,7 @@ const QMatrix4x4& Camera::getViewMatrix()
 		m_right = QVector3D::crossProduct(m_absUp, forward).normalized();
 		m_up = QVector3D::crossProduct(forward, m_right).normalized();
 		m_view.lookAt(m_position, m_translation, m_absUp);
+		qDebug() << m_position << "\n";
 
 		//m_view.translate(0, 0, -m_radius);
 		//m_view.rotate(180.0f - m_xRot, 1, 0, 0);
@@ -149,6 +160,11 @@ const QMatrix4x4& Camera::getViewMatrix()
 const QMatrix4x4& Camera::getProjMatrix() const
 {
 	return m_proj;
+}
+
+const QVector3D& gmvis::core::Camera::getPosition() const
+{
+	return m_position;
 }
 
 void Camera::recalculateProjectionMatrix()
