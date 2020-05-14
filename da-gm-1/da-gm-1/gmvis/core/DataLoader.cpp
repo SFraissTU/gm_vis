@@ -300,6 +300,45 @@ std::unique_ptr<LineStrip> gmvis::core::DataLoader::readLSfromTXT(const QString&
 
 }
 
+std::unique_ptr<LineStrip> gmvis::core::DataLoader::readLSfromBIN(const QString& path)
+{
+	QFile file(path);
+	if (file.open(QIODevice::ReadOnly)) {
+		unsigned int i = 1;
+		char* c = (char*)&i;
+		bool littleendian = *c;
+
+		point_list vlist;
+		//Check Format
+		char* arr = new char[3 * 8];
+		qint64 read = file.read(arr, 3*8);
+		while (read == 3*8) {
+			double x, y, z;
+			if (littleendian) {
+				memcpy(&x, &arr[0], 8);
+				memcpy(&y, &arr[8], 8);
+				memcpy(&z, &arr[16], 8);
+			}
+			else {
+				char* xx = (char*)&x;
+				char* yy = (char*)&y;
+				char* zz = (char*)&z;
+				memcpy(xx, &arr[4], 4);
+				memcpy(&xx[4], &arr[0], 4);
+				memcpy(yy, &arr[12], 4);
+				memcpy(&yy[4], &arr[8], 4);
+				memcpy(zz, &arr[20], 4);
+				memcpy(&zz[4], &arr[16], 4);
+			}
+			vlist.push_back(point_item(x, y, z));
+			read = file.read(arr, 3 * 8);
+		}
+		file.close();
+		return std::make_unique<LineStrip>(vlist);
+	}
+	return nullptr;
+}
+
 QVector<QVector3D> DataLoader::readTransferFunction(const QString& path)
 {
 	QVector<QVector3D> result;

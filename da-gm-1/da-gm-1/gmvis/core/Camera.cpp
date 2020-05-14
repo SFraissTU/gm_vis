@@ -145,7 +145,6 @@ const QMatrix4x4& Camera::getViewMatrix()
 		m_right = QVector3D::crossProduct(m_absUp, forward).normalized();
 		m_up = QVector3D::crossProduct(forward, m_right).normalized();
 		m_view.lookAt(m_position, m_translation, m_absUp);
-		qDebug() << m_position << "\n";
 
 		//m_view.translate(0, 0, -m_radius);
 		//m_view.rotate(180.0f - m_xRot, 1, 0, 0);

@@ -21,6 +21,7 @@ namespace gmvis::core {
 		static std::unique_ptr<GaussianMixture> readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem);
 
 		static std::unique_ptr<LineStrip> readLSfromTXT(const QString& path);
+		static std::unique_ptr<LineStrip> readLSfromBIN(const QString& path);
 
 		static QVector<QVector3D> readTransferFunction(const QString& path);
 	};

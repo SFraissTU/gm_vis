@@ -79,7 +79,7 @@ void VisualizerWindow::slotLoadPointcloud() {
 			bool hasoldpc = pointcloud != nullptr;
 			pointcloud = std::move(newPC);
 			ui.openGLWidget->getPointCloudRenderer()->setPointCloud(pointcloud.get());
-			if (!hasoldpc || !ui.openGLWidget->isGMVisibleInAnyWay() || !mixture) {
+			if (ui.openGLWidget->isPointDisplayEnabled() && (!hasoldpc || !ui.openGLWidget->isGMVisibleInAnyWay() || !mixture)) {
 				ui.openGLWidget->getCamera()->setPositionByBoundingBox(pointcloud->getBBMin(), pointcloud->getBBMax());
 			}
 		}
@@ -146,9 +146,15 @@ void VisualizerWindow::slotLoadPureMixture()
 
 void gmvis::ui::VisualizerWindow::slotLoadLine()
 {
-	QString filename = QFileDialog::getOpenFileName(this, "Load Line", openGmDirectory, "*.txt");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Line", openGmDirectory, "*.txt;*.bin");
 	if (!filename.isNull()) {
-		auto newLine = DataLoader::readLSfromTXT(filename);
+		std::unique_ptr<LineStrip> newLine;
+		if (filename.endsWith(".txt")) {
+			newLine = DataLoader::readLSfromTXT(filename);
+		}
+		else {
+			newLine = DataLoader::readLSfromBIN(filename);
+		}
 		if (newLine) {
 			line = std::move(newLine);
 			ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
@@ -171,8 +177,12 @@ void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
 		ui.openGLWidget->repaint();
 	}
 
-	QString path = lineDirectory + "/pos-b0-g" + std::to_string(index).c_str() + ".txt";
-	auto newLine = DataLoader::readLSfromTXT(path);
+	QString path = lineDirectory + "/pos-b0-g" + std::to_string(index).c_str() + ".bin";
+	auto newLine = DataLoader::readLSfromBIN(path);
+	if (!newLine) {
+		QString path = lineDirectory + "/pos-b0-g" + std::to_string(index).c_str() + ".txt";
+		newLine = DataLoader::readLSfromTXT(path);
+	}
 	if (newLine) {
 		line = std::move(newLine);
 		ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
@@ -241,7 +251,7 @@ void VisualizerWindow::slotDensityValuesChanged()
 	renderer->setDensityCutoff(ui.cb_dscalecutoff->isChecked());
 	ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
 	if (!ui.cb_dscaleauto->isChecked()) {
-		ui.openGLWidget->update();
+		ui.openGLWidget->update();	//This is where the second rendering might be scheduled
 	}
 }
 
