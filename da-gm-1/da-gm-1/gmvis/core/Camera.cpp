@@ -124,6 +124,8 @@ void gmvis::core::Camera::setPositionByBoundingBox(QVector3D min, QVector3D max)
 {
 	QVector3D center = (min + max) / 2.0;
 	QVector3D extend = (max - min) / 2.0;
+	center = QVector3D(center.x(), center.z(), -center.y());
+	extend = QVector3D(extend.x(), extend.z(), -extend.y());
 	setTranslation(center);
 	setRadius(std::max(extend.x(), std::max(extend.y(), extend.z())) * 3);
 	setXRotation(135);
