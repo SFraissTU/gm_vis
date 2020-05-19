@@ -15,7 +15,7 @@ void main() {
 	vec3 v = normalize(eyePos - frag_position.xyz);
 	vec3 r = reflect(-l, normal);
 	float nl = dot(normal, l);
-	out_color = frag_color * (0.3 + max(nl, 0.0f)*0.7);
+	out_color = frag_color * (0.3 + max(nl, 0.0f)*0.8);
 	if (nl > 0) {
 		out_color += 0.3*pow(max(dot(r,v),0), 1.5f);
 	}

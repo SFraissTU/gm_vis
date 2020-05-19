@@ -33,6 +33,7 @@ namespace gmvis::core {
 		const QMatrix4x4& getViewMatrix();
 		const QMatrix4x4& getProjMatrix() const;
 		const QVector3D& getPosition() const;
+		const QVector3D getViewDirection();
 
 	private:
 		//Camera settings

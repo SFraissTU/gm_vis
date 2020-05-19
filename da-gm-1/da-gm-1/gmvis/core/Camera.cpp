@@ -168,6 +168,14 @@ const QVector3D& gmvis::core::Camera::getPosition() const
 	return m_position;
 }
 
+const QVector3D gmvis::core::Camera::getViewDirection()
+{
+	if (m_viewDirty) {
+		getViewMatrix();
+	}
+	return (m_translation - m_position).normalized();
+}
+
 void Camera::recalculateProjectionMatrix()
 {
 	m_proj.setToIdentity();

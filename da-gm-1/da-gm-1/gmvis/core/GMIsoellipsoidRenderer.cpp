@@ -183,7 +183,12 @@ void GMIsoellipsoidRenderer::render()
 	}
 	m_gm_vao.bind();
 	m_program->bind();
-	m_program->setUniformValue(m_locLightDir, m_sLightDirection);
+	if (m_sLightDirectionAuto) {
+		m_program->setUniformValue(m_locLightDir, m_camera->getViewDirection());
+	}
+	else {
+		m_program->setUniformValue(m_locLightDir, m_sLightDirection);
+	}
 	m_program->setUniformValue(m_locProjMatrix, m_camera->getProjMatrix());
 	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
 	m_program->setUniformValue(m_locEyePos, m_camera->getPosition());

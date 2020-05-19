@@ -72,5 +72,6 @@ namespace gmvis::core {
 		double m_sEllMin = 0;
 		double m_sEllMax = 0.05;
 		GMColorRangeMode m_sRangeMode = GMColorRangeMode::RANGE_MINMAX;
+		bool m_sLightDirectionAuto = true;
 	};
 }
