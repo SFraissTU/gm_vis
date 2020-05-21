@@ -18,6 +18,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	auto widget = ui.openGLWidget;
 	ui.cb_displayPointcloud->setChecked(widget->isPointDisplayEnabled());
 	ui.cb_displayEllipsoids->setChecked(widget->isEllipsoidDisplayEnabled());
+	ui.cb_displayIsosurface->setChecked(widget->isIsosurfaceDisplayEnabled());
 	ui.cb_displayDensity->setChecked(widget->isDensityDisplayEnabled());
 
 	auto ellrenderer = widget->getGMIsoellipsoidRenderer();
@@ -50,6 +51,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.cb_displayPointcloud, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayGMPositions, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayEllipsoids, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
+	(void)connect(ui.cb_displayIsosurface, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayDensity, SIGNAL(stateChanged(int)), this, SLOT(slotDisplayOptionsChanged()));
 
 	(void)connect(ui.spin_ellmin, SIGNAL(valueChanged(double)), this, SLOT(slotEllValuesChanged()));
@@ -95,10 +97,8 @@ void VisualizerWindow::slotLoadMixtureModel()
 		auto newGauss = DataLoader::readGMfromPLY(filename, true, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
-			ui.openGLWidget->getGMDensityRenderer()->setMixture(mixture.get());
-			ui.openGLWidget->getGMPositionsRenderer()->setMixture(mixture.get());
+			ui.openGLWidget->setMixture(mixture.get());
 			auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
-			isoren->setMixture(mixture.get());
 			ui.spin_ellmin->setValue(isoren->getEllMin());
 			ui.spin_ellmax->setValue(isoren->getEllMax());
 			lineDirectory = openGmDirectory;
@@ -124,10 +124,8 @@ void VisualizerWindow::slotLoadPureMixture()
 		auto newGauss = DataLoader::readGMfromPLY(filename, false, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
-			ui.openGLWidget->getGMDensityRenderer()->setMixture(mixture.get());
-			ui.openGLWidget->getGMPositionsRenderer()->setMixture(mixture.get());
+			ui.openGLWidget->setMixture(mixture.get());
 			auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
-			isoren->setMixture(mixture.get());
 			ui.spin_ellmin->setValue(isoren->getEllMin());
 			ui.spin_ellmax->setValue(isoren->getEllMax());
 			lineDirectory = openGmDirectory;
@@ -195,6 +193,7 @@ void VisualizerWindow::slotDisplayOptionsChanged()
 	ui.openGLWidget->setPointDisplayEnabled(ui.cb_displayPointcloud->isChecked());
 	ui.openGLWidget->setGMPositionsDisplayEnabled(ui.cb_displayGMPositions->isChecked());
 	ui.openGLWidget->setEllipsoidDisplayEnabled(ui.cb_displayEllipsoids->isChecked());
+	ui.openGLWidget->setIsosurfaceDisplayEnabled(ui.cb_displayIsosurface->isChecked());
 	ui.openGLWidget->setDensityDisplayEnabled(ui.cb_displayDensity->isChecked());
 	ui.openGLWidget->update();
 }

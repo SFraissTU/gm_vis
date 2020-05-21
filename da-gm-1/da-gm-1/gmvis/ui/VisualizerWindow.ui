@@ -62,13 +62,13 @@
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
              <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
+             <verstretch>70</verstretch>
             </sizepolicy>
            </property>
            <property name="maximumSize">
             <size>
              <width>16777215</width>
-             <height>100</height>
+             <height>130</height>
             </size>
            </property>
            <property name="title">
@@ -80,7 +80,7 @@
               <x>10</x>
               <y>20</y>
               <width>149</width>
-              <height>70</height>
+              <height>100</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout">
@@ -105,6 +105,13 @@
                </property>
               </widget>
              </item>
+              <item>
+                <widget class="QCheckBox" name="cb_displayIsosurface">
+                  <property name="text">
+                    <string>Isosurface</string>
+                  </property>
+                </widget>
+              </item>
              <item>
               <widget class="QCheckBox" name="cb_displayDensity">
                <property name="text">

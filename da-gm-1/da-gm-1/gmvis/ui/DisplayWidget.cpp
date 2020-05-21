@@ -20,10 +20,12 @@ DisplayWidget::DisplayWidget(QWidget* parent) : QOpenGLWidget(parent)
 	setFocusPolicy(Qt::StrongFocus);
 
 	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width()) / height(), 0.01f, 1000.0f);
-	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
-	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
-	m_positionsRenderer = std::make_unique<GMPositionsRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
-	m_densityRenderer = std::make_unique<GMDensityRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get(), width(), height());
+	auto gl = static_cast<QOpenGLFunctions_4_5_Core*>(this);
+	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(gl, m_camera.get());
+	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(gl, m_camera.get());
+	m_positionsRenderer = std::make_unique<GMPositionsRenderer>(gl, m_camera.get());
+	m_densityRenderer = std::make_unique<GMDensityRenderer>(gl, m_camera.get(), width(), height());
+	m_isosurfaceRenderer = std::make_unique<GMIsosurfaceRenderer>(gl, m_camera.get(), width(), height());
 	m_lineRenderer = std::make_unique<LineRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 }
 
@@ -54,6 +56,11 @@ void gmvis::ui::DisplayWidget::setGMPositionsDisplayEnabled(bool enabled)
 	m_sDisplayGMPositions = enabled;
 }
 
+void gmvis::ui::DisplayWidget::setIsosurfaceDisplayEnabled(bool enabled)
+{
+	m_sDisplayIsosurface = enabled;
+}
+
 void DisplayWidget::setDensityDisplayEnabled(bool enabled)
 {
 	m_sDisplayDensity = enabled;
@@ -72,6 +79,11 @@ bool DisplayWidget::isEllipsoidDisplayEnabled() const
 bool DisplayWidget::isDensityDisplayEnabled() const
 {
 	return m_sDisplayDensity;
+}
+
+bool gmvis::ui::DisplayWidget::isIsosurfaceDisplayEnabled() const
+{
+	return m_sDisplayIsosurface;
 }
 
 bool gmvis::ui::DisplayWidget::isGMVisibleInAnyWay() const
@@ -99,6 +111,11 @@ GMPositionsRenderer* DisplayWidget::getGMPositionsRenderer()
 	return m_positionsRenderer.get();
 }
 
+GMIsosurfaceRenderer* gmvis::ui::DisplayWidget::getGMIsosurfaceRenderer()
+{
+	return m_isosurfaceRenderer.get();
+}
+
 GMDensityRenderer* DisplayWidget::getGMDensityRenderer()
 {
 	return m_densityRenderer.get();
@@ -112,6 +129,14 @@ LineRenderer* DisplayWidget::getLineRenderer()
 Camera* gmvis::ui::DisplayWidget::getCamera()
 {
 	return m_camera.get();
+}
+
+void gmvis::ui::DisplayWidget::setMixture(GaussianMixture* mixture)
+{
+	m_isoellipsoidRenderer->setMixture(mixture);
+	m_positionsRenderer->setMixture(mixture);
+	m_isosurfaceRenderer->setMixture(mixture, 0.000001);
+	m_densityRenderer->setMixture(mixture);
 }
 
 void DisplayWidget::cleanup() {
@@ -144,6 +169,7 @@ void DisplayWidget::initializeGL() {
 	m_isoellipsoidRenderer->initialize();
 	m_positionsRenderer->initialize();
 	m_densityRenderer->initialize();
+	m_isosurfaceRenderer->initialize();
 	m_lineRenderer->initialize();
 
 	m_fboIntermediate = std::make_unique<ScreenFBO>(static_cast<QOpenGLFunctions_4_5_Core*>(this), width(), height());
@@ -169,6 +195,13 @@ void DisplayWidget::paintGL()
 {
 	GLint defaultFbo = 0;
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);
+
+	if (m_sDisplayIsosurface) {
+		int width = m_fboIntermediate->getWidth();
+		int height = m_fboIntermediate->getHeight();
+		m_isosurfaceRenderer->render(width, height);
+		return;
+	}
 
 	bool renderDensity = m_sDisplayDensity && m_densityRenderer->hasMixture();
 
