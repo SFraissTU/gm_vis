@@ -15,17 +15,31 @@ void ScreenFBO::initialize()
 	m_gl->glCreateFramebuffers(1, &m_id);
 }
 
-void ScreenFBO::attachSinglevalueTexture(GLuint attachment)
+void ScreenFBO::attachSinglevalueFloatTexture(GLuint attachment)
 {
-	m_gl->glGenTextures(1, &m_singleTex);
-	m_gl->glBindTexture(GL_TEXTURE_2D, m_singleTex);
+	m_gl->glGenTextures(1, &m_singleFloatTex);
+	m_gl->glBindTexture(GL_TEXTURE_2D, m_singleFloatTex);
 	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, m_fboWidth, m_fboHeight, 0, GL_RED, GL_FLOAT, nullptr);
 	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
-	m_gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachment, GL_TEXTURE_2D, m_singleTex, 0);
+	m_gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachment, GL_TEXTURE_2D, m_singleFloatTex, 0);
+	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void gmvis::core::ScreenFBO::attachSinglevalueIntTexture(GLuint attachment)
+{
+	m_gl->glGenTextures(1, &m_singleIntTex);
+	m_gl->glBindTexture(GL_TEXTURE_2D, m_singleIntTex);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, m_fboWidth, m_fboHeight, 0, GL_RED, GL_INT, nullptr);
+	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
+	m_gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachment, GL_TEXTURE_2D, m_singleIntTex, 0);
 	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -57,13 +71,24 @@ void ScreenFBO::attachDepthTexture()
 	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void gmvis::core::ScreenFBO::attachStencilBuffer()
+{
+	m_gl->glGenRenderbuffers(1, &m_stencilTex);
+	m_gl->glBindRenderbuffer(GL_RENDERBUFFER, m_stencilTex);
+	m_gl->glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX16, m_fboWidth, m_fboHeight);
+	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
+	m_gl->glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_stencilTex);
+	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
+	m_gl->glBindRenderbuffer(GL_RENDERBUFFER, 0);
+}
+
 void ScreenFBO::setSize(int width, int height)
 {
 	if (width > m_fboWidth || height > m_fboHeight || m_equalsize) {
 		m_fboWidth = width;
 		m_fboHeight = height;
-		if (m_singleTex != -1) {
-			m_gl->glBindTexture(GL_TEXTURE_2D, m_singleTex);
+		if (m_singleFloatTex != -1) {
+			m_gl->glBindTexture(GL_TEXTURE_2D, m_singleFloatTex);
 			m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, m_fboWidth, m_fboHeight, 0, GL_RED, GL_FLOAT, nullptr);
 		}
 		if (m_colorTex != -1) {
@@ -79,9 +104,14 @@ void ScreenFBO::setSize(int width, int height)
 	m_screenHeight = height;
 }
 
-GLuint ScreenFBO::getSinglevalueTexture()
+GLuint ScreenFBO::getSinglevalueFloatTexture()
 {
-	return m_singleTex;
+	return m_singleFloatTex;
+}
+
+GLuint gmvis::core::ScreenFBO::getSinglevalueIntTexture()
+{
+	return m_singleIntTex;
 }
 
 GLuint ScreenFBO::getColorTexture()
@@ -92,6 +122,11 @@ GLuint ScreenFBO::getColorTexture()
 GLuint ScreenFBO::getDepthTexture()
 {
 	return m_depthTex;
+}
+
+GLuint gmvis::core::ScreenFBO::getStencilBuffer()
+{
+	return m_stencilTex;
 }
 
 int ScreenFBO::getWidth()
@@ -112,8 +147,8 @@ int ScreenFBO::getID()
 void ScreenFBO::cleanup()
 {
 	m_gl->glDeleteFramebuffers(1, &m_id);
-	if (m_singleTex != -1) {
-		m_gl->glDeleteTextures(1, &m_singleTex);
+	if (m_singleFloatTex != -1) {
+		m_gl->glDeleteTextures(1, &m_singleFloatTex);
 	}
 	if (m_colorTex != -1) {
 		m_gl->glDeleteTextures(1, &m_colorTex);

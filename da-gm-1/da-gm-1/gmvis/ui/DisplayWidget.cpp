@@ -175,7 +175,7 @@ void DisplayWidget::initializeGL() {
 	m_fboIntermediate = std::make_unique<ScreenFBO>(static_cast<QOpenGLFunctions_4_5_Core*>(this), width(), height());
 	m_fboIntermediate->initialize();
 	m_fboIntermediate->attachColorTexture();
-	m_fboIntermediate->attachSinglevalueTexture(1);
+	m_fboIntermediate->attachSinglevalueFloatTexture(1);
 	m_fboIntermediate->attachDepthTexture();
 
 #if _DEBUG

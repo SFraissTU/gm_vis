@@ -18,7 +18,7 @@ void GMDensityRenderer::initialize()
 	m_fbo_intermediate.initialize();
 	m_fbo_final.initialize();
 
-	m_fbo_intermediate.attachSinglevalueTexture();
+	m_fbo_intermediate.attachSinglevalueFloatTexture();
 	m_fbo_final.attachColorTexture();
 
 	m_program_coloring = std::make_unique<QOpenGLShaderProgram>();
@@ -88,7 +88,7 @@ void GMDensityRenderer::render(GLuint preTexture, bool blend)
 		m_rasterizeRenderer.render(screenWidth, screenHeight);
 	}
 	else {
-		m_raycastRenderer.render(m_fbo_intermediate.getSinglevalueTexture(), screenWidth, screenHeight);
+		m_raycastRenderer.render(m_fbo_intermediate.getSinglevalueFloatTexture(), screenWidth, screenHeight);
 	}
 
 	//Auto-Density-Scale-Mode
@@ -109,7 +109,7 @@ void GMDensityRenderer::render(GLuint preTexture, bool blend)
 	m_gl->glBindImageTexture(0, m_fbo_final.getColorTexture(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 	m_program_coloring->setUniformValue(m_col_bindingOutimg, 0);
 	m_gl->glActiveTexture(GL_TEXTURE1);
-	m_gl->glBindImageTexture(1, m_fbo_intermediate.getSinglevalueTexture(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
+	m_gl->glBindImageTexture(1, m_fbo_intermediate.getSinglevalueFloatTexture(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
 	m_program_coloring->setUniformValue(m_col_bindingSumimg, 1);
 	m_gl->glActiveTexture(GL_TEXTURE2);
 	m_gl->glBindImageTexture(2, preTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);

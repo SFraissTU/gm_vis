@@ -6,7 +6,7 @@
 using namespace gmvis::core;
 
 gmvis::core::GMIsosurfaceRenderer::GMIsosurfaceRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height)
-	: m_gl(gl), m_camera(camera), m_gaussianListFBO(gl, 500, 500)
+	: m_gl(gl), m_camera(camera), m_intermediateFBO(gl, 500, 500)
 {
 }
 
@@ -90,8 +90,33 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 
 	m_gl->glCreateBuffers(1, &m_ssboMixture);
 
-	m_gaussianListFBO.initialize();
-	m_gaussianListFBO.attachColorTexture(0);
+	m_intermediateFBO.initialize();
+	m_intermediateFBO.attachStencilBuffer();
+
+	m_gl->glCreateBuffers(1, &m_ssboFragmentList);
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboFragmentList);
+	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, 4 * 4 * 35000, nullptr, GL_DYNAMIC_DRAW);
+	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	m_gl->glCreateBuffers(1, &m_atomListSize);
+	m_gl->glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, m_atomListSize);
+	GLuint value = 0;
+	m_gl->glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), &value, GL_DYNAMIC_DRAW);
+
+	m_gl->glGenTextures(1, &m_imgStartIdx);
+	m_gl->glBindTexture(GL_TEXTURE_2D, m_imgStartIdx);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	int pxn = m_intermediateFBO.getWidth() * m_intermediateFBO.getHeight();
+	int* data = new int[pxn];
+	for (int i = 0; i < pxn; ++i) {
+		data[i] = -1;
+	}
+	m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, m_intermediateFBO.getWidth(), m_intermediateFBO.getHeight(), 0, GL_RED, GL_INT, data);
+	m_gl->glBindTexture(GL_TEXTURE_2D, 0);
+	delete[] data;
 }
 
 void gmvis::core::GMIsosurfaceRenderer::setMixture(GaussianMixture* mixture, double accThreshold)
@@ -131,15 +156,17 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 	if (!m_mixture) {
 		return;
 	}
-	m_gaussianListFBO.setSize(screenWidth, screenHeight);
+	m_intermediateFBO.setSize(screenWidth, screenHeight);
 
 	GLint screenFbo = 0;
 	m_gl->glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &screenFbo);
-	m_gl->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_gaussianListFBO.getID());
+	m_gl->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_intermediateFBO.getID());
 	
-	m_gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	m_gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	m_gl->glDisable(GL_DEPTH_TEST);
 	m_gl->glDisable(GL_CULL_FACE);
+	m_gl->glEnable(GL_STENCIL_TEST);
+	m_gl->glStencilOp(GL_INCR, GL_INCR, GL_INCR);
 	m_gl->glDisable(GL_BLEND);
 	m_gl->glViewport(0, 0, screenWidth, screenHeight);
 
@@ -157,13 +184,26 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_bindingMixture, m_ssboMixture);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
 
+	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_ssboFragmentList);
+	m_gl->glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, m_atomListSize);
+	m_gl->glActiveTexture(GL_TEXTURE0);
+	m_gl->glBindImageTexture(0, m_imgStartIdx, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32I);
+	m_gl->glUniform1i(2, 0);
+
 	m_gm_vao.bind();
 	m_gl->glDrawElementsInstanced(GL_TRIANGLES, m_geoIndices.count(), GL_UNSIGNED_INT, nullptr, m_nrValidMixtureComponents);
 
-	m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_gaussianListFBO.getID());
+	m_gl->glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
+
+	
+
+	//resetten von buffern!
+	m_gl->glDisable(GL_STENCIL_TEST);
+
+	/*m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_intermediateFBO.getID());
 	m_gl->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, screenFbo);
 	m_gl->glBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight,
-		GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		GL_COLOR_BUFFER_BIT, GL_LINEAR);*/
 }
 
 void gmvis::core::GMIsosurfaceRenderer::cleanup()

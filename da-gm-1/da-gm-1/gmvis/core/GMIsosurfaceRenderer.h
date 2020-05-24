@@ -46,11 +46,15 @@ namespace gmvis::core {
 		GLuint m_rend_locIsolevel;
 		GLuint m_bindingMixture;
 
+		GLuint m_ssboFragmentList;
+		GLuint m_atomListSize;
+		GLuint m_imgStartIdx;
+
 		GLuint m_ssboMixture;
 		GLuint m_texGauss;
 		GLuint m_nrValidMixtureComponents;
 
-		ScreenFBO m_gaussianListFBO;
+		ScreenFBO m_intermediateFBO;
 
 		std::unique_ptr<QOpenGLShaderProgram> m_program_projection;
 		std::unique_ptr<QOpenGLShaderProgram> m_program_sort_and_render;
