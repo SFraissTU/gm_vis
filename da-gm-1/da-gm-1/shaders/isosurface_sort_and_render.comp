@@ -1,0 +1,145 @@
+#version 450
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+struct FragmentData {
+	float z;
+	int gIndex;
+	int flags;
+	int next;
+};
+
+layout(std430, binding=0) buffer FragmentList {
+	FragmentData[] fragmentList;
+} flb;
+
+struct Gaussian {
+	vec4 mu_alpha;
+	mat4 invsigma;
+};
+
+layout(std430, binding=1) buffer GaussianMixture {
+	Gaussian gaussians[];
+} mixture;
+
+uniform uint listSize;
+uniform uint width;
+uniform uint height;
+uniform float isolevel;
+uniform float fov;
+uniform sampler1D gaussTex;
+
+float sqrt2pi = 2.506628275;
+
+
+layout(r32i) uniform iimage2D img_startidx;
+//layout(rgba32f) uniform image2D img_startidx;
+
+layout(rgba32f) uniform image2D img_rendered;
+
+void main() {
+	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	vec2 pixel_center = vec2(pixel_coords) + vec2(0.5);
+	vec2 pixel_uv = pixel_center / vec2(width, height);
+	vec2 d = pixel_uv * 2.0 - 1.0;
+	float aspectRatio = float(width) / float(height);
+
+	vec3 origin = vec3(0, 0, 0.0);
+	vec3 direction = normalize(vec3(d.x * aspectRatio, d.y, -1/tan(fov/2.0)));
+	//ivec2 size = imageSize(img_startidx);
+	//width und height sollten angegbene werden. size könnte größer sein
+	if (pixel_coords.x < width && pixel_coords.y < height) {
+//		int i = imageLoad(img_startidx, pixel_coords).r;
+//		//float i = imageLoad(img_startidx, pixel_coords).r;
+//		//imageStore(img_rendered, pixel_coords, vec4(i / 1000.0));
+//		if (i > 0) {
+//			//imageStore(img_rendered, pixel_coords, vec4(1));
+//			imageStore(img_rendered, pixel_coords, vec4(float(i) / listSize));
+//		} else {
+//			imageStore(img_rendered, pixel_coords, vec4(0));
+//		}
+
+		float fragZ[128];
+		int fragGIdx[128];
+		int fragFlags[128];
+		uint pos[128];
+		uint count = 0;
+
+		int gaussList[64];
+		int gaussCount = 0;
+
+		int node = imageLoad(img_startidx, pixel_coords).r;
+		if (node == -1) {
+			imageStore(img_rendered, pixel_coords, vec4(0));
+			return;
+		}
+		while (node != -1 && count < 128) {
+			fragZ[count] = flb.fragmentList[node].z;
+			fragGIdx[count] = flb.fragmentList[node].gIndex;
+			fragFlags[count] = flb.fragmentList[node].flags;
+			if (fragFlags[count] == 1 && gaussCount < 64) {
+				gaussList[gaussCount] = fragGIdx[count];
+				gaussCount++;
+			}
+			pos[count] = count;
+			count++;
+			node = flb.fragmentList[node].next;
+		}
+		if (count == 128) {
+			imageStore(img_rendered, pixel_coords, vec4(1, 0, 0, 1));
+			return;
+		}
+		for (uint i = 1; i < count; i++) {
+			uint j = i;
+			while (j > 0 && fragZ[pos[j-1]] > fragZ[pos[j]]) {
+				uint temp = pos[j-1];
+				pos[j-1] = pos[j];
+				pos[j] = temp;
+				j--;
+			}
+		}
+
+		//imageStore(img_rendered, pixel_coords, vec4(fragZ[pos[0]] / 200.0));
+		//return;
+
+		float zn = 0, zf = 0;
+		//for now: use all gaussians in this list
+		for (int i = 0; i < count; i++) {
+			float z = fragZ[pos[i]];
+			float sum = 0;
+			for (int j = 0; j < gaussCount; j++) {
+				Gaussian gauss = mixture.gaussians[j];
+				//z*direction is probably wrong! let's just render the current gaussian completely
+				//to check
+				//vec3 relpos = origin + z*direction - gauss.mu_alpha.xyz;
+				//float ex = exp(-0.5 * dot(relpos*mat3(gauss.invsigma),relpos));
+				//sum += gauss.mu_alpha.w * ex;
+
+				mat3 inv = mat3(gauss.invsigma);
+				vec3 rs = direction*inv;
+				float sig2 = 1.0 / dot(rs, direction);
+				float mu = dot(rs, gauss.mu_alpha.xyz-origin) * sig2;
+				float sig = sqrt(sig2);
+				vec3 pivec = origin + mu*direction - gauss.mu_alpha.xyz;
+				float gammak = sqrt2pi * gauss.mu_alpha.w * sig * exp(-0.5*dot(pivec*inv, pivec));
+				sum += gammak * texture(gaussTex, mu / sig).r;
+			}
+			imageStore(img_rendered, pixel_coords, vec4(sum*1000000));
+			return;
+			if (sum == isolevel) {
+				//Shade and Render
+				imageStore(img_rendered, pixel_coords, vec4(z / 200.0));
+				return;
+			} else if (sum < isolevel) {
+				zn = z;
+			} else if (sum > isolevel) {
+				zf = z;
+				//Refine Solution
+				//Shade and Render
+				imageStore(img_rendered, pixel_coords, vec4(z / 200.0));
+				return;
+			}
+		}
+	}
+	//für den stencil test können wir keinen compute shader verwenden!
+}

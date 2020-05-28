@@ -38,13 +38,17 @@ namespace gmvis::core {
 
 		GLuint m_proj_locProjMatrix;
 		GLuint m_proj_locViewMatrix;
+		GLuint m_proj_locImgStart;
+		GLuint m_proj_locMaxFragListLen;
 		GLuint m_rend_locInvViewMatrix;
 		GLuint m_rend_locWidth;
 		GLuint m_rend_locHeight;
 		GLuint m_rend_locFov;
 		GLuint m_rend_locGaussTex;
 		GLuint m_rend_locIsolevel;
-		GLuint m_bindingMixture;
+		GLuint m_rend_locImgStart;
+		GLuint m_rend_locImgRendered;
+		GLuint m_rend_locListSize;
 
 		GLuint m_ssboFragmentList;
 		GLuint m_atomListSize;
@@ -53,13 +57,15 @@ namespace gmvis::core {
 		GLuint m_ssboMixture;
 		GLuint m_texGauss;
 		GLuint m_nrValidMixtureComponents;
+		GLuint m_maxFragListLen = 10000000;
 
-		ScreenFBO m_intermediateFBO;
+		ScreenFBO m_stencilFBO;
+		ScreenFBO m_renderFBO;
 
 		std::unique_ptr<QOpenGLShaderProgram> m_program_projection;
 		std::unique_ptr<QOpenGLShaderProgram> m_program_sort_and_render;
 
-		float m_sIsolevel = 0.1;
+		float m_sIsolevel = 0.0000000001;
 	};
 
 }

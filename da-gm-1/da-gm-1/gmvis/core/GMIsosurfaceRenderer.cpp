@@ -6,7 +6,7 @@
 using namespace gmvis::core;
 
 gmvis::core::GMIsosurfaceRenderer::GMIsosurfaceRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height)
-	: m_gl(gl), m_camera(camera), m_intermediateFBO(gl, 500, 500)
+	: m_gl(gl), m_camera(camera), m_stencilFBO(gl, width, height), m_renderFBO(gl, width, height)
 {
 }
 
@@ -17,15 +17,30 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/isosurface_proj.frag");
 	m_program_projection->link();
 
+	m_program_sort_and_render = std::make_unique<QOpenGLShaderProgram>();
+	m_program_sort_and_render->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/isosurface_sort_and_render.comp");
+	m_program_sort_and_render->link();
+
 	m_program_projection->bind();
 	m_proj_locProjMatrix = m_program_projection->uniformLocation("projMatrix");
 	m_proj_locViewMatrix = m_program_projection->uniformLocation("viewMatrix");
+	m_proj_locImgStart = m_program_projection->uniformLocation("img_startidx");
+	m_proj_locMaxFragListLen = m_program_projection->uniformLocation("maxFragmentListLength");
 	/*m_proj_locInvViewMatrix = m_program_projection->uniformLocation("invViewMatrix");
 	m_proj_locWidth = m_program_projection->uniformLocation("width");
 	m_proj_locHeight = m_program_projection->uniformLocation("height");
 	m_proj_locFov = m_program_projection->uniformLocation("fov");
 	m_proj_locGaussTex = m_program_projection->uniformLocation("gaussTex");*/
-	m_bindingMixture = 0;
+
+	m_program_sort_and_render->bind();
+	m_rend_locImgStart = m_program_sort_and_render->uniformLocation("img_startidx");
+	m_rend_locImgRendered = m_program_sort_and_render->uniformLocation("img_rendered");
+	m_rend_locListSize = m_program_sort_and_render->uniformLocation("listSize");
+	m_rend_locWidth = m_program_sort_and_render->uniformLocation("width");
+	m_rend_locHeight = m_program_sort_and_render->uniformLocation("height");
+	m_rend_locIsolevel = m_program_sort_and_render->uniformLocation("isolevel");
+	m_rend_locFov = m_program_sort_and_render->uniformLocation("fov");
+	m_rend_locGaussTex = m_program_sort_and_render->uniformLocation("gaussTex");
 
 	//ToDo: Rest of Uniforms
 
@@ -90,13 +105,19 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 
 	m_gl->glCreateBuffers(1, &m_ssboMixture);
 
-	m_intermediateFBO.initialize();
-	m_intermediateFBO.attachStencilBuffer();
+	m_stencilFBO.initialize();
+	m_stencilFBO.attachColorTexture(0);	//unused
+	m_stencilFBO.attachStencilBuffer();
+
+	m_renderFBO.initialize();
+	m_renderFBO.attachColorTexture();
 
 	m_gl->glCreateBuffers(1, &m_ssboFragmentList);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboFragmentList);
-	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, 4 * 4 * 35000, nullptr, GL_DYNAMIC_DRAW);
+	int* data = new int[4 * m_maxFragListLen];
+	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, 4 * 4 * m_maxFragListLen, data, GL_DYNAMIC_DRAW);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	delete[] data;
 
 	m_gl->glCreateBuffers(1, &m_atomListSize);
 	m_gl->glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, m_atomListSize);
@@ -109,14 +130,8 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	m_gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	int pxn = m_intermediateFBO.getWidth() * m_intermediateFBO.getHeight();
-	int* data = new int[pxn];
-	for (int i = 0; i < pxn; ++i) {
-		data[i] = -1;
-	}
-	m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, m_intermediateFBO.getWidth(), m_intermediateFBO.getHeight(), 0, GL_RED, GL_INT, data);
+	m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, m_stencilFBO.getWidth(), m_stencilFBO.getHeight(), 0, GL_RED_INTEGER, GL_INT, nullptr);
 	m_gl->glBindTexture(GL_TEXTURE_2D, 0);
-	delete[] data;
 }
 
 void gmvis::core::GMIsosurfaceRenderer::setMixture(GaussianMixture* mixture, double accThreshold)
@@ -156,19 +171,51 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 	if (!m_mixture) {
 		return;
 	}
-	m_intermediateFBO.setSize(screenWidth, screenHeight);
+	if (screenWidth > m_stencilFBO.getWidth() || screenHeight > m_stencilFBO.getHeight()) {
+		m_gl->glBindTexture(GL_TEXTURE_2D, m_imgStartIdx);
+		m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, screenWidth, screenHeight, 0, GL_RED_INTEGER, GL_INT, nullptr);
+	}
+	m_stencilFBO.setSize(screenWidth, screenHeight);
+	m_renderFBO.setSize(screenWidth, screenHeight);
+
+	int value = -1;
+	m_gl->glClearTexImage(m_imgStartIdx, 0, GL_RED_INTEGER, GL_INT, &value);
+
+	//qDebug() << m_gl->glGetError() << "\n";
 
 	GLint screenFbo = 0;
 	m_gl->glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &screenFbo);
-	m_gl->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_intermediateFBO.getID());
+	m_gl->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_stencilFBO.getID());
+
+	/*qDebug() << m_gl->glGetError() << "\n";
+
+	GLint status = m_gl->glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+	switch (status) {
+	case GL_FRAMEBUFFER_COMPLETE:
+		qDebug() << "";
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+		qDebug() << "A";
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+		qDebug() << "C";
+		break;
+	case GL_FRAMEBUFFER_UNSUPPORTED:
+		qDebug() << "D";
+		break;
+	default:
+		qDebug() << "E";
+	}*/
 	
-	m_gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	m_gl->glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	m_gl->glDisable(GL_DEPTH_TEST);
 	m_gl->glDisable(GL_CULL_FACE);
 	m_gl->glEnable(GL_STENCIL_TEST);
 	m_gl->glStencilOp(GL_INCR, GL_INCR, GL_INCR);
 	m_gl->glDisable(GL_BLEND);
 	m_gl->glViewport(0, 0, screenWidth, screenHeight);
+
+	//qDebug() << m_gl->glGetError() << "\n";
 
 	m_program_projection->bind();
 	m_program_projection->setUniformValue(m_proj_locProjMatrix, m_camera->getProjMatrix());
@@ -184,26 +231,71 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_bindingMixture, m_ssboMixture);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
 
+	//qDebug() << m_gl->glGetError() << "\n";
+
+	m_gl->glUniform1ui(m_proj_locMaxFragListLen, m_maxFragListLen);
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_ssboFragmentList);
 	m_gl->glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, m_atomListSize);
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindImageTexture(0, m_imgStartIdx, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32I);
-	m_gl->glUniform1i(2, 0);
+	m_gl->glUniform1i(m_proj_locImgStart, 0);
+
+	//qDebug() << m_gl->glGetError() << "\n";
+
+	//ToDo: We need to disable front clipping
 
 	m_gm_vao.bind();
 	m_gl->glDrawElementsInstanced(GL_TRIANGLES, m_geoIndices.count(), GL_UNSIGNED_INT, nullptr, m_nrValidMixtureComponents);
 
+	//qDebug() << m_gl->glGetError() << "\n";
+
 	m_gl->glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 
+	m_gl->glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, m_atomListSize);
+	GLuint* countp = (GLuint*)m_gl->glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+	GLuint listsize = *countp;
+	*countp = 0;
+	m_gl->glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+
+	qDebug() << listsize << "\n";
+
+	//qDebug() << m_gl->glGetError() << "\n";
+
+	m_program_sort_and_render->bind();
+	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_ssboFragmentList);
+	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_ssboMixture);
+	m_gl->glUniform1ui(m_rend_locListSize, listsize);
+	m_gl->glUniform1ui(m_rend_locWidth, screenWidth);
+	m_gl->glUniform1ui(m_rend_locHeight, screenHeight);
+	m_gl->glUniform1f(m_rend_locIsolevel, m_sIsolevel);
+	m_gl->glUniform1f(m_rend_locFov, qDegreesToRadians(m_camera->getFoV()));
+	m_gl->glActiveTexture(GL_TEXTURE0);
+	//m_gl->glBindImageTexture(0, m_stencilFBO.getColorTexture(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+	m_gl->glBindImageTexture(0, m_imgStartIdx, 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32I);
+	m_gl->glUniform1i(m_rend_locImgStart, 0);
+	//qDebug() << m_gl->glGetError() << "\n";
+	m_gl->glActiveTexture(GL_TEXTURE1);
+	m_gl->glBindImageTexture(1, m_renderFBO.getColorTexture(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+	m_gl->glUniform1i(m_rend_locImgRendered, 1);
+	m_gl->glActiveTexture(GL_TEXTURE2);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
+	m_gl->glUniform1i(m_rend_locGaussTex, 2);
+
+	//qDebug() << m_gl->glGetError() << "\n";
+
+	m_gl->glDispatchCompute(screenWidth / 32 + 1, screenHeight / 32 + 1, 1);
 	
+	//qDebug() << m_gl->glGetError() << "\n";
 
 	//resetten von buffern!
 	m_gl->glDisable(GL_STENCIL_TEST);
 
-	/*m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_intermediateFBO.getID());
+	m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderFBO.getID());
 	m_gl->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, screenFbo);
 	m_gl->glBlitFramebuffer(0, 0, screenWidth, screenHeight, 0, 0, screenWidth, screenHeight,
-		GL_COLOR_BUFFER_BIT, GL_LINEAR);*/
+		GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	//qDebug() << m_gl->glGetError() << "\n";
 }
 
 void gmvis::core::GMIsosurfaceRenderer::cleanup()

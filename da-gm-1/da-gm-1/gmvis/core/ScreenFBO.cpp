@@ -75,7 +75,7 @@ void gmvis::core::ScreenFBO::attachStencilBuffer()
 {
 	m_gl->glGenRenderbuffers(1, &m_stencilTex);
 	m_gl->glBindRenderbuffer(GL_RENDERBUFFER, m_stencilTex);
-	m_gl->glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX16, m_fboWidth, m_fboHeight);
+	m_gl->glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX, m_fboWidth, m_fboHeight);
 	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
 	m_gl->glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_stencilTex);
 	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
@@ -87,6 +87,10 @@ void ScreenFBO::setSize(int width, int height)
 	if (width > m_fboWidth || height > m_fboHeight || m_equalsize) {
 		m_fboWidth = width;
 		m_fboHeight = height;
+		if (m_singleIntTex != -1) {
+			m_gl->glBindTexture(GL_TEXTURE_2D, m_singleIntTex);
+			m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, m_fboWidth, m_fboHeight, 0, GL_RED, GL_INT, nullptr);
+		}
 		if (m_singleFloatTex != -1) {
 			m_gl->glBindTexture(GL_TEXTURE_2D, m_singleFloatTex);
 			m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, m_fboWidth, m_fboHeight, 0, GL_RED, GL_FLOAT, nullptr);
@@ -99,6 +103,12 @@ void ScreenFBO::setSize(int width, int height)
 			m_gl->glBindTexture(GL_TEXTURE_2D, m_depthTex);
 			m_gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_fboWidth, m_fboHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 		}
+		m_gl->glBindTexture(GL_TEXTURE_2D, 0);
+		if (m_stencilTex != -1) {
+			m_gl->glBindRenderbuffer(GL_RENDERBUFFER, m_stencilTex);
+			m_gl->glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX16, m_fboWidth, m_fboHeight);
+		}
+		m_gl->glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	}
 	m_screenWidth = width;
 	m_screenHeight = height;
