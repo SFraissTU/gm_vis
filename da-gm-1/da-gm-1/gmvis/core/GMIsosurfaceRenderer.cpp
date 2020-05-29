@@ -41,6 +41,7 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 	m_rend_locIsolevel = m_program_sort_and_render->uniformLocation("isolevel");
 	m_rend_locFov = m_program_sort_and_render->uniformLocation("fov");
 	m_rend_locGaussTex = m_program_sort_and_render->uniformLocation("gaussTex");
+	m_rend_locInvViewMatrix = m_program_sort_and_render->uniformLocation("invViewMatrix");
 
 	//ToDo: Rest of Uniforms
 
@@ -280,6 +281,7 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 	m_gl->glActiveTexture(GL_TEXTURE2);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
 	m_gl->glUniform1i(m_rend_locGaussTex, 2);
+	m_program_sort_and_render->setUniformValue(m_rend_locInvViewMatrix, m_camera->getViewMatrix().inverted());
 
 	//qDebug() << m_gl->glGetError() << "\n";
 

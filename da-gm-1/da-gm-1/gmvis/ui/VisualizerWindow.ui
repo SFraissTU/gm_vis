@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>900</width>
-    <height>641</height>
+    <height>675</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -38,7 +38,7 @@
          <x>0</x>
          <y>0</y>
          <width>208</width>
-         <height>568</height>
+         <height>602</height>
         </rect>
        </property>
        <widget class="QWidget" name="layoutWidget">
@@ -47,7 +47,7 @@
           <x>0</x>
           <y>10</y>
           <width>201</width>
-          <height>541</height>
+          <height>601</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -68,7 +68,7 @@
            <property name="maximumSize">
             <size>
              <width>16777215</width>
-             <height>130</height>
+             <height>140</height>
             </size>
            </property>
            <property name="title">
@@ -80,7 +80,7 @@
               <x>10</x>
               <y>20</y>
               <width>149</width>
-              <height>100</height>
+              <height>111</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout">
@@ -91,13 +91,13 @@
                </property>
               </widget>
              </item>
-              <item>
-                <widget class="QCheckBox" name="cb_displayGMPositions">
-                  <property name="text">
-                    <string>GM Positions</string>
-                  </property>
-                </widget>
-              </item>
+             <item>
+              <widget class="QCheckBox" name="cb_displayGMPositions">
+               <property name="text">
+                <string>GM Positions</string>
+               </property>
+              </widget>
+             </item>
              <item>
               <widget class="QCheckBox" name="cb_displayEllipsoids">
                <property name="text">
@@ -105,13 +105,13 @@
                </property>
               </widget>
              </item>
-              <item>
-                <widget class="QCheckBox" name="cb_displayIsosurface">
-                  <property name="text">
-                    <string>Isosurface</string>
-                  </property>
-                </widget>
-              </item>
+             <item>
+              <widget class="QCheckBox" name="cb_displayIsosurface">
+               <property name="text">
+                <string>Isosurface</string>
+               </property>
+              </widget>
+             </item>
              <item>
               <widget class="QCheckBox" name="cb_displayDensity">
                <property name="text">
@@ -363,7 +363,7 @@
               <x>0</x>
               <y>20</y>
               <width>191</width>
-              <height>96</height>
+              <height>99</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout">
@@ -451,13 +451,13 @@
                </property>
               </widget>
              </item>
-              <item row="3" column="1">
-                <widget class="QCheckBox" name="cb_dscalecutoff">
-                  <property name="text">
-                    <string>Cutoff</string>
-                  </property>
-                </widget>
-              </item>
+             <item row="3" column="1">
+              <widget class="QCheckBox" name="cb_dscalecutoff">
+               <property name="text">
+                <string>Cutoff</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </widget>
           </widget>
