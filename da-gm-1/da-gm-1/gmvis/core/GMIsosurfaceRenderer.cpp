@@ -26,11 +26,11 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 	m_proj_locViewMatrix = m_program_projection->uniformLocation("viewMatrix");
 	m_proj_locImgStart = m_program_projection->uniformLocation("img_startidx");
 	m_proj_locMaxFragListLen = m_program_projection->uniformLocation("maxFragmentListLength");
-	/*m_proj_locInvViewMatrix = m_program_projection->uniformLocation("invViewMatrix");
+	m_proj_locInvViewMatrix = m_program_projection->uniformLocation("invViewMatrix");
 	m_proj_locWidth = m_program_projection->uniformLocation("width");
 	m_proj_locHeight = m_program_projection->uniformLocation("height");
 	m_proj_locFov = m_program_projection->uniformLocation("fov");
-	m_proj_locGaussTex = m_program_projection->uniformLocation("gaussTex");*/
+	/*m_proj_locGaussTex = m_program_projection->uniformLocation("gaussTex");*/
 
 	m_program_sort_and_render->bind();
 	m_rend_locImgStart = m_program_sort_and_render->uniformLocation("img_startidx");
@@ -42,12 +42,13 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 	m_rend_locFov = m_program_sort_and_render->uniformLocation("fov");
 	m_rend_locGaussTex = m_program_sort_and_render->uniformLocation("gaussTex");
 	m_rend_locInvViewMatrix = m_program_sort_and_render->uniformLocation("invViewMatrix");
+	m_rend_locImgTest = m_program_sort_and_render->uniformLocation("img_test");
 
 	//ToDo: Rest of Uniforms
 
 	//Create Geometry Data
 	point_list normals;
-	Helper::createSphere(1.0f, 32.0f, 32.0f, m_geoVertices, normals, m_geoIndices);
+	Helper::createSphere(1.0f, 32, 32, m_geoVertices, normals, m_geoIndices);
 
 	//Create VAO
 	m_gm_vao.create();
@@ -108,17 +109,16 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 
 	m_stencilFBO.initialize();
 	m_stencilFBO.attachColorTexture(0);	//unused
-	m_stencilFBO.attachStencilBuffer();
+	//m_stencilFBO.attachDepthTexture();
+	m_stencilFBO.attachStencilBuffer();	//TODO: Remove Depth Buffer and disable Depth Test!
 
 	m_renderFBO.initialize();
 	m_renderFBO.attachColorTexture();
 
 	m_gl->glCreateBuffers(1, &m_ssboFragmentList);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboFragmentList);
-	int* data = new int[4 * m_maxFragListLen];
-	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, 4 * 4 * m_maxFragListLen, data, GL_DYNAMIC_DRAW);
+	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, 4 * 8 * m_maxFragListLen, nullptr, GL_DYNAMIC_DRAW); //4 = sizeof(float)
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-	delete[] data;
 
 	m_gl->glCreateBuffers(1, &m_atomListSize);
 	m_gl->glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, m_atomListSize);
@@ -208,8 +208,9 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 		qDebug() << "E";
 	}*/
 	
-	m_gl->glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	m_gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	m_gl->glDisable(GL_DEPTH_TEST);
+	m_gl->glEnable(GL_DEPTH_TEST);
 	m_gl->glDisable(GL_CULL_FACE);
 	m_gl->glEnable(GL_STENCIL_TEST);
 	m_gl->glStencilOp(GL_INCR, GL_INCR, GL_INCR);
@@ -221,10 +222,10 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 	m_program_projection->bind();
 	m_program_projection->setUniformValue(m_proj_locProjMatrix, m_camera->getProjMatrix());
 	m_program_projection->setUniformValue(m_proj_locViewMatrix, m_camera->getViewMatrix());
-	/*m_program_projection->setUniformValue(m_proj_locInvViewMatrix, m_camera->getViewMatrix().inverted());
+	m_program_projection->setUniformValue(m_proj_locInvViewMatrix, m_camera->getViewMatrix().inverted());
 	m_program_projection->setUniformValue(m_proj_locWidth, screenWidth);
 	m_program_projection->setUniformValue(m_proj_locHeight, screenHeight);
-	m_program_projection->setUniformValue(m_proj_locFov, qDegreesToRadians(m_camera->getFoV()));*/
+	m_program_projection->setUniformValue(m_proj_locFov, qDegreesToRadians(m_camera->getFoV()));
 	/*m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
 	m_program_projection->setUniformValue(m_proj_locGaussTex, 0);
@@ -281,6 +282,9 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 	m_gl->glActiveTexture(GL_TEXTURE2);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
 	m_gl->glUniform1i(m_rend_locGaussTex, 2);
+	m_gl->glActiveTexture(GL_TEXTURE3);
+	m_gl->glBindImageTexture(3, m_stencilFBO.getColorTexture(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+	m_gl->glUniform1i(m_rend_locImgTest, 3);
 	m_program_sort_and_render->setUniformValue(m_rend_locInvViewMatrix, m_camera->getViewMatrix().inverted());
 
 	//qDebug() << m_gl->glGetError() << "\n";

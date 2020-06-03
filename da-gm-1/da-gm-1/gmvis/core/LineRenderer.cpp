@@ -43,6 +43,9 @@ void LineRenderer::setLineStrip(LineStrip* linestrip)
 		m_ls_vao.release();
 	}
 	m_linestrip = linestrip;
+	if (m_maxiteration > m_linestrip->getPointCount()) {
+		qDebug() << "Not enough points in line strip!\n";
+	}
 }
 
 void LineRenderer::setMaxIteration(int iteration)
@@ -53,6 +56,10 @@ void LineRenderer::setMaxIteration(int iteration)
 void LineRenderer::render(bool transparent)
 {
 	if (!m_linestrip) {
+		return;
+	}
+	if (m_linestrip->getPointCount() == 0) {
+		qDebug() << "Error: empty line strip!" << "\n";
 		return;
 	}
 
