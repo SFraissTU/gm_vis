@@ -7,7 +7,8 @@ layout(location = 0) in vec3 in_vertex;
 layout(location = 1) in mat4 in_transform;
 
 out int gaussIndex;
-out float depthValue;
+//out float depthValue;
+out vec3 vPos;
 out vec3 position;
 
 uniform mat4 projMatrix;
@@ -22,6 +23,7 @@ void main() {
 	gaussIndex = gl_InstanceID;
 	//gaussIndex = int(frag_position.y) % 10;
 	//gaussIndex = frag_position.y / 6;
-	depthValue = length(view_position.xyz);
+	//depthValue = length(view_position.xyz);
+	vPos = view_position.xyz;
 	position = frag_position.xzy;
 }

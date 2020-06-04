@@ -117,7 +117,7 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 
 	m_gl->glCreateBuffers(1, &m_ssboFragmentList);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboFragmentList);
-	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, 4 * 8 * m_maxFragListLen, nullptr, GL_DYNAMIC_DRAW); //4 = sizeof(float)
+	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, 4 * 12 * m_maxFragListLen, nullptr, GL_DYNAMIC_DRAW); //4 = sizeof(float)
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 	m_gl->glCreateBuffers(1, &m_atomListSize);
@@ -210,7 +210,7 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 	
 	m_gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	m_gl->glDisable(GL_DEPTH_TEST);
-	m_gl->glEnable(GL_DEPTH_TEST);
+	//m_gl->glEnable(GL_DEPTH_TEST);
 	m_gl->glDisable(GL_CULL_FACE);
 	m_gl->glEnable(GL_STENCIL_TEST);
 	m_gl->glStencilOp(GL_INCR, GL_INCR, GL_INCR);

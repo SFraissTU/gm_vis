@@ -4,7 +4,8 @@
 // Fragment Shader. Calcualtes contribution to pixel sum
 
 in flat int gaussIndex;
-in float depthValue;
+//in float depthValue;
+in vec3 vPos;
 in vec3 position;
 
 out vec4 testcolor;
@@ -13,7 +14,9 @@ struct FragmentData {
 	int gIndex;
 	int flags;
 	int next;
-	float z;
+	int padding1;
+	double z;
+	double padding2;
 	//ivec4 g_f_n;
 	vec4 position;
 };
@@ -41,7 +44,7 @@ void main() {
 		discard;
 		return;
 	}
-	flb.fragmentList[i].z = depthValue;
+	flb.fragmentList[i].z = length(dvec3(vPos));
 	flb.fragmentList[i].gIndex = gaussIndex;
 	flb.fragmentList[i].flags = int(gl_FrontFacing);
 	int oldhead = imageAtomicExchange(img_startidx, ivec2(gl_FragCoord.xy), int(i));
@@ -82,7 +85,8 @@ void main() {
 	//testcolor = vec4(val, val, val, 1.0);
 
 	//testcolor = vec4(depthValue / 200.0);
-	testcolor = vec4(float(gaussIndex%3==0), float(gaussIndex%3==1), float(gaussIndex%3==2), 1.0);
+	//testcolor = vec4(float(gaussIndex%3==0), float(gaussIndex%3==1), float(gaussIndex%3==2), 1.0);
+	testcolor = vec4(position, 1.0);
 
 	flb.fragmentList[i].position = vec4(position, 1.0);
 	//flb.fragmentList[i].position = vec4(depthValue / 60);

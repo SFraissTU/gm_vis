@@ -135,7 +135,7 @@ void gmvis::ui::DisplayWidget::setMixture(GaussianMixture* mixture)
 {
 	m_isoellipsoidRenderer->setMixture(mixture);
 	m_positionsRenderer->setMixture(mixture);
-	m_isosurfaceRenderer->setMixture(mixture, 0.000000001);
+	m_isosurfaceRenderer->setMixture(mixture, 0.00001);
 	m_densityRenderer->setMixture(mixture);
 }
 
