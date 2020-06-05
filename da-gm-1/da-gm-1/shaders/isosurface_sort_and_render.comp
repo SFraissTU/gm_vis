@@ -36,6 +36,90 @@ layout(std430, binding=1) buffer GaussianMixture {
 	Gaussian gaussians[];
 } mixture;
 
+struct LinkedListElement {
+	double z;
+	int next;
+};
+
+//Ordered Linked List
+struct CandidateList {
+	LinkedListElement candidates[FRAG_LIST_MAX_LEN];
+	int candidates_len;
+	int candidates_next_index;
+};
+
+CandidateList createCandidateList() {
+	CandidateList list;
+	list.candidates_len = 0;
+	list.candidates_next_index = 0;
+	return list;
+};
+
+void insert(inout CandidateList list, double t, int initialinspectionindex, int initialpreviousindex) {
+	int inspectionindex = initialinspectionindex;
+	int previousindex = initialpreviousindex;
+	while (inspectionindex < list.candidates_len && inspectionindex != -1) {
+		LinkedListElement candidate = list.candidates[inspectionindex];
+		if (candidate.z > t) {
+			LinkedListElement newC;
+			newC.z = t;
+			newC.next = inspectionindex;
+			list.candidates[list.candidates_len] = newC;
+			if (previousindex == -1) {
+				list.candidates_next_index = list.candidates_len;
+			} else {
+				list.candidates[previousindex].next = list.candidates_len;
+			}
+			list.candidates_len++;
+			break;
+		}
+		previousindex = inspectionindex;
+		inspectionindex = candidate.next;
+	}
+	if (inspectionindex == -1 || inspectionindex == list.candidates_len) {
+		//insert at beginning or end
+		LinkedListElement newC;
+		newC.z = t;
+		newC.next = -1;
+		list.candidates[list.candidates_len] = newC;
+		if (previousindex != -1) {
+			list.candidates[previousindex].next = list.candidates_len;
+		}
+		list.candidates_len++;
+	}
+};
+
+void insert(inout CandidateList list, double t) {
+	int inspectionindex = list.candidates_next_index;
+	int previousindex = -1;
+	insert(list, t, inspectionindex, previousindex);
+}
+
+void insert(inout CandidateList list, double t1, double t2) {
+	//Insert t1
+	insert(list, t1);
+	//Insert t2
+	insert(list, t2, list.candidates[list.candidates_len-1].next, list.candidates_len-1);
+};
+
+
+bool hasNext(CandidateList list) {
+	return list.candidates_next_index < list.candidates_len;
+};
+
+double getNextZ(CandidateList list) {
+	return list.candidates[list.candidates_next_index].z;
+}
+
+double popZ(inout CandidateList list) {
+	double z = list.candidates[list.candidates_next_index].z;
+	list.candidates_next_index = list.candidates[list.candidates_next_index].next;
+	if (list.candidates_next_index == -1) {
+		list.candidates_next_index = list.candidates_len;
+	}
+	return z;
+}
+
 uniform uint listSize;
 uniform uint width;
 uniform uint height;
@@ -169,14 +253,14 @@ void main() {
 			return;
 		}
 		while (node != -1 && count < FRAG_LIST_MAX_LEN) {
-			fragGIdx[count] = flb.fragmentList[node].gIndex;
 			fragFlags[count] = flb.fragmentList[node].flags;
 			fragZ[count] = flb.fragmentList[node].z;
 			fragPositions[count] = flb.fragmentList[node].position;
 			if (fragFlags[count] == 1 && gaussCount < FRAG_LIST_MAX_LEN/2) {
-				gaussList[gaussCount] = fragGIdx[count];
+				gaussList[gaussCount] = flb.fragmentList[node].gIndex;
 				//vec3 rdir = normalize(fragPositions[count].xyz - origin);
-				gaussRayList[gaussCount] = GaussianParametersOnRay(fragGIdx[count], origin, direction);
+				gaussRayList[gaussCount] = GaussianParametersOnRay(flb.fragmentList[node].gIndex, origin, direction);
+				fragGIdx[count] = gaussCount;
 				gaussCount++;
 			}
 			pos[count] = count;
@@ -203,115 +287,60 @@ void main() {
 		//imageStore(img_rendered, pixel_coords, vec4(gaussCount / 64.0));
 		//return;
 
-		float zn = 0, zf = 0;
-		imageStore(img_rendered, pixel_coords, vec4(0));
+		CandidateList candidateList;
+		int input_next_index = 0;
+		double zn = 0, zf = 0;
 		//for now: use all gaussians in this list
-		for (int i = 0; i < count; i++) {
-			vec3 position = fragPositions[pos[i]].xyz;
-			//float z = distance(origin, pos);
-
-			vec3 sum = vec3(0);
-//			for (int j = 0; j < gaussCount; j++) {
-//				GaussianRay gauss = gaussRayList[j];
-//				sum += gauss.direction.xyz;
-//			}
-//			sum /= gaussCount;
-//			vec3 std = vec3(0);
-//			for (int j = 0; j < gaussCount; j++) {
-//				GaussianRay gauss = gaussRayList[j];
-//				std += abs(gauss.direction.xyz-sum);
-//			}
-//			std /= gaussCount;
-			//vec3 rdir = normalize(fragPositions[pos[i]].xyz - origin);
-			//vec3 rdir = fragPositions[pos[i]].xyz - origin;
-			//rdir = rdir / length(rdir);
-			//vec3 rdir = direction;
-			//vec3 rdir = origin + fragZ[pos[i]]*direction;
-			//vec3 rdir = max(fragPositions[pos[i]].xyz / 60.0, 0);
-			//vec3 rdir = fragPositions[pos[i]].xyz / 60.0;
-			//dvec3 rdir = dvec3(fragPositions[pos[i]].xyz) - dvec3(origin);
-			//sum += abs(vec3(normalize(rdir)) - direction);
-			dvec3 dPosition = origin + float(fragZ[pos[i]])*direction;
-			//double val = abs(dPosition).z / 0.6;
-			//val = (int(val) % 10) / 10.0;
-			//sum += rdir;
-			//sum = vec3(fragZ[pos[i]]) / 200.0;
-			//sum = vec3(fragGIdx[pos[i]] / 400.0);
-			//imageStore(img_rendered, pixel_coords, vec4(sum, 1.0));
-			if (pixel_coords.x < width - pixel_coords.y) {
-				//imageStore(img_rendered, pixel_coords, imageLoad(img_test, pixel_coords)/ 60.0);
-				//imageStore(img_rendered, pixel_coords, vec4(abs(std), 1.0));
-				//imageStore(img_rendered, pixel_coords, vec4(abs(position - origin) / 50.0, 1.0));
-				//imageStore(img_rendered, pixel_coords, vec4(abs(position) / 30.0, 1.0));
-				//imageStore(img_rendered, pixel_coords, vec4(0.2 + 10000*evalGMM_classic(position, gaussCount, gaussList)));
-				imageStore(img_rendered, pixel_coords, vec4(0.2 + 10000*evalGMM_ray_d(fragZ[pos[i]], gaussCount, gaussRayList)));
+		//for (int i = 0; i < count; i++) {
+		while (input_next_index < count || hasNext(candidateList)) {
+			bool process_input = !hasNext(candidateList);
+			if (!process_input) {
+				if (input_next_index < 0) {
+					//Let's decide
+					double zI = fragZ[pos[input_next_index]];
+					double zC = getNextZ(candidateList);
+					process_input = zI <= zC;
+				}
 			}
+
+			//Input-Processing
+			if (process_input) {
+				if (fragFlags[pos[input_next_index]] != 0) {
+					GaussianRay ray = gaussRayList[pos[input_next_index]];
+					if (ray.a > isolevel) {
+						double tdist = sqrt(-2*ray.c2*log(isolevel/ray.a));
+						double t1 = ray.b - tdist;
+						double t2 = ray.b + tdist;
+						insert(candidateList, t1, t2);
+					} else {
+						insert(candidateList, ray.b);
+					}
+					input_next_index++;
+				}
+			}
+			//Sample-Processing
 			else {
-				//imageStore(img_rendered, pixel_coords, vec4(abs(sum - origin) / 50.0, 1.0));
-				//imageStore(img_rendered, pixel_coords, vec4(abs(dPosition) / 30.0, 1.0));
-				imageStore(img_rendered, pixel_coords, vec4(0.2 + 10000*evalGMM_classic_d(dPosition, gaussCount, gaussList)));
+				double z = popZ(candidateList);
+				float sum = evalGMM_ray_d(z, gaussCount, gaussRayList);
+
+				if (abs(sum - isolevel) <= epsilon) {
+					//Shade and Render
+					imageStore(img_rendered, pixel_coords, vec4(0.2 + 1000*sum));
+					return;
+				} else if (sum < isolevel) {
+					zn = z;
+					//imageStore(img_rendered, pixel_coords, vec4(0, 1, 0, 1));
+					//return;
+				} else if (sum > isolevel) {
+					zf = z;
+					//Refine Solution
+					//Shade and Render
+					imageStore(img_rendered, pixel_coords, vec4(0.2 + 1000*sum));
+					return;
+				}
 			}
-
-			//if (pixel_coords.x < width/2) {
-				//float sum = evalGMM_classic(pos, gaussCount, gaussList);
-				//float sum = evalGMM_ray(z, gaussCount, gaussRayList);
-				//imageStore(img_rendered, pixel_coords, vec4(0.2 + sum*1000000));
-				//imageStore(img_rendered, pixel_coords, vec4(sum));
-			//} else {
-				//imageStore(img_rendered, pixel_coords, vec4((ivec3(pos)%25) / 25.0, 1.0));
-			//}
-			return;
-
-			//float z = fragZ[pos[i]];
 			
-			
-
-			//imageStore(img_rendered, pixel_coords, vec4(z / 200.0));
-			
-			//imageStore(img_rendered, pixel_coords, fragPositions[pos[i]]);
-			//imageStore(img_rendered, pixel_coords, vec4(fragGIdx[pos[i]] / 500.0));
-			//return;
-			//float sum = sum2;
-			//sum = mixture.gaussians[fragGIdx[pos[i]]].mu_alpha.w;
-			//imageStore(img_rendered, pixel_coords, vec4((ivec3(origin + z*direction).zzz % 10) / 10.0, 1));
-			//imageStore(img_rendered, pixel_coords, vec4(z / 60.0));
-//			if (pixel_coords.x < width/2) {
-////				float val = fragGIdx[pos[i]] / 10.0;
-////				//float val = z;
-////				val = (int(val) % 10) / 10.0;
-////				imageStore(img_rendered, pixel_coords, vec4(val));
-//				imageStore(img_rendered, pixel_coords, imageLoad(img_test, pixel_coords));
-//			} else {
-//				vec4 position = fragPositions[pos[i]];
-//				//vec3 position = origin + z*direction;
-//				//float val = length(position - origin);
-//				float val = abs(position).z / 0.6;
-//				//float val = z;
-//				val = (int(val) % 10) / 10.0;
-//				imageStore(img_rendered, pixel_coords, vec4(val));
-//				return;
-			//}
-			//return;
-			//return;
-			//imageStore(img_rendered, pixel_coords, vec4(sum*100000));
-			//return;
-//			if (abs(sum - isolevel) <= epsilon) {
-//				//Shade and Render
-//				imageStore(img_rendered, pixel_coords, vec4(z / 200.0));
-//				return;
-//			} else if (sum < isolevel) {
-//				zn = z;
-//				//imageStore(img_rendered, pixel_coords, vec4(0, 1, 0, 1));
-//				//return;
-//			} else if (sum > isolevel) {
-//				zf = z;
-//				//Refine Solution
-//				//Shade and Render
-//				imageStore(img_rendered, pixel_coords, vec4(z / 200.0));
-//				return;
-//			}
 		}
-		return;
 		imageStore(img_rendered, pixel_coords, vec4(0));
 		return;
 	}
