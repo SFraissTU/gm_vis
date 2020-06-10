@@ -204,6 +204,67 @@ float evalGMMderivative_ray(float z, int gaussCount, GaussianRay gaussList[FRAG_
 	return sum;
 }
 
+float evalGMMderivative_ray_d(double z, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_LEN / 2]) {
+	float sum = 0;
+	for (int j = 0; j < gaussCount; j++) {
+		GaussianRay gauss = gaussList[j];
+		sum += -gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2))*(z-gauss.b)/gauss.c2;
+	}
+	return sum;
+}
+
+void evalGMM_valAndDerivative_ray_d(double z, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_LEN / 2], out float val, out float derivative) {
+	val = 0;
+	derivative = 0;
+	for (int j = 0; j < gaussCount; j++) {
+		GaussianRay gauss = gaussList[j];
+		float sampleval = gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2));
+		val += sampleval;
+		derivative += -sampleval*(z-gauss.b)/gauss.c2;
+	}
+}
+
+double refine_newton(double z_n, double z_f, float val_f, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_LEN / 2], out bool success) {
+	double last_z = z_f;
+	float last_val = val_f;
+	float last_goal = abs(last_val - isolevel);
+	float last_derivative = evalGMMderivative_ray_d(last_z, gaussCount, gaussList);
+	do {
+		double new_z = last_z - (last_val - isolevel)/last_derivative;
+		float new_val, new_derivative;
+		evalGMM_valAndDerivative_ray_d(new_z, gaussCount, gaussList, new_val, new_derivative);
+		float new_goal = abs(new_val - isolevel);
+		//if (new_goal > last_goal) {	//divergence
+		if (new_z > z_f || new_z < z_n) {
+			success = false;
+			return z_f;
+		}
+		last_z = new_z;
+		last_val = new_val;
+		last_goal = new_goal;
+		last_derivative = new_derivative;
+	} while (last_goal > epsilon);
+	return last_z;
+}
+
+double refine_regula_falsi(double z_n, double z_f, float val_f, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_LEN / 2]) {
+	float val_n = evalGMM_ray_d(z_n, gaussCount, gaussList);
+	double z_new;
+	float val_new;
+	do {
+		z_new = (z_n*(val_f-isolevel) - z_f*(val_n-isolevel)) / (val_f - val_n);
+		val_new = evalGMM_ray_d(z_new, gaussCount, gaussList);
+		if (val_new < isolevel) {
+			z_n = z_new;
+			val_n = val_new;
+		} else {
+			z_f = z_new;
+			val_f = val_new;
+		}
+	} while(abs(val_new - isolevel) > epsilon);
+	return z_new;
+}
+
 void main() {
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 	vec2 pixel_center = vec2(pixel_coords) + vec2(0.5);
@@ -287,24 +348,45 @@ void main() {
 		//imageStore(img_rendered, pixel_coords, vec4(gaussCount / 64.0));
 		//return;
 
-		CandidateList candidateList;
+//		CandidateList testList = createCandidateList();
+//		insert(testList, 5.0);
+//		insert(testList, 3.0, 6.0);
+//		double z = popZ(testList);
+//		z = popZ(testList);
+//		z = popZ(testList);
+//		z = popZ(testList);
+//		z = popZ(testList);
+//		//z = getNextZ(testList);
+//
+//		imageStore(img_rendered, pixel_coords, vec4(!hasNext(testList)));
+//		return;
+
+		CandidateList candidateList = createCandidateList();
 		int input_next_index = 0;
 		double zn = 0, zf = 0;
-		//for now: use all gaussians in this list
-		//for (int i = 0; i < count; i++) {
+		//As long as there is another input or another candidate
 		while (input_next_index < count || hasNext(candidateList)) {
-			bool process_input = !hasNext(candidateList);
-			if (!process_input) {
-				if (input_next_index < 0) {
+			//Let's choose what to determine next
+			//if there is only a candidate next, we go with that one
+			//if there is only an input next, we go with that one
+			//otherwise we have to choose the one with the lower z value
+			bool process_input;
+			if (hasNext(candidateList)) {
+				if (input_next_index < count) {
 					//Let's decide
 					double zI = fragZ[pos[input_next_index]];
 					double zC = getNextZ(candidateList);
 					process_input = zI <= zC;
+				} else {
+					process_input = false;
 				}
+			} else {
+				process_input = true;
 			}
 
 			//Input-Processing
 			if (process_input) {
+				//only choose front facing inputs (-> enable backface culling in fragment shader to simplify this)
 				if (fragFlags[pos[input_next_index]] != 0) {
 					GaussianRay ray = gaussRayList[pos[input_next_index]];
 					if (ray.a > isolevel) {
@@ -315,8 +397,8 @@ void main() {
 					} else {
 						insert(candidateList, ray.b);
 					}
-					input_next_index++;
 				}
+				input_next_index++;
 			}
 			//Sample-Processing
 			else {
@@ -333,7 +415,9 @@ void main() {
 					//return;
 				} else if (sum > isolevel) {
 					zf = z;
-					//Refine Solution
+
+
+
 					//Shade and Render
 					imageStore(img_rendered, pixel_coords, vec4(0.2 + 1000*sum));
 					return;
