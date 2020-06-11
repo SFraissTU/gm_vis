@@ -129,7 +129,7 @@ uniform sampler1D gaussTex;
 uniform mat4 invViewMatrix;
 
 float sqrt2pi = 2.506628275;
-float epsilon = 0.000000001;
+float epsilon = 0.0000001;
 
 
 layout(r32i) uniform iimage2D img_startidx;
@@ -208,7 +208,7 @@ float evalGMMderivative_ray_d(double z, int gaussCount, GaussianRay gaussList[FR
 	float sum = 0;
 	for (int j = 0; j < gaussCount; j++) {
 		GaussianRay gauss = gaussList[j];
-		sum += -gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2))*(z-gauss.b)/gauss.c2;
+		sum += -gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2)) * float((z-gauss.b)/gauss.c2);
 	}
 	return sum;
 }
@@ -220,16 +220,23 @@ void evalGMM_valAndDerivative_ray_d(double z, int gaussCount, GaussianRay gaussL
 		GaussianRay gauss = gaussList[j];
 		float sampleval = gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2));
 		val += sampleval;
-		derivative += -sampleval*(z-gauss.b)/gauss.c2;
+		derivative += -float(sampleval*(z-gauss.b)/gauss.c2);
 	}
 }
 
-double refine_newton(double z_n, double z_f, float val_f, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_LEN / 2], out bool success) {
+double refine_newton(double z_n, double z_f, float val_f, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_LEN / 2], out bool success, out bool failure) {
 	double last_z = z_f;
 	float last_val = val_f;
 	float last_goal = abs(last_val - isolevel);
 	float last_derivative = evalGMMderivative_ray_d(last_z, gaussCount, gaussList);
+	int i = 0;
 	do {
+		if (i > 200) {
+			success = false;
+			failure = true;
+			return 1000.0;
+		}
+		++i;
 		double new_z = last_z - (last_val - isolevel)/last_derivative;
 		float new_val, new_derivative;
 		evalGMM_valAndDerivative_ray_d(new_z, gaussCount, gaussList, new_val, new_derivative);
@@ -237,6 +244,7 @@ double refine_newton(double z_n, double z_f, float val_f, int gaussCount, Gaussi
 		//if (new_goal > last_goal) {	//divergence
 		if (new_z > z_f || new_z < z_n) {
 			success = false;
+			failure = false;
 			return z_f;
 		}
 		last_z = new_z;
@@ -244,14 +252,21 @@ double refine_newton(double z_n, double z_f, float val_f, int gaussCount, Gaussi
 		last_goal = new_goal;
 		last_derivative = new_derivative;
 	} while (last_goal > epsilon);
+	failure = false;
 	return last_z;
 }
 
-double refine_regula_falsi(double z_n, double z_f, float val_f, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_LEN / 2]) {
+double refine_regula_falsi(double z_n, double z_f, float val_f, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_LEN / 2], out bool failure) {
 	float val_n = evalGMM_ray_d(z_n, gaussCount, gaussList);
 	double z_new;
 	float val_new;
+	int i = 0;
+	failure = false;
 	do {
+		if (i > 200) {
+			failure = true;
+			return z_new;
+		}
 		z_new = (z_n*(val_f-isolevel) - z_f*(val_n-isolevel)) / (val_f - val_n);
 		val_new = evalGMM_ray_d(z_new, gaussCount, gaussList);
 		if (val_new < isolevel) {
@@ -361,6 +376,7 @@ void main() {
 //		imageStore(img_rendered, pixel_coords, vec4(!hasNext(testList)));
 //		return;
 
+
 		CandidateList candidateList = createCandidateList();
 		int input_next_index = 0;
 		double zn = 0, zf = 0;
@@ -388,13 +404,17 @@ void main() {
 			if (process_input) {
 				//only choose front facing inputs (-> enable backface culling in fragment shader to simplify this)
 				if (fragFlags[pos[input_next_index]] != 0) {
-					GaussianRay ray = gaussRayList[pos[input_next_index]];
+					GaussianRay ray = gaussRayList[fragGIdx[pos[input_next_index]]];
 					if (ray.a > isolevel) {
 						double tdist = sqrt(-2*ray.c2*log(isolevel/ray.a));
 						double t1 = ray.b - tdist;
+						//imageStore(img_rendered, pixel_coords, vec4(t1 / 200.0));
+						//return;
 						double t2 = ray.b + tdist;
 						insert(candidateList, t1, t2);
 					} else {
+						//imageStore(img_rendered, pixel_coords, vec4(ray.b / 200.0));
+						//return;
 						insert(candidateList, ray.b);
 					}
 				}
@@ -403,23 +423,43 @@ void main() {
 			//Sample-Processing
 			else {
 				double z = popZ(candidateList);
-				float sum = evalGMM_ray_d(z, gaussCount, gaussRayList);
+				float val = evalGMM_ray_d(z, gaussCount, gaussRayList);
 
-				if (abs(sum - isolevel) <= epsilon) {
+				if (abs(val - isolevel) <= epsilon) {
 					//Shade and Render
-					imageStore(img_rendered, pixel_coords, vec4(0.2 + 1000*sum));
+					dvec3 pos = origin + z*direction;
+					imageStore(img_rendered, pixel_coords, vec4(abs(pos/30.0), 1.0));
 					return;
-				} else if (sum < isolevel) {
+				} else if (val < isolevel) {
 					zn = z;
 					//imageStore(img_rendered, pixel_coords, vec4(0, 1, 0, 1));
 					//return;
-				} else if (sum > isolevel) {
+				} else if (val > isolevel) {
 					zf = z;
 
-
-
-					//Shade and Render
-					imageStore(img_rendered, pixel_coords, vec4(0.2 + 1000*sum));
+					bool success = false;
+					bool failure = false;
+					//double znew = z;
+					//double znew = refine_regula_falsi(zn, zf, val, gaussCount, gaussRayList);
+					double znew = refine_newton(zn, zf, val, gaussCount, gaussRayList, success, failure);
+//					//double znew = z;
+					if (failure) {
+						imageStore(img_rendered, pixel_coords, vec4(0.7, 0.7, 0.7, 1));
+						return;
+					}
+					if (!success) {
+						znew = refine_regula_falsi(zn, zf, val, gaussCount, gaussRayList, failure);
+						if (failure) {
+							imageStore(img_rendered, pixel_coords, vec4(0.5, 0.5, 0.5, 1));
+							return;
+						}
+					}
+//
+//					//Shade and Render
+					dvec3 pos = origin + z*direction;
+					imageStore(img_rendered, pixel_coords, vec4(abs(pos/30.0), 1.0));
+					//imageStore(img_rendered, pixel_coords, vec4(znew / 200.0));
+//					//imageStore(img_rendered, pixel_coords, vec4(0, 1, 0, 1));
 					return;
 				}
 			}

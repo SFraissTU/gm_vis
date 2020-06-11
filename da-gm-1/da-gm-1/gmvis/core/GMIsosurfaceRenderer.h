@@ -70,7 +70,7 @@ namespace gmvis::core {
 		std::unique_ptr<QOpenGLShaderProgram> m_program_projection;
 		std::unique_ptr<QOpenGLShaderProgram> m_program_sort_and_render;
 
-		float m_sIsolevel = 0.000001;
+		float m_sIsolevel = 0.0001;
 	};
 
 }
