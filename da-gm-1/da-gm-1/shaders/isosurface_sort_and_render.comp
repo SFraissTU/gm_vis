@@ -28,7 +28,7 @@ struct GaussianRay {
 	float a;
 	float b;
 	float c2;
-	float padding;
+	int enabled;	//0 = disabled, 1 = enabled, 2 = ex-enabled
 	vec4 direction;
 };
 
@@ -152,6 +152,7 @@ GaussianRay GaussianParametersOnRay(int gaussIndex, vec3 origin, vec3 direction)
 	ray.b = b;
 	ray.c2 = c2;
 	ray.direction = vec4(direction, 1.0);
+	ray.enabled = 0;
 	return ray;
 }
 
@@ -181,7 +182,8 @@ float evalGMM_ray(float z, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_L
 	float sum = 0;
 	for (int j = 0; j < gaussCount; j++) {
 		GaussianRay gauss = gaussList[j];
-		sum += gauss.a * exp(-0.5 * pow(z - gauss.b, 2)/gauss.c2);
+		if (gauss.enabled == 1)
+			sum += gauss.a * exp(-0.5 * pow(z - gauss.b, 2)/gauss.c2);
 	}
 	return sum;
 }
@@ -190,7 +192,8 @@ float evalGMM_ray_d(double z, int gaussCount, GaussianRay gaussList[FRAG_LIST_MA
 	float sum = 0;
 	for (int j = 0; j < gaussCount; j++) {
 		GaussianRay gauss = gaussList[j];
-		sum += gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2));
+		if (gauss.enabled == 1)
+			sum += gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2));
 	}
 	return sum;
 }
@@ -199,16 +202,21 @@ float evalGMMderivative_ray(float z, int gaussCount, GaussianRay gaussList[FRAG_
 	float sum = 0;
 	for (int j = 0; j < gaussCount; j++) {
 		GaussianRay gauss = gaussList[j];
-		sum += -gauss.a * exp(-0.5 * pow(z - gauss.b, 2)/gauss.c2)*(z-gauss.b)/gauss.c2;
+		if (gauss.enabled == 1)
+			sum += -gauss.a * exp(-0.5 * pow(z - gauss.b, 2)/gauss.c2)*(z-gauss.b)/gauss.c2;
 	}
 	return sum;
 }
+
+//These functions are used in numeric methods, where we might go back so they don't check for enabled-flag
+//Maybe instead use a trinary variable. disabled, enabled, ex-enabled
 
 float evalGMMderivative_ray_d(double z, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_LEN / 2]) {
 	float sum = 0;
 	for (int j = 0; j < gaussCount; j++) {
 		GaussianRay gauss = gaussList[j];
-		sum += -gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2)) * float((z-gauss.b)/gauss.c2);
+		if (gauss.enabled != 0)
+			sum += -gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2)) * float((z-gauss.b)/gauss.c2);
 	}
 	return sum;
 }
@@ -218,9 +226,11 @@ void evalGMM_valAndDerivative_ray_d(double z, int gaussCount, GaussianRay gaussL
 	derivative = 0;
 	for (int j = 0; j < gaussCount; j++) {
 		GaussianRay gauss = gaussList[j];
-		float sampleval = gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2));
-		val += sampleval;
-		derivative += -float(sampleval*(z-gauss.b)/gauss.c2);
+		if (gauss.enabled != 0) {
+			float sampleval = gauss.a * exp(float(-0.5 * (z - gauss.b)*(z - gauss.b)/gauss.c2));
+			val += sampleval;
+			derivative += -float(sampleval*(z-gauss.b)/gauss.c2);
+		}
 	}
 }
 
@@ -418,6 +428,7 @@ void main() {
 						insert(candidateList, ray.b);
 					}
 				}
+				gaussRayList[fragGIdx[pos[input_next_index]]].enabled++;
 				input_next_index++;
 			}
 			//Sample-Processing
