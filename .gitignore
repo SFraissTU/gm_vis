@@ -374,3 +374,7 @@ da-gm-1/data/chair_0128HR.off
 da-gm-1/data/chair_0030HR.off
 da-gm-1/data/c_30HRL0.ply
 da-gm-1/data/chair_0030LR.off
+/build/*
+/res/*
+/shaders/*
+/visualizer
