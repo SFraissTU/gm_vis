@@ -102,7 +102,7 @@ void VisualizerWindow::slotLoadMixtureModel()
 			ui.spin_ellmin->setValue(isoren->getEllMin());
 			ui.spin_ellmax->setValue(isoren->getEllMax());
 			lineDirectory = openGmDirectory;
-			QRegularExpression re("pcgmm-0-\d{5}.ply$");
+			QRegularExpression re("pcgmm-0-\\d{5}.ply$");
 			if (re.match(filename).hasMatch()) {
 				int id = filename.mid(filename.length() - 9, 5).toInt();
 				ui.openGLWidget->getLineRenderer()->setMaxIteration(id);
@@ -277,7 +277,7 @@ void VisualizerWindow::slotDensityRenderModeChanged()
 void VisualizerWindow::slotAccelerationThresholdChanged()
 {
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
-	renderer->setAccelerationThreshold(0.01f * ui.spin_accthreshold->value());
+	renderer->setAccelerationThreshold(0.01 * ui.spin_accthreshold->value());
 	renderer->updateAccelerationData();
 	if (!ui.cb_accthauto->isChecked() || !ui.cb_dscaleauto->isChecked()) {
 		ui.openGLWidget->update();

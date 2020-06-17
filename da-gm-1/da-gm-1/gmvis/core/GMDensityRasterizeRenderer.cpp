@@ -13,8 +13,8 @@ GMDensityRasterizeRenderer::GMDensityRasterizeRenderer(QOpenGLFunctions_4_5_Core
 void GMDensityRasterizeRenderer::initialize()
 {
 	m_program_projection = std::make_unique<QOpenGLShaderProgram>();
-	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/density_acc_proj.vert");
-	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/density_acc_proj.frag");
+	m_program_projection->addShaderFromSourceCode(QOpenGLShader::Vertex, DataLoader::readRessource("shaders/density_acc_proj.vert"));
+	m_program_projection->addShaderFromSourceCode(QOpenGLShader::Fragment, DataLoader::readRessource("shaders/density_acc_proj.frag"));
 	m_program_projection->link();
 
 	m_program_projection->bind();

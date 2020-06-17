@@ -12,15 +12,15 @@ GMDensityRaycastRenderer::GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl
 void GMDensityRaycastRenderer::initialize()
 {
 	m_program_regular = std::make_unique<QOpenGLShaderProgram>();
-	m_program_regular->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_exact.comp");
+	m_program_regular->addShaderFromSourceCode(QOpenGLShader::Compute, DataLoader::readRessource("shaders/density_exact.comp"));
 	m_program_regular->link();
 
 	m_program_accelerated = std::make_unique<QOpenGLShaderProgram>();
-	m_program_accelerated->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_octree.comp");
+	m_program_accelerated->addShaderFromSourceCode(QOpenGLShader::Compute, DataLoader::readRessource("shaders/density_octree.comp"));
 	m_program_accelerated->link();
 
 	m_program_sampling = std::make_unique<QOpenGLShaderProgram>();
-	m_program_sampling->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_sampling.comp");
+	m_program_sampling->addShaderFromSourceCode(QOpenGLShader::Compute, DataLoader::readRessource("shaders/density_sampling.comp"));
 	m_program_sampling->link();
 
 	m_program_accelerated->bind();

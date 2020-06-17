@@ -24,5 +24,7 @@ namespace gmvis::core {
 		static std::unique_ptr<LineStrip> readLSfromBIN(const QString& path);
 
 		static QVector<QVector3D> readTransferFunction(const QString& path);
+
+		static QByteArray readRessource(const QString& path);
 	};
 }

@@ -22,7 +22,7 @@ void GMDensityRenderer::initialize()
 	m_fbo_final.attachColorTexture();
 
 	m_program_coloring = std::make_unique<QOpenGLShaderProgram>();
-	m_program_coloring->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/density_coloring.comp");
+	m_program_coloring->addShaderFromSourceCode(QOpenGLShader::Compute, DataLoader::readRessource("shaders/density_coloring.comp"));
 	m_program_coloring->link();
 
 	m_program_coloring->bind();

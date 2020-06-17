@@ -77,6 +77,8 @@ set(CORE_FILES
     gmvis/core/LineStrip.h
     gmvis/core/LineRenderer.h
     gmvis/core/LineRenderer.cpp
+    shaders.qrc
+    res.qrc
 )
 
 set(CMAKE_AUTOMOC ON)
@@ -133,5 +135,4 @@ add_custom_command(TARGET visualizer POST_BUILD
                        
 install(TARGETS visualizer pygmvis
         DESTINATION ./)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/res ${CMAKE_SOURCE_DIR}/shaders
-        DESTINATION ./)
+
