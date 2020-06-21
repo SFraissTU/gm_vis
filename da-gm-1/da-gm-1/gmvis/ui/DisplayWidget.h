@@ -90,6 +90,8 @@ namespace gmvis::ui {
 
 		std::unique_ptr<core::ScreenFBO> m_fboIntermediate;
 
+		core::GaussianMixture* m_mixture = nullptr;
+
 		//Matrices (TODO)
 		std::unique_ptr<core::Camera> m_camera;
 		QPoint m_lastPos;

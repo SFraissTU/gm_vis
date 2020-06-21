@@ -85,6 +85,11 @@ const double& gmvis::core::Gaussian::getNormalizedWeight() const
 	return m_pi;
 }
 
+double gmvis::core::Gaussian::getCovDeterminant() const
+{
+	return m_covariancematrix.determinant();
+}
+
 std::optional<QMatrix4x4> Gaussian::getTransform(double threshold) const {
 	if (threshold >= m_amplitude) {
 		return {};

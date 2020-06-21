@@ -137,6 +137,7 @@ void gmvis::ui::DisplayWidget::setMixture(GaussianMixture* mixture)
 	m_positionsRenderer->setMixture(mixture);
 	m_isosurfaceRenderer->setMixture(mixture, 0.00001);
 	m_densityRenderer->setMixture(mixture);
+	m_mixture = mixture;
 }
 
 void DisplayWidget::cleanup() {
@@ -197,9 +198,24 @@ void DisplayWidget::paintGL()
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &defaultFbo);
 
 	if (m_sDisplayIsosurface) {
+		GLuint query;
+		glGenQueries(1, &query);
+		glBeginQuery(GL_TIME_ELAPSED, query);
+
 		int width = m_fboIntermediate->getWidth();
 		int height = m_fboIntermediate->getHeight();
 		m_isosurfaceRenderer->render(width, height);
+
+		glEndQuery(GL_TIME_ELAPSED);
+
+		GLint done = 0;
+		while (!done) {
+			glGetQueryObjectiv(query, GL_QUERY_RESULT_AVAILABLE, &done);
+		}
+
+		GLuint64 elapsed;
+		glGetQueryObjectui64v(query, GL_QUERY_RESULT, &elapsed);
+		qDebug() << elapsed / 1000000.0 << "ms\n";
 		return;
 	}
 
@@ -291,7 +307,15 @@ void DisplayWidget::mousePressEvent(QMouseEvent* event)
 			delete[] data;
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFbo);
 			glNamedFramebufferReadBuffer(m_fboIntermediate->getID(), GL_COLOR_ATTACHMENT0);
-			qDebug() << index << "\n";
+			//qDebug() << index << "\n";
+			//Gaussian Info
+			qDebug() << "Selected Gaussian:\n";
+			qDebug() << "  Index: " << index << "\n";
+			const core::Gaussian* gauss = (*m_mixture)[index];
+			auto pos = gauss->getPosition();
+			qDebug() << "  Position: " << pos.x() << " / " << pos.y() << " / " << pos.z() << "\n";
+			qDebug() << "  Determinant: " << gauss->getCovDeterminant() << "\n";
+			qDebug() << "\n";
 			if (index != 0) {
 				emit gaussianSelected(index - 1);
 			}

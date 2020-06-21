@@ -234,6 +234,38 @@ void evalGMM_valAndDerivative_ray_d(double z, int gaussCount, GaussianRay gaussL
 	}
 }
 
+vec3 evalGMM_gradient(vec3 position, int gaussCount, int gaussList[FRAG_LIST_MAX_LEN / 2], GaussianRay gaussRayList[FRAG_LIST_MAX_LEN / 2]) {
+	vec3 gradient = vec3(0);
+	for (int j = 0; j < gaussCount; j++) {
+		if (gaussRayList[j].enabled == 1) {
+			Gaussian gauss = mixture.gaussians[gaussList[j]];
+			vec3 relpos = position - gauss.mu_alpha.xyz;
+			mat3 inv = mat3(gauss.invsigma);
+			float gmm = gauss.mu_alpha.w * exp(-0.5 * dot(relpos*inv,relpos));
+			vec3 der = inv * relpos;
+			gradient += gmm*der;
+		}
+	}
+	return -gradient;
+}
+
+vec3 shade(vec3 position, vec3 origin, int gaussCount, int gaussList[FRAG_LIST_MAX_LEN / 2], GaussianRay gaussRayList[FRAG_LIST_MAX_LEN / 2]) {
+	vec3 grad = -evalGMM_gradient(position, gaussCount, gaussList, gaussRayList);
+
+	vec3 normal = normalize(grad);
+	vec3 lightDir = vec3(-1, 1, -1);
+	vec3 l = -normalize(lightDir);
+	vec3 v = normalize(origin - position);
+	vec3 r = reflect(-l, normal);
+	float nl = dot(normal, l);
+	vec3 fragcolor = vec3(0, 0, 1);//abs(position/30.0);
+	vec3 out_color = fragcolor * (0.3 + max(nl, 0.0f)*0.8);
+	if (nl > 0) {
+		out_color += 0.3*pow(max(dot(r,v),0), 1.5f);
+	}
+	return out_color;
+}
+
 double refine_newton(double z_n, double z_f, float val_f, int gaussCount, GaussianRay gaussList[FRAG_LIST_MAX_LEN / 2], out bool success, out bool failure) {
 	double last_z = z_f;
 	float last_val = val_f;
@@ -273,10 +305,11 @@ double refine_regula_falsi(double z_n, double z_f, float val_f, int gaussCount, 
 	int i = 0;
 	failure = false;
 	do {
-		if (i > 200) {
+		if (i > 100) {
 			failure = true;
 			return z_new;
 		}
+		i++;
 		z_new = (z_n*(val_f-isolevel) - z_f*(val_n-isolevel)) / (val_f - val_n);
 		val_new = evalGMM_ray_d(z_new, gaussCount, gaussList);
 		if (val_new < isolevel) {
@@ -439,7 +472,8 @@ void main() {
 				if (abs(val - isolevel) <= epsilon) {
 					//Shade and Render
 					dvec3 pos = origin + z*direction;
-					imageStore(img_rendered, pixel_coords, vec4(abs(pos/30.0), 1.0));
+					vec3 color = shade(vec3(pos), origin, gaussCount, gaussList, gaussRayList);
+					imageStore(img_rendered, pixel_coords, vec4(color, 1.0));
 					return;
 				} else if (val < isolevel) {
 					zn = z;
@@ -468,7 +502,10 @@ void main() {
 //
 //					//Shade and Render
 					dvec3 pos = origin + z*direction;
-					imageStore(img_rendered, pixel_coords, vec4(abs(pos/30.0), 1.0));
+					//vec3 pos = origin + float(z)*direction;
+					vec3 color = shade(vec3(pos), origin, gaussCount, gaussList, gaussRayList);
+					imageStore(img_rendered, pixel_coords, vec4(color, 1.0));
+					//imageStore(img_rendered, pixel_coords, vec4(abs(pos/30.0), 1.0));
 					//imageStore(img_rendered, pixel_coords, vec4(znew / 200.0));
 //					//imageStore(img_rendered, pixel_coords, vec4(0, 1, 0, 1));
 					return;

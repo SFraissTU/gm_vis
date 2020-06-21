@@ -52,6 +52,8 @@ namespace gmvis::core {
 
 		const double& getNormalizedWeight() const;
 
+		double getCovDeterminant() const;
+
 		/*
 		Takes the isoellipsoid of this gaussian with the constant density value
 		defined by threshold and calculates a transformation matrix that transforms

@@ -2,8 +2,10 @@
 in vec4 frag_position;
 in vec3 frag_normal;
 in vec3 frag_color;
+flat in int frag_index;
 
-out vec3 out_color;
+layout(location = 0) out vec3 out_color;
+layout(location = 1) out float out_index;
 
 uniform mat4 viewMatrix;
 uniform vec3 eyePos;
@@ -19,4 +21,5 @@ void main() {
 	if (nl > 0) {
 		out_color += 0.3*pow(max(dot(r,v),0), 1.5f);
 	}
+	out_index = frag_index + 1;
 }
