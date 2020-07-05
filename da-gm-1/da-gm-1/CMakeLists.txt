@@ -9,16 +9,11 @@ message(STATUS "ANACONDA3_PATH=${ANACONDA3_PATH}")
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Threads)
-if (WIN32)
-    set(Python_INCLUDE_DIRS "D:/Programme/Anaconda3/include")
-    #Python_LIBRARIES is only needed for test app for python lib
-    set(Python_LIBRARIES "D:/Programme/Anaconda3/pkgs/python-3.6.9-h5500b2f_0/libs/python36.lib")
-else()
-#     set (CMAKE_FIND_FRAMEWORK NEVER)
-    set (Python_ROOT_DIR ${ANACONDA3_PATH}/bin)
-    set (Python_FIND_STRATEGY LOCATION)
-    find_package (Python REQUIRED COMPONENTS Interpreter Development)
-endif()
+
+set (Python_ROOT_DIR ${ANACONDA3_PATH}/bin)
+set (Python_FIND_STRATEGY LOCATION)
+find_package (Python REQUIRED COMPONENTS Interpreter Development)
+
 message("Python_LIBRARIES:${Python_LIBRARIES}")
 message("Python_LIBRARY_DIRS:${Python_LIBRARY_DIRS}")
 message("Python_INCLUDE_DIRS:${Python_INCLUDE_DIRS}")
@@ -111,18 +106,18 @@ add_executable(visualizer
     ${CORE_FILES}
 )
 
-add_executable(pythontest
-    ${PY_FILES}
-    ${CORE_FILES}
-)
+#add_executable(pythontest
+#    ${PY_FILES}
+#    ${CORE_FILES}
+#)
 
 target_link_libraries(visualizer Qt5::Widgets ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(pythontest Qt5::Widgets ${Python_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+#target_link_libraries(pythontest Qt5::Widgets ${Python_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(pygmvis PRIVATE Qt5::Widgets ${CMAKE_THREAD_LIBS_INIT})
-target_compile_definitions(pythontest PUBLIC PY_LIB)
+#target_compile_definitions(pythontest PUBLIC PY_LIB)
 target_compile_definitions(pygmvis PUBLIC PY_LIB)
 if(NOT MSVC)
-  target_compile_options(pythontest PUBLIC -fvisibility=hidden)
+  #target_compile_options(pythontest PUBLIC -fvisibility=hidden)
   target_compile_options(pygmvis PUBLIC -fvisibility=hidden)
 endif()
 
