@@ -2,6 +2,7 @@
 #include <qfiledialog.h>
 #include <QDoubleValidator>
 #include <QComboBox>
+#include <QMessageBox>
 
 using namespace gmvis::ui;
 using namespace gmvis::core;
@@ -102,7 +103,7 @@ void VisualizerWindow::slotLoadMixtureModel()
 			ui.spin_ellmin->setValue(isoren->getEllMin());
 			ui.spin_ellmax->setValue(isoren->getEllMax());
 			lineDirectory = openGmDirectory;
-			QRegularExpression re("pcgmm-0-\d{5}.ply$");
+			QRegularExpression re("pcgmm-0-\\d{5}.ply$");
 			if (re.match(filename).hasMatch()) {
 				int id = filename.mid(filename.length() - 9, 5).toInt();
 				ui.openGLWidget->getLineRenderer()->setMaxIteration(id);
@@ -153,9 +154,12 @@ void gmvis::ui::VisualizerWindow::slotLoadLine()
 		else {
 			newLine = DataLoader::readLSfromBIN(filename);
 		}
-		if (newLine) {
+		if (newLine && newLine->getDataSize() > 0) {
 			line = std::move(newLine);
 			ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
+		}
+		else {
+			QMessageBox::critical(this, "Empty Line", "Read-in Line is empty or does not exist");
 		}
 	}
 }
@@ -181,10 +185,13 @@ void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
 		QString path = lineDirectory + "/pos-b0-g" + std::to_string(index).c_str() + ".txt";
 		newLine = DataLoader::readLSfromTXT(path);
 	}
-	if (newLine) {
+	if (newLine && newLine->getDataSize() > 0) {
 		line = std::move(newLine);
 		ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
 		ui.openGLWidget->repaint();
+	}
+	else {
+		QMessageBox::critical(this, "Empty Line", "Read-in Line is empty or does not exist");
 	}
 }
 
@@ -276,7 +283,7 @@ void VisualizerWindow::slotDensityRenderModeChanged()
 void VisualizerWindow::slotAccelerationThresholdChanged()
 {
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
-	renderer->setAccelerationThreshold(0.01f * ui.spin_accthreshold->value());
+	renderer->setAccelerationThreshold(0.01 * ui.spin_accthreshold->value());
 	renderer->updateAccelerationData();
 	if (!ui.cb_accthauto->isChecked() || !ui.cb_dscaleauto->isChecked()) {
 		ui.openGLWidget->update();

@@ -3,6 +3,7 @@
 #include <qtextstream.h>
 #include <qdebug.h>
 #include <QColor>
+#include <QCoreApplication>
 
 using namespace gmvis::core;
 
@@ -10,6 +11,8 @@ QMap<QString, QString> gmvis::core::DataLoader::readConfigFile(const QString& pa
 {
 	QMap<QString, QString> map;
 	QFile file("res/config.txt");
+	if (!file.exists())
+		file.setFileName(QCoreApplication::applicationDirPath() + "/res/config.txt");
 	if (file.open(QIODevice::ReadOnly)) {
 		QTextStream in(&file);
 		while (!in.atEnd()) {
@@ -342,7 +345,10 @@ std::unique_ptr<LineStrip> gmvis::core::DataLoader::readLSfromBIN(const QString&
 QVector<QVector3D> DataLoader::readTransferFunction(const QString& path)
 {
 	QVector<QVector3D> result;
-	QFile file(path);
+	QFile file(":/" + path);
+	if (QFile::exists(path)) {
+		file.setFileName(path);
+	}
 	if (file.open(QIODevice::ReadOnly)) {
 		QTextStream in(&file);
 		while (!in.atEnd()) {
@@ -356,4 +362,14 @@ QVector<QVector3D> DataLoader::readTransferFunction(const QString& path)
 		}
 	}
 	return result;
+}
+
+QByteArray DataLoader::readRessource(const QString& path)
+{
+	QFile f(":/" + path);
+	if (QFile::exists(path)) {
+		f.setFileName(path);
+	}
+
+	return f.open(QIODevice::ReadOnly) ? f.readAll() : "";
 }

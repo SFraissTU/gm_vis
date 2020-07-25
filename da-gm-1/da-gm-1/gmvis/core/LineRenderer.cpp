@@ -1,4 +1,5 @@
 #include "LineRenderer.h"
+#include "DataLoader.h"
 
 using namespace gmvis::core;
 
@@ -9,8 +10,8 @@ LineRenderer::LineRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera) : m_gl
 void LineRenderer::initialize()
 {
 	m_program = std::make_unique<QOpenGLShaderProgram>();
-	m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/linestrip.vert");
-	m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/linestrip.frag");
+	m_program->addShaderFromSourceCode(QOpenGLShader::Vertex, DataLoader::readRessource("shaders/linestrip.vert"));
+	m_program->addShaderFromSourceCode(QOpenGLShader::Fragment, DataLoader::readRessource("shaders/linestrip.frag"));
 	m_program->link();
 
 	m_program->bind();

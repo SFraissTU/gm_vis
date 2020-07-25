@@ -3,15 +3,20 @@ cmake_minimum_required(VERSION 3.1.0)
 project(visualizer)
 
 
-if (WIN32)
-    set(PYTHON_H_PATH "D:/Programme/Anaconda3/include")
-    #PYTHON_LIB_PATH is only needed for test app for python lib
-    set(PYTHON_LIB_PATH "D:/Programme/Anaconda3/pkgs/python-3.6.9-h5500b2f_0/libs/python36.lib")
-else()
-    #set(Python_ADDITIONAL_VERSIONS 3.7)
-    find_package(PythonLibs 3 COMPONENTS Interpreter Development REQUIRED)
-    message("PYTHON_INCLUDE_DIRS:${PYTHON_INCLUDE_DIRS}")
-endif()
+set(ANACONDA3_PATH $ENV{CONDA_PREFIX})
+#execute_process(COMMAND conda info --base OUTPUT_VARIABLE ANACONDA3_PATH) # alternative, maybe it works better for windows
+message(STATUS "ANACONDA3_PATH=${ANACONDA3_PATH}")
+
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Threads)
+
+set (Python_ROOT_DIR ${ANACONDA3_PATH}/bin)
+set (Python_FIND_STRATEGY LOCATION)
+find_package (Python REQUIRED COMPONENTS Interpreter Development)
+
+message("Python_LIBRARIES:${Python_LIBRARIES}")
+message("Python_LIBRARY_DIRS:${Python_LIBRARY_DIRS}")
+message("Python_INCLUDE_DIRS:${Python_INCLUDE_DIRS}")
 
 set(UI_FILES
     gmvis/ui/VisualizerWindow.ui
@@ -69,6 +74,8 @@ set(CORE_FILES
     gmvis/core/LineStrip.h
     gmvis/core/LineRenderer.h
     gmvis/core/LineRenderer.cpp
+    shaders.qrc
+    res.qrc
 )
 
 set(CMAKE_AUTOMOC ON)
@@ -82,15 +89,12 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
-find_package(Threads)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    SYSTEM ${PYTHON_INCLUDE_DIRS}
+    SYSTEM ${Python_INCLUDE_DIRS}
     SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/../include
     SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/pybind11/include
-    SYSTEM ${PYTHON_H_PATH}
 )
 
 add_subdirectory(pybind11)
@@ -104,18 +108,18 @@ add_executable(visualizer
     ${CORE_FILES}
 )
 
-add_executable(pythontest
-    ${PY_FILES}
-    ${CORE_FILES}
-)
+#add_executable(pythontest
+#    ${PY_FILES}
+#    ${CORE_FILES}
+#)
 
-target_link_libraries(visualizer Qt5::Widgets ${PYTHON_LIB_PATH} ${PYTHON_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(pythontest Qt5::Widgets ${PYTHON_LIB_PATH} ${PYTHON_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(visualizer Qt5::Widgets ${CMAKE_THREAD_LIBS_INIT})
+#target_link_libraries(pythontest Qt5::Widgets ${Python_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(pygmvis PRIVATE Qt5::Widgets ${CMAKE_THREAD_LIBS_INIT})
-target_compile_definitions(pythontest PUBLIC PY_LIB)
+#target_compile_definitions(pythontest PUBLIC PY_LIB)
 target_compile_definitions(pygmvis PUBLIC PY_LIB)
 if(NOT MSVC)
-  target_compile_options(pythontest PUBLIC -fvisibility=hidden)
+  #target_compile_options(pythontest PUBLIC -fvisibility=hidden)
   target_compile_options(pygmvis PUBLIC -fvisibility=hidden)
 endif()
 
@@ -125,3 +129,7 @@ add_custom_command(TARGET visualizer POST_BUILD
 add_custom_command(TARGET visualizer POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
                        ${CMAKE_SOURCE_DIR}/shaders/ $<TARGET_FILE_DIR:visualizer>/shaders/)
+                       
+install(TARGETS visualizer pygmvis
+        DESTINATION ./)
+
