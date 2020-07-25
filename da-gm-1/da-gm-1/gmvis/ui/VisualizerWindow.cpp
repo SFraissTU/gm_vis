@@ -2,6 +2,7 @@
 #include <qfiledialog.h>
 #include <QDoubleValidator>
 #include <QComboBox>
+#include <QMessageBox>
 
 using namespace gmvis::ui;
 using namespace gmvis::core;
@@ -155,9 +156,12 @@ void gmvis::ui::VisualizerWindow::slotLoadLine()
 		else {
 			newLine = DataLoader::readLSfromBIN(filename);
 		}
-		if (newLine) {
+		if (newLine && newLine->getDataSize() > 0) {
 			line = std::move(newLine);
 			ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
+		}
+		else {
+			QMessageBox::critical(this, "Empty Line", "Read-in Line is empty or does not exist");
 		}
 	}
 }
@@ -183,10 +187,13 @@ void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
 		QString path = lineDirectory + "/pos-b0-g" + std::to_string(index).c_str() + ".txt";
 		newLine = DataLoader::readLSfromTXT(path);
 	}
-	if (newLine) {
+	if (newLine && newLine->getDataSize() > 0) {
 		line = std::move(newLine);
 		ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
 		ui.openGLWidget->repaint();
+	}
+	else {
+		QMessageBox::critical(this, "Empty Line", "Read-in Line is empty or does not exist");
 	}
 }
 
