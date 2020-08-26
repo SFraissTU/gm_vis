@@ -303,21 +303,24 @@ void DisplayWidget::mousePressEvent(QMouseEvent* event)
 			float* data = new float[width * height];
 			glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, data);
 			int glidx = (width * (height - 1 - m_lastPos.y())) + m_lastPos.x();
-			int index = int(data[glidx]);
+			int index = int(data[glidx]) - 1;
 			delete[] data;
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFbo);
 			glNamedFramebufferReadBuffer(m_fboIntermediate->getID(), GL_COLOR_ATTACHMENT0);
 			//qDebug() << index << "\n";
 			//Gaussian Info
-			qDebug() << "Selected Gaussian:\n";
-			qDebug() << "  Index: " << index << "\n";
-			const core::Gaussian* gauss = (*m_mixture)[index];
-			auto pos = gauss->getPosition();
-			qDebug() << "  Position: " << pos.x() << " / " << pos.y() << " / " << pos.z() << "\n";
-			qDebug() << "  Determinant: " << gauss->getCovDeterminant() << "\n";
-			qDebug() << "\n";
-			if (index != 0) {
-				emit gaussianSelected(index - 1);
+			if (index >= 0) {
+				qDebug() << "Selected Gaussian:\n";
+				qDebug() << "  Index: " << index << "\n";
+				const core::Gaussian* gauss = (*m_mixture)[index];
+				auto pos = gauss->getPosition();
+				qDebug() << "  Position: " << pos.x() << " / " << pos.y() << " / " << pos.z() << "\n";
+				qDebug() << "  Determinant: " << gauss->getCovDeterminant() << "\n";
+				qDebug() << "\n";
+				emit gaussianSelected(index);
+			}
+			else {
+				qDebug() << "No Gaussian selected.\n";
 			}
 		}
 	}

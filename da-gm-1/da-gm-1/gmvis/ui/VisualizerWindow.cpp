@@ -179,10 +179,10 @@ void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
 		ui.openGLWidget->repaint();
 	}
 
-	QString path = lineDirectory + "/pos-b0-g" + std::to_string(index).c_str() + ".bin";
+	QString path = lineDirectory + "/pos-g" + std::to_string(index).c_str() + ".bin";
 	auto newLine = DataLoader::readLSfromBIN(path);
 	if (!newLine) {
-		QString path = lineDirectory + "/pos-b0-g" + std::to_string(index).c_str() + ".txt";
+		QString path = lineDirectory + "/pos-g" + std::to_string(index).c_str() + ".txt";
 		newLine = DataLoader::readLSfromTXT(path);
 	}
 	if (newLine && newLine->getDataSize() > 0) {

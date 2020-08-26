@@ -2,6 +2,7 @@
 #include "Helper.h"
 #include "PointCloud.h"
 #include <QtMath>
+#include "DataLoader.h"
 
 using namespace gmvis::core;
 
@@ -13,12 +14,12 @@ gmvis::core::GMIsosurfaceRenderer::GMIsosurfaceRenderer(QOpenGLFunctions_4_5_Cor
 void gmvis::core::GMIsosurfaceRenderer::initialize()
 {
 	m_program_projection = std::make_unique<QOpenGLShaderProgram>();
-	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Vertex, "shaders/isosurface_proj.vert");
-	m_program_projection->addShaderFromSourceFile(QOpenGLShader::Fragment, "shaders/isosurface_proj.frag");
+	m_program_projection->addShaderFromSourceCode(QOpenGLShader::Vertex, DataLoader::readRessource("shaders/isosurface_proj.vert"));
+	m_program_projection->addShaderFromSourceCode(QOpenGLShader::Fragment, DataLoader::readRessource("shaders/isosurface_proj.frag"));
 	m_program_projection->link();
 
 	m_program_sort_and_render = std::make_unique<QOpenGLShaderProgram>();
-	m_program_sort_and_render->addShaderFromSourceFile(QOpenGLShader::Compute, "shaders/isosurface_sort_and_render.comp");
+	m_program_sort_and_render->addShaderFromSourceCode(QOpenGLShader::Compute, DataLoader::readRessource("shaders/isosurface_sort_and_render.comp"));
 	m_program_sort_and_render->link();
 
 	m_program_projection->bind();
