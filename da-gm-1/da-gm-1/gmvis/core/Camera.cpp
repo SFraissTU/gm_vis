@@ -163,8 +163,11 @@ const QMatrix4x4& Camera::getProjMatrix() const
 	return m_proj;
 }
 
-const QVector3D& gmvis::core::Camera::getPosition() const
+const QVector3D& gmvis::core::Camera::getPosition()
 {
+	if (m_viewDirty) {
+		getViewMatrix();
+	}
 	return m_position;
 }
 
