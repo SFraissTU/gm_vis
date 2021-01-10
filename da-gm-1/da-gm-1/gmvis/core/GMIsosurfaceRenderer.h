@@ -13,7 +13,7 @@ namespace gmvis::core {
 	public:
 		GMIsosurfaceRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height);
 		void initialize();
-		void setMixture(GaussianMixture* mixture, double accThreshold);
+		void setMixture(GaussianMixture<float>* mixture, double accThreshold);
 		void updateAccelerationData(double accThreshold);
 		void render(int screenWidth, int screenHeight);
 		void cleanup();
@@ -24,7 +24,7 @@ namespace gmvis::core {
 	private:
 		QOpenGLFunctions_4_5_Core* m_gl;
 		Camera* m_camera;
-		GaussianMixture* m_mixture = nullptr;
+		GaussianMixture<float>* m_mixture = nullptr;
 
 		//Geometry Data per Sphere
 		QVector<QVector3D> m_geoVertices;

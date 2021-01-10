@@ -1,20 +1,21 @@
 #pragma once
 #include <vector>
 
+template <typename decimal>
 struct RawGaussian {
-	double mux;
-	double muy;
-	double muz;
-	double covxx;
-	double covxy;
-	double covxz;
-	double covyy;
-	double covyz;
-	double covzz;
-	double weight;
+	decimal mux;
+	decimal muy;
+	decimal muz;
+	decimal covxx;
+	decimal covxy;
+	decimal covxz;
+	decimal covyy;
+	decimal covyz;
+	decimal covzz;
+	decimal weight;
 
 	static void normalize(std::vector<RawGaussian>& list) {
-		double weightsum = 0;
+		float weightsum = 0;
 		for (auto it = list.cbegin(); it != list.cend(); ++it) {
 			weightsum += it->weight;
 		}

@@ -95,7 +95,7 @@ void VisualizerWindow::slotLoadMixtureModel()
 	if (!filename.isNull()) {
 		int slashidx = std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
 		openGmDirectory = filename.left(slashidx);
-		auto newGauss = DataLoader::readGMfromPLY(filename, true, false);
+		auto newGauss = DataLoader::readGMfromPLY<float>(filename, true, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
 			ui.openGLWidget->setMixture(mixture.get());
@@ -122,7 +122,7 @@ void VisualizerWindow::slotLoadPureMixture()
 	if (!filename.isNull()) {
 		int slashidx = std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
 		openGmDirectory = filename.left(slashidx);
-		auto newGauss = DataLoader::readGMfromPLY(filename, false, false);
+		auto newGauss = DataLoader::readGMfromPLY<float>(filename, false, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
 			ui.openGLWidget->setMixture(mixture.get());

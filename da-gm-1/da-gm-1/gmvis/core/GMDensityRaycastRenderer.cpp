@@ -57,7 +57,7 @@ void GMDensityRaycastRenderer::initialize()
 	m_gl->glCreateBuffers(1, &m_ssboOctree);
 }
 
-void GMDensityRaycastRenderer::setMixture(GaussianMixture* mixture)
+void GMDensityRaycastRenderer::setMixture(GaussianMixture<float>* mixture)
 {
 	m_mixture = mixture;
 

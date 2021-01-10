@@ -51,7 +51,7 @@ namespace gmvis::ui {
 		core::LineRenderer* getLineRenderer();
 
 		core::Camera* getCamera();
-		void setMixture(gmvis::core::GaussianMixture* mixture);
+		void setMixture(gmvis::core::GaussianMixture<float>* mixture);
 
 	public slots:
 		void cleanup();
@@ -90,7 +90,7 @@ namespace gmvis::ui {
 
 		std::unique_ptr<core::ScreenFBO> m_fboIntermediate;
 
-		core::GaussianMixture* m_mixture = nullptr;
+		core::GaussianMixture<float>* m_mixture = nullptr;
 
 		//Matrices (TODO)
 		std::unique_ptr<core::Camera> m_camera;

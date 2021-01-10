@@ -67,7 +67,7 @@ void gmvis::pylib::OffscreenRenderSurface::setSize(int width, int height)
 	m_densityRenderer->setSize(width, height);
 }
 
-void gmvis::pylib::OffscreenRenderSurface::setMixture(core::GaussianMixture* mixture)
+void gmvis::pylib::OffscreenRenderSurface::setMixture(core::GaussianMixture<float>* mixture)
 {
 	m_isoellipsoidRenderer->setMixture(mixture);
 	m_positionRenderer->setMixture(mixture);

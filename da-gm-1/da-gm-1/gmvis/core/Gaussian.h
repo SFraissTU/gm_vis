@@ -10,6 +10,10 @@
 #include <optional>
 
 #define M_PI 3.14159265358979323846
+#define EGVector Eigen::Matrix<decimal, 3, 1>
+#define EGMatrix Eigen::Matrix<decimal, 3, 3>
+#define EGVectorX Eigen::Matrix<decimal, -1, 1>
+#define EGMatrixX Eigen::Matrix<decimal, -1, -1>
 
 namespace gmvis::core {
 
@@ -27,32 +31,33 @@ namespace gmvis::core {
 	/*
 	Represents a single Gaussian.
 	*/
+	template <typename decimal>
 	struct Gaussian {
 		
 	public:
 		Gaussian() {};	//please don't use this
 
-		static Gaussian createGaussian(const RawGaussian& original, bool normalizedWeight = false);
+		static Gaussian createGaussian(const RawGaussian<decimal>& original, bool normalizedWeight = false);
 		
 		const GaussianGPU& getGPUData() const;
 
 		/*
 		Samples the Gaussian at the given coordinate and returns the corresponding density value.
 		*/
-		double sample(double x, double y, double z) const;
+		decimal sample(decimal x, decimal y, decimal z) const;
 
 		/*
 		Returns a matrix containing the eigenvectors multiplied by the eigenvalues
 		*/
-		const QGenericMatrix<3, 3, double>& getEigenMatrix() const;
+		const QGenericMatrix<3, 3, decimal>& getEigenMatrix() const;
 
-		const Eigen::Vector3d& getPosition() const;
+		const EGVector& getPosition() const;
 
-		const double& getAmplitude() const;
+		const decimal& getAmplitude() const;
 
-		const double& getNormalizedWeight() const;
+		const decimal& getNormalizedWeight() const;
 
-		double getCovDeterminant() const;
+		decimal getCovDeterminant() const;
 
 		/*
 		Takes the isoellipsoid of this gaussian with the constant density value
@@ -62,7 +67,7 @@ namespace gmvis::core {
 		does not result in an isoellipsoid, as it's bigger than any density value
 		appearing in this Gaussian.
 		*/
-		std::optional<QMatrix4x4> getTransform(double threshold) const;
+		std::optional<QMatrix4x4> getTransform(decimal threshold) const;
 
 		/*
 		Takes the isoellipsoid of this gaussian with the constant density value
@@ -71,7 +76,7 @@ namespace gmvis::core {
 		If the isoellipsoid exists, true is returned and the min and max values
 		of the AABB are stored in the parameters. Otherwise, false is returned.
 		*/
-		bool getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const;
+		bool getBoundingBox(decimal threshold, QVector3D& min, QVector3D& max) const;
 
 		bool checkValidity() const;
 		
@@ -79,20 +84,21 @@ namespace gmvis::core {
 		/* GPU data */
 		GaussianGPU m_gpudata;
 		/* Covariance matrix */
-		Eigen::Matrix3d m_covariancematrix;
+		EGMatrix m_covariancematrix;
 		/* Inverse covariance matrix */
-		Eigen::Matrix3d m_inversecovariance;
+		EGMatrix m_inversecovariance;
 		/* Mean of this Gaussian */
-		Eigen::Vector3d m_mu;
+		EGVector m_mu;
 		/* Amplitude of this Gaussian */
-		double m_amplitude;
-		double m_pi;
+		decimal m_amplitude;
+		decimal m_pi;
 		/* Vectors containing the eigenvectors multiplied by their eigenvalues. */
-		QGenericMatrix<3, 3, double> m_eigenmatrix;
+		QGenericMatrix<3, 3, decimal> m_eigenmatrix;
 
-		Gaussian(Eigen::Vector3d mu, Eigen::Matrix3d covariancematrix, Eigen::Matrix3d inversecovariance, double amplitude, double beta);
+		Gaussian(EGVector mu, EGMatrix covariancematrix, EGMatrix inversecovariance, decimal amplitude, decimal beta);
+
+		static const inline decimal GAUSS_PI_FACTOR = 1.0 / pow(2 * M_PI, 3.0 / 2.0);
 	};
 
 
-	const double GAUSS_PI_FACTOR = 1.0 / pow(2 * M_PI, 3.0 / 2.0);
 }

@@ -16,7 +16,7 @@ namespace gmvis::core {
 	public:
 		GMPositionsRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera);
 		void initialize();
-		void setMixture(GaussianMixture* mixture);
+		void setMixture(GaussianMixture<float>* mixture);
 		void updateColors();
 		void render();
 		void cleanup();
@@ -36,7 +36,7 @@ namespace gmvis::core {
 	private:
 		QOpenGLFunctions_4_5_Core* m_gl;
 		Camera* m_camera;
-		GaussianMixture* m_mixture = nullptr;
+		GaussianMixture<float>* m_mixture = nullptr;
 		
 		//Buffers
 		QOpenGLVertexArrayObject m_gm_vao;

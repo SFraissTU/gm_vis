@@ -136,7 +136,7 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 	m_gl->glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void gmvis::core::GMIsosurfaceRenderer::setMixture(GaussianMixture* mixture, double accThreshold)
+void gmvis::core::GMIsosurfaceRenderer::setMixture(GaussianMixture<float>* mixture, double accThreshold)
 {
 	m_mixture = mixture;
 	updateAccelerationData(accThreshold);
@@ -149,7 +149,7 @@ void gmvis::core::GMIsosurfaceRenderer::updateAccelerationData(double accThresho
 	QVector<QMatrix4x4> transforms;
 	transforms.reserve(n);
 	for (int i = 0; i < n; ++i) {
-		const Gaussian* gauss = (*m_mixture)[i];
+		const Gaussian<float>* gauss = (*m_mixture)[i];
 		auto transform = gauss->getTransform(accThreshold);
 		if (transform.has_value()) {
 			transforms.push_back(transform.value());

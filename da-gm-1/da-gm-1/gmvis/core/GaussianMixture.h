@@ -24,18 +24,19 @@ namespace gmvis::core {
 		GLint gaussianend;
 	};
 
+	template <typename decimal>
 	class GaussianMixture {
 	private:
-		QVector<Gaussian> gaussians;
+		QVector<Gaussian<decimal>> gaussians;
 
 	public:
 		GaussianMixture() {};
 
-		GaussianMixture(const std::vector<RawGaussian>& gaussians, bool isgmm);
+		GaussianMixture(const std::vector<RawGaussian<decimal>>& gaussians, bool isgmm);
 
-		void addGaussian(const RawGaussian& gauss);
+		void addGaussian(const RawGaussian<decimal>& gauss);
 
-		void addGaussian(const Gaussian& gauss) {
+		void addGaussian(const Gaussian<decimal>& gauss) {
 			gaussians.push_back(gauss);
 		}
 
@@ -43,9 +44,9 @@ namespace gmvis::core {
 			return gaussians.size();
 		}
 
-		double sample(double x, double y, double z) const;
+		decimal sample(decimal x, decimal y, decimal z) const;
 
-		const Gaussian* operator[](int index) const {
+		const Gaussian<decimal>* operator[](int index) const {
 			if (index >= gaussians.size() || index < 0) {
 				return nullptr;
 			}
@@ -57,11 +58,11 @@ namespace gmvis::core {
 		bool isValid() const;
 
 		std::shared_ptr<char[]> gpuData(size_t& arrsize) const;
-		std::shared_ptr<char[]> gpuData(size_t& arrsize, double threshold, GLuint& numberOfComponents) const;
+		std::shared_ptr<char[]> gpuData(size_t& arrsize, decimal threshold, GLuint& numberOfComponents) const;
 		std::shared_ptr<char[]> gpuPositionData(size_t& arrsize) const;
 
 		//Returns the Gaussians-Data as return value and the octree nodes per parameter
-		std::shared_ptr<char[]> buildOctree(double threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const;
+		std::shared_ptr<char[]> buildOctree(decimal threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const;
 	};
 
 }

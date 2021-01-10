@@ -92,7 +92,8 @@ std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(const QString& path, bool
 	return readPCDfromOFF(file, convertCoordinateSystem);
 }
 
-std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem)
+template <typename decimal>
+std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem)
 {
 	if (file.open(QIODevice::ReadOnly)) {
 		QTextStream in(&file);
@@ -102,7 +103,7 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool isg
 			qDebug() << "Invalid format in file " << file.fileName() << "\n";
 			return {};
 		}
-		std::vector<RawGaussian> rawGaussians;
+		std::vector<RawGaussian<decimal>> rawGaussians;
 		int numberOfGaussians = 0;
 		int remainingGaussians = 0;
 		QList<QString> properties;
@@ -143,8 +144,16 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool isg
 					qDebug() << "Invalid property specification in ply file " << file.fileName() << ".\n";
 					return {};
 				}
-				if (words[1] == "float" && supportedProperties.contains(words[2])) {
+				if ((words[1] == "float" || words[1] == "double") && supportedProperties.contains(words[2])) {
 					properties.append(words[2]);
+					if (words[1] == "float" && typeid(decimal).name() != "float")
+					{
+						qDebug() << "Warning: Reading float as double.\n";
+					}
+					else if (words[1] == "double" && typeid(decimal).name() != "double")
+					{
+						qDebug() << "Warning: Reading double as float.\n";
+					}
 				}
 				else {
 					if (!ignoredProperties.contains(words[2])) {
@@ -178,13 +187,13 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool isg
 				qDebug() << "Not every property was given for an entry in ply file " << file.fileName() << "\n.";
 				return {};
 			}
-			RawGaussian newGaussian;
+			RawGaussian<decimal> newGaussian;
 			for (int i = 0; i < words.length(); ++i) {
 				if (!properties[i].isNull()) {
 					bool ok;
-					double val = words[i].toDouble(&ok);
+					decimal val = strToDecimal<decimal>(words[i], &ok);
 					if (!ok) {
-						qDebug() << "A value could not be transformed into a float in ply file " << file.fileName() << "\n.";
+						qDebug() << "A value could not be transformed into a decimal in ply file " << file.fileName() << "\n.";
 						return {};
 					}
 					if (properties[i] == "x") {
@@ -262,9 +271,9 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool isg
 		}
 		//The weights are multiplied by the amount of points, so we have to normalize them
 		if (isgmm) {
-			RawGaussian::normalize(rawGaussians);
+			RawGaussian<decimal>::normalize(rawGaussians);
 		}
-		std::unique_ptr<GaussianMixture> mixture = std::make_unique<GaussianMixture>(rawGaussians, isgmm);
+		std::unique_ptr<GaussianMixture<decimal>> mixture = std::make_unique<GaussianMixture<decimal>>(rawGaussians, isgmm);
 		qDebug() << "Successfully read " << mixture->numberOfGaussians() << " Gaussians from " << file.fileName() << ".\n";
 		if (!mixture->isValid())
 		{
@@ -275,13 +284,32 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool isg
 	else {
 		qDebug() << "Could not open file: " << file.fileName() << "\n";
 	}
-	return std::unique_ptr<GaussianMixture>();
+	return std::unique_ptr<GaussianMixture<decimal>>();
 }
 
-std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem)
+template std::unique_ptr<GaussianMixture<float>> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem);
+template std::unique_ptr<GaussianMixture<double>> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem);
+
+template <typename decimal>
+std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem)
 {
 	QFile file(path);
-	return readGMfromPLY(file, isgmm, convertCoordinateSystem);
+	return readGMfromPLY<decimal>(file, isgmm, convertCoordinateSystem);
+}
+
+template std::unique_ptr<GaussianMixture<float>> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem);
+template std::unique_ptr<GaussianMixture<double>> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem);
+
+template<> 
+double gmvis::core::DataLoader::strToDecimal<double>(QString str, bool* ok)
+{
+	return str.toDouble(ok);
+}
+
+template<> 
+float gmvis::core::DataLoader::strToDecimal<float>(QString str, bool* ok)
+{
+	return str.toFloat(ok);
 }
 
 std::unique_ptr<LineStrip> gmvis::core::DataLoader::readLSfromTXT(const QString& path)

@@ -15,7 +15,7 @@ namespace gmvis::core {
 	public:
 		GMDensityRaycastRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height);
 		void initialize();
-		void setMixture(GaussianMixture* mixture);
+		void setMixture(GaussianMixture<float>* mixture);
 		void render(GLuint outTexture, int screenWidth, int screenHeight);
 		void enableAccelerationStructure();
 		void disableAccelerationStructure();
@@ -28,7 +28,7 @@ namespace gmvis::core {
 	private:
 		QOpenGLFunctions_4_5_Core* m_gl;
 		Camera* m_camera;
-		GaussianMixture* m_mixture = nullptr;
+		GaussianMixture<float>* m_mixture = nullptr;
 
 		GLuint m_locOuttex;
 		GLuint m_locInvViewMatrix;

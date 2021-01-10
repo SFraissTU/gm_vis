@@ -10,7 +10,7 @@ namespace gmvis::core {
 	public:
 		GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height);
 		void initialize();
-		void setMixture(GaussianMixture* mixture);
+		void setMixture(GaussianMixture<float>* mixture);
 		bool hasMixture() const;
 		void setSize(int width, int height);
 		void render(GLuint preTexture, bool blend);
@@ -40,7 +40,7 @@ namespace gmvis::core {
 
 	private:
 		QOpenGLFunctions_4_5_Core* m_gl;
-		GaussianMixture* m_mixture = nullptr;
+		GaussianMixture<float>* m_mixture = nullptr;
 
 		GMDensityRasterizeRenderer m_rasterizeRenderer;
 		GMDensityRaycastRenderer m_raycastRenderer;

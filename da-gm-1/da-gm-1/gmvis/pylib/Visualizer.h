@@ -42,7 +42,7 @@ namespace gmvis::pylib {
 		std::unique_ptr<QApplication> m_application;
 		std::unique_ptr<OffscreenRenderSurface> m_surface;
 		std::vector<std::unique_ptr<gmvis::core::PointCloud>> m_pointclouds;
-		std::vector<std::unique_ptr<gmvis::core::GaussianMixture>> m_mixtures;
+		std::vector<std::unique_ptr<gmvis::core::GaussianMixture<float>>> m_mixtures;
 		std::unique_ptr<py::object> m_callback;
 		std::unique_ptr<std::thread> m_thread;
 		bool m_async = true;

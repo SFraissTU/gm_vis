@@ -113,7 +113,7 @@ void GMIsoellipsoidRenderer::initialize()
 	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
 }
 
-void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
+void GMIsoellipsoidRenderer::setMixture(GaussianMixture<float>* mixture)
 {	
 	m_mixture = mixture;
 	int n = mixture->numberOfGaussians();
@@ -122,7 +122,7 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture* mixture)
 	transforms.resize(n);
 	normalTransfs.resize(n);
 	for (int i = 0; i < n; ++i) {
-		const Gaussian* gauss = (*mixture)[i];
+		const Gaussian<float>* gauss = (*mixture)[i];
 
 		auto eigenMatrix = gauss->getEigenMatrix();
 		auto mu = gauss->getPosition();
@@ -253,7 +253,7 @@ void GMIsoellipsoidRenderer::updateColors()
 			minVal = std::numeric_limits<double>::infinity();
 			maxVal = -minVal;
 			for (int i = 0; i < n; ++i) {
-				const Gaussian* gauss = (*m_mixture)[i];
+				const Gaussian<float>* gauss = (*m_mixture)[i];
 				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 				if (val < minVal) {
 					minVal = val;
@@ -268,7 +268,7 @@ void GMIsoellipsoidRenderer::updateColors()
 			QVector<double> values;
 			values.resize(n);
 			for (int i = 0; i < n; ++i) {
-				const Gaussian* gauss = (*m_mixture)[i];
+				const Gaussian<float>* gauss = (*m_mixture)[i];
 				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 				values[i] = val;
 			}
@@ -288,7 +288,7 @@ void GMIsoellipsoidRenderer::updateColors()
 		}
 		double range = maxVal - minVal;
 		for (int i = 0; i < n; ++i) {
-			const Gaussian* gauss = (*m_mixture)[i];
+			const Gaussian<float>* gauss = (*m_mixture)[i];
 			double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 			float t = std::min(1.0f, float((val - minVal) / range));
 			t = std::max(t, 0.0f);

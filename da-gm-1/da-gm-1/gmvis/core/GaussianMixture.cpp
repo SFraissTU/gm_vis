@@ -7,35 +7,48 @@
 
 using namespace gmvis::core;
 
-GaussianMixture::GaussianMixture(const std::vector<RawGaussian>& gaussians, bool isgmm)
+template <typename decimal>
+GaussianMixture<decimal>::GaussianMixture(const std::vector<RawGaussian<decimal>>& gaussians, bool isgmm)
 {
 	for (auto it = gaussians.cbegin(); it != gaussians.cend(); ++it) {
-		addGaussian(Gaussian::createGaussian(*it, isgmm));
+		addGaussian(Gaussian<decimal>::createGaussian(*it, isgmm));
 	}
 }
 
-void GaussianMixture::addGaussian(const RawGaussian& gauss)
+template GaussianMixture<float>::GaussianMixture(const std::vector<RawGaussian<float>>& gaussians, bool isgmm);
+template GaussianMixture<double>::GaussianMixture(const std::vector<RawGaussian<double>>& gaussians, bool isgmm);
+
+template <typename decimal>
+void GaussianMixture<decimal>::addGaussian(const RawGaussian<decimal>& gauss)
 {
-	addGaussian(Gaussian::createGaussian(gauss, false));
+	addGaussian(Gaussian<decimal>::createGaussian(gauss, false));
 }
 
-double GaussianMixture::sample(double x, double y, double z) const
+template void GaussianMixture<float>::addGaussian(const RawGaussian<float>& gauss);
+template void GaussianMixture<double>::addGaussian(const RawGaussian<double>& gauss);
+
+template <typename decimal>
+decimal GaussianMixture<decimal>::sample(decimal x, decimal y, decimal z) const
 {
-	Eigen::Vector3d pos = Eigen::Vector3d(x, y, z);
-	double sum = 0.0f;
+	EGVector pos = EGVector(x, y, z);
+	decimal sum = 0.0f;
 	for (int i = 0; i < gaussians.size(); ++i) {
 		//if (i != 4) continue;
-		const Gaussian& gauss = gaussians[i];
+		const Gaussian<decimal>& gauss = gaussians[i];
 		sum += gauss.sample(x, y, z);
 	}
 	return sum;
 }
 
-bool gmvis::core::GaussianMixture::isValid() const
+template float GaussianMixture<float>::sample(float x, float y, float z) const;
+template double GaussianMixture<double>::sample(double x, double y, double z) const;
+
+template <typename decimal>
+bool gmvis::core::GaussianMixture<decimal>::isValid() const
 {
-	double weightsum = 0.0;
+	decimal weightsum = 0.0;
 	for (int i = 0; i < gaussians.size(); ++i) {
-		const Gaussian& gauss = gaussians[i];
+		const Gaussian<decimal>& gauss = gaussians[i];
 		if (!gauss.checkValidity()) {
 			return false;
 		}
@@ -48,7 +61,11 @@ bool gmvis::core::GaussianMixture::isValid() const
 	return true;
 }
 
-std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize) const
+template bool GaussianMixture<float>::isValid() const;
+template bool GaussianMixture<double>::isValid() const;
+
+template <typename decimal>
+std::shared_ptr<char[]> GaussianMixture<decimal>::gpuData(size_t& arrsize) const
 {
 	GLint n = (GLint)numberOfGaussians();
 	arrsize = 80 * n;
@@ -64,7 +81,11 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize) const
 	return std::shared_ptr<char[]>(result);
 }
 
-std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize, double threshold, GLuint& numberOfComponents) const {
+template std::shared_ptr<char[]> GaussianMixture<float>::gpuData(size_t& arrsize) const;
+template std::shared_ptr<char[]> GaussianMixture<double>::gpuData(size_t& arrsize) const;
+
+template <typename decimal>
+std::shared_ptr<char[]> GaussianMixture<decimal>::gpuData(size_t& arrsize, decimal threshold, GLuint& numberOfComponents) const {
 	GLint n = (GLint)numberOfGaussians();
 	numberOfComponents = 0;
 	for (int i = 0; i < n; i++) {
@@ -87,7 +108,11 @@ std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize, double thresho
 	return std::shared_ptr<char[]>(result);
 }
 
-std::shared_ptr<char[]> gmvis::core::GaussianMixture::gpuPositionData(size_t& arrsize) const
+template std::shared_ptr<char[]> GaussianMixture<float>::gpuData(size_t& arrsize, float threshold, GLuint& numberOfComponents) const;
+template std::shared_ptr<char[]> GaussianMixture<double>::gpuData(size_t& arrsize, double threshold, GLuint& numberOfComponents) const;
+
+template <typename decimal>
+std::shared_ptr<char[]> gmvis::core::GaussianMixture<decimal>::gpuPositionData(size_t& arrsize) const
 {
 	GLint n = (GLint)numberOfGaussians();
 	arrsize = 16 * n;
@@ -103,7 +128,11 @@ std::shared_ptr<char[]> gmvis::core::GaussianMixture::gpuPositionData(size_t& ar
 	return std::shared_ptr<char[]>(result);
 }
 
-std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const
+template std::shared_ptr<char[]> gmvis::core::GaussianMixture<float>::gpuPositionData(size_t& arrsize) const;
+template std::shared_ptr<char[]> gmvis::core::GaussianMixture<double>::gpuPositionData(size_t& arrsize) const;
+
+template <typename decimal>
+std::shared_ptr<char[]> GaussianMixture<decimal>::buildOctree(decimal threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const
 {
 	QTime time;
 	time.start();
@@ -132,10 +161,10 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 		}
 	}
 	//Adapt min and max such that it becomes a regular cube
-	double extent = std::max(absMax.x() - absMin.x(), std::max(absMax.y() - absMin.y(), absMax.z() - absMin.z()));
-	double xenlarge = (extent - absMax.x() + absMin.x()) / 2.0;
-	double yenlarge = (extent - absMax.y() + absMin.y()) / 2.0;
-	double zenlarge = (extent - absMax.z() + absMin.z()) / 2.0;
+	float extent = std::max(absMax.x() - absMin.x(), std::max(absMax.y() - absMin.y(), absMax.z() - absMin.z()));
+	float xenlarge = (extent - absMax.x() + absMin.x()) / 2.0;
+	float yenlarge = (extent - absMax.y() + absMin.y()) / 2.0;
+	float zenlarge = (extent - absMax.z() + absMin.z()) / 2.0;
 	absMin = QVector3D(absMin.x() - xenlarge, absMin.y() - yenlarge, absMin.z() - zenlarge);
 	absMax = QVector3D(absMax.x() + xenlarge, absMax.y() + yenlarge, absMax.z() + zenlarge);
 
@@ -150,15 +179,15 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 		GMOctreeNode& node = octreelist[index];
 		int firstchildindex = octreelist.size();
 		QVector4D halfsize = (node.max - node.min) / 2.0;
-		double minx = node.min.x();
-		double miny = node.min.y();
-		double minz = node.min.z();
-		double maxx = node.max.x();
-		double maxy = node.max.y();
-		double maxz = node.max.z();
-		double middlex = minx + halfsize.x();
-		double middley = miny + halfsize.y();
-		double middlez = minz + halfsize.z();
+		float minx = node.min.x();
+		float miny = node.min.y();
+		float minz = node.min.z();
+		float maxx = node.max.x();
+		float maxy = node.max.y();
+		float maxz = node.max.z();
+		float middlex = minx + halfsize.x();
+		float middley = miny + halfsize.y();
+		float middlez = minz + halfsize.z();
 		int nextlevel = node.gaussianend + 1;
 		if (nextlevel < maxlevels) {
 			node.childrenstart = firstchildindex;	//Needs to happen first. Otherwise through reallocation of memory, the reference might not be up to date anymore
@@ -294,3 +323,6 @@ std::shared_ptr<char[]> GaussianMixture::buildOctree(double threshold, QVector<G
 
 	return std::shared_ptr<char[]>(gaussRes);
 }
+
+template std::shared_ptr<char[]> GaussianMixture<float>::buildOctree(float threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const;
+template std::shared_ptr<char[]> GaussianMixture<double>::buildOctree(double threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const;

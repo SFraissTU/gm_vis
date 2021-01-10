@@ -191,9 +191,9 @@ void Visualizer::set_gaussian_mixtures(py::array_t<float> mixtures, bool isgmm)
 		auto gms = mixtures.unchecked<4>();
 		m_mixtures.clear();
 		for (int i = 0; i < batchsize; ++i) {
-			std::vector<RawGaussian> gaussians;
+			std::vector<RawGaussian<float>> gaussians;
 			for (int j = 0; j < gausscount; ++j) {
-				RawGaussian gauss;
+				RawGaussian<float> gauss;
 				gauss.weight = gms(i, 0, j, 0);
 				gauss.mux = gms(i, 0, j, 1);
 				gauss.muy = gms(i, 0, j, 2);
@@ -207,10 +207,10 @@ void Visualizer::set_gaussian_mixtures(py::array_t<float> mixtures, bool isgmm)
 				gaussians.push_back(gauss);
 			}
 			if (isgmm) {
-				RawGaussian::normalize(gaussians);
+				RawGaussian<float>::normalize(gaussians);
 			}
-			GaussianMixture* mixture = new GaussianMixture(gaussians, isgmm);
-			m_mixtures.push_back(std::unique_ptr<GaussianMixture>(mixture));
+			GaussianMixture<float>* mixture = new GaussianMixture<float>(gaussians, isgmm);
+			m_mixtures.push_back(std::unique_ptr<GaussianMixture<float>>(mixture));
 		}
 	});
 }
@@ -220,7 +220,7 @@ void gmvis::pylib::Visualizer::set_gaussian_mixtures_from_paths(py::list paths, 
 	pushCommand([this, paths, isgmm] {
 		m_mixtures.clear();
 		for (int i = 0; i < paths.size(); ++i) {
-			auto newGM = DataLoader::readGMfromPLY(QString(paths[i].cast<std::string>().c_str()), isgmm, false);
+			auto newGM = DataLoader::readGMfromPLY<float>(QString(paths[i].cast<std::string>().c_str()), isgmm, false);
 			if (newGM) {
 				m_mixtures.push_back(std::move(newGM));
 			}

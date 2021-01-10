@@ -57,7 +57,7 @@ void GMPositionsRenderer::initialize()
 	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, transferdata.size(), 0, GL_RGB, GL_FLOAT, transferdata.data());
 }
 
-void GMPositionsRenderer::setMixture(GaussianMixture* mixture)
+void GMPositionsRenderer::setMixture(GaussianMixture<float>* mixture)
 {
 	m_mixture = mixture;
 
@@ -172,7 +172,7 @@ void GMPositionsRenderer::updateColors()
 			minVal = std::numeric_limits<double>::infinity();
 			maxVal = -minVal;
 			for (int i = 0; i < n; ++i) {
-				const Gaussian* gauss = (*m_mixture)[i];
+				const Gaussian<float>* gauss = (*m_mixture)[i];
 				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 				if (val < minVal) {
 					minVal = val;
@@ -187,7 +187,7 @@ void GMPositionsRenderer::updateColors()
 			QVector<double> values;
 			values.resize(n);
 			for (int i = 0; i < n; ++i) {
-				const Gaussian* gauss = (*m_mixture)[i];
+				const Gaussian<float>* gauss = (*m_mixture)[i];
 				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 				values[i] = val;
 			}
@@ -207,7 +207,7 @@ void GMPositionsRenderer::updateColors()
 		}
 		double range = maxVal - minVal;
 		for (int i = 0; i < n; ++i) {
-			const Gaussian* gauss = (*m_mixture)[i];
+			const Gaussian<float>* gauss = (*m_mixture)[i];
 			double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
 			float t = std::min(1.0f, float((val - minVal) / range));
 			t = std::max(t, 0.0f);

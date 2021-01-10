@@ -52,7 +52,7 @@ void GMDensityRenderer::initialize()
 	setRenderMode(m_sRenderMode);
 }
 
-void GMDensityRenderer::setMixture(GaussianMixture* mixture)
+void GMDensityRenderer::setMixture(GaussianMixture<float>* mixture)
 {
 	m_mixture = mixture;
 	m_rasterizeRenderer.setMixture(mixture, m_sAccThreshold);
