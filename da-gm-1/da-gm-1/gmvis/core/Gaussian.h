@@ -72,6 +72,8 @@ namespace gmvis::core {
 		of the AABB are stored in the parameters. Otherwise, false is returned.
 		*/
 		bool getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const;
+
+		bool checkValidity() const;
 		
 	private:
 		/* GPU data */

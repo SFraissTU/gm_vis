@@ -31,6 +31,23 @@ double GaussianMixture::sample(double x, double y, double z) const
 	return sum;
 }
 
+bool gmvis::core::GaussianMixture::isValid() const
+{
+	double weightsum = 0.0;
+	for (int i = 0; i < gaussians.size(); ++i) {
+		const Gaussian& gauss = gaussians[i];
+		if (!gauss.checkValidity()) {
+			return false;
+		}
+		weightsum += gauss.getNormalizedWeight();
+	}
+	if (abs(weightsum - 1.0) > 0.01)
+	{
+		return false;
+	}
+	return true;
+}
+
 std::shared_ptr<char[]> GaussianMixture::gpuData(size_t& arrsize) const
 {
 	GLint n = (GLint)numberOfGaussians();

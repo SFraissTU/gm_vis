@@ -54,6 +54,8 @@ namespace gmvis::core {
 			}
 		}
 
+		bool isValid() const;
+
 		std::shared_ptr<char[]> gpuData(size_t& arrsize) const;
 		std::shared_ptr<char[]> gpuData(size_t& arrsize, double threshold, GLuint& numberOfComponents) const;
 		std::shared_ptr<char[]> gpuPositionData(size_t& arrsize) const;

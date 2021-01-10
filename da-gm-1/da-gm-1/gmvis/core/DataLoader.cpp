@@ -266,6 +266,10 @@ std::unique_ptr<GaussianMixture> DataLoader::readGMfromPLY(QFile& file, bool isg
 		}
 		std::unique_ptr<GaussianMixture> mixture = std::make_unique<GaussianMixture>(rawGaussians, isgmm);
 		qDebug() << "Successfully read " << mixture->numberOfGaussians() << " Gaussians from " << file.fileName() << ".\n";
+		if (!mixture->isValid())
+		{
+			qDebug() << "Warning: Mixture is not valid!\n";
+		}
 		return std::move(mixture);
 	}
 	else {

@@ -125,6 +125,35 @@ bool Gaussian::getBoundingBox(double threshold, QVector3D& min, QVector3D& max) 
 	return true;
 }
 
+bool gmvis::core::Gaussian::checkValidity() const
+{
+	bool ok = m_covariancematrix.determinant() > 0;
+	if (!ok) 
+		return false;
+	ok = m_covariancematrix.block(0, 0, 2, 2).determinant() > 0;
+	if (!ok) 
+		return false;
+	ok = m_covariancematrix(0, 0) > 0;
+	if (!ok) 
+		return false;
+	ok = m_inversecovariance.determinant() > 0;
+	if (!ok) 
+		return false;
+	ok = m_inversecovariance.block(0, 0, 2, 2).determinant() > 0;
+	if (!ok) 
+		return false;
+	ok = m_inversecovariance(0, 0) > 0;
+	if (!ok) 
+		return false;
+	ok = m_covariancematrix.isApprox(m_covariancematrix.transpose());
+	if (!ok) 
+		return false;
+	ok = m_inversecovariance.isApprox(m_inversecovariance.transpose());
+	if (!ok) 
+		return false;
+	return true;
+}
+
 const GaussianGPU& Gaussian::getGPUData() const
 {
 	return m_gpudata;
