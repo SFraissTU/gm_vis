@@ -131,7 +131,7 @@ Camera* gmvis::ui::DisplayWidget::getCamera()
 	return m_camera.get();
 }
 
-void gmvis::ui::DisplayWidget::setMixture(GaussianMixture<float>* mixture)
+void gmvis::ui::DisplayWidget::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 {
 	m_isoellipsoidRenderer->setMixture(mixture);
 	m_positionsRenderer->setMixture(mixture);
@@ -312,7 +312,7 @@ void DisplayWidget::mousePressEvent(QMouseEvent* event)
 			if (index >= 0) {
 				qDebug() << "Selected Gaussian:\n";
 				qDebug() << "  Index: " << index << "\n";
-				const core::Gaussian<float>* gauss = (*m_mixture)[index];
+				const core::Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[index];
 				auto pos = gauss->getPosition();
 				qDebug() << "  Position: " << pos.x() << " / " << pos.y() << " / " << pos.z() << "\n";
 				qDebug() << "  Determinant: " << gauss->getCovDeterminant() << "\n";

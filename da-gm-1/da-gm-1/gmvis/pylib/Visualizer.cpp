@@ -182,7 +182,7 @@ void Visualizer::set_pointclouds_from_paths(py::list paths)
 	});
 }
 
-void Visualizer::set_gaussian_mixtures(py::array_t<float> mixtures, bool isgmm)
+void Visualizer::set_gaussian_mixtures(py::array_t<DECIMAL_TYPE> mixtures, bool isgmm)
 {
 	pushCommand([this, mixtures, isgmm] {
 		auto shape = mixtures.shape();
@@ -191,9 +191,9 @@ void Visualizer::set_gaussian_mixtures(py::array_t<float> mixtures, bool isgmm)
 		auto gms = mixtures.unchecked<4>();
 		m_mixtures.clear();
 		for (int i = 0; i < batchsize; ++i) {
-			std::vector<RawGaussian<float>> gaussians;
+			std::vector<RawGaussian<DECIMAL_TYPE>> gaussians;
 			for (int j = 0; j < gausscount; ++j) {
-				RawGaussian<float> gauss;
+				RawGaussian<DECIMAL_TYPE> gauss;
 				gauss.weight = gms(i, 0, j, 0);
 				gauss.mux = gms(i, 0, j, 1);
 				gauss.muy = gms(i, 0, j, 2);
@@ -207,10 +207,10 @@ void Visualizer::set_gaussian_mixtures(py::array_t<float> mixtures, bool isgmm)
 				gaussians.push_back(gauss);
 			}
 			if (isgmm) {
-				RawGaussian<float>::normalize(gaussians);
+				RawGaussian<DECIMAL_TYPE>::normalize(gaussians);
 			}
-			GaussianMixture<float>* mixture = new GaussianMixture<float>(gaussians, isgmm);
-			m_mixtures.push_back(std::unique_ptr<GaussianMixture<float>>(mixture));
+			GaussianMixture<DECIMAL_TYPE>* mixture = new GaussianMixture<DECIMAL_TYPE>(gaussians, isgmm);
+			m_mixtures.push_back(std::unique_ptr<GaussianMixture<DECIMAL_TYPE>>(mixture));
 		}
 	});
 }
@@ -220,7 +220,7 @@ void gmvis::pylib::Visualizer::set_gaussian_mixtures_from_paths(py::list paths, 
 	pushCommand([this, paths, isgmm] {
 		m_mixtures.clear();
 		for (int i = 0; i < paths.size(); ++i) {
-			auto newGM = DataLoader::readGMfromPLY<float>(QString(paths[i].cast<std::string>().c_str()), isgmm, false);
+			auto newGM = DataLoader::readGMfromPLY<DECIMAL_TYPE>(QString(paths[i].cast<std::string>().c_str()), isgmm, false);
 			if (newGM) {
 				m_mixtures.push_back(std::move(newGM));
 			}

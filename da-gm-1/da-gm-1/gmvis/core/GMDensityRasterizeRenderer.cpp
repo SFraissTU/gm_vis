@@ -89,7 +89,7 @@ void GMDensityRasterizeRenderer::initialize()
 	m_gl->glCreateBuffers(1, &m_ssboMixture);
 }
 
-void GMDensityRasterizeRenderer::setMixture(GaussianMixture<float>* mixture, double accThreshold)
+void GMDensityRasterizeRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture, double accThreshold)
 {
 	m_mixture = mixture;
 	updateAccelerationData(accThreshold);
@@ -102,7 +102,7 @@ void GMDensityRasterizeRenderer::updateAccelerationData(double accThreshold)
 	QVector<QMatrix4x4> transforms;
 	transforms.reserve(n);
 	for (int i = 0; i < n; ++i) {
-		const Gaussian<float>* gauss = (*m_mixture)[i];
+		const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
 		auto transform = gauss->getTransform(accThreshold);
 		if (transform.has_value()) {
 			transforms.push_back(transform.value());

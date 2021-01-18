@@ -80,7 +80,7 @@ void Camera::rotateY(float amount)
 
 void Camera::zoom(float amount)
 {
-	m_radius = std::max(0.5f, m_radius - amount);
+	m_radius = std::max(0.0001f, m_radius - amount);
 	m_viewDirty = true;
 }
 

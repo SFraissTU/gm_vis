@@ -16,7 +16,7 @@ namespace gmvis::core {
 	public:
 		GMIsoellipsoidRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera);
 		void initialize();
-		void setMixture(GaussianMixture<float>* mixture);
+		void setMixture(GaussianMixture<DECIMAL_TYPE>* mixture);
 		void updateColors();
 		void render();
 		void cleanup();
@@ -36,7 +36,7 @@ namespace gmvis::core {
 	private:
 		QOpenGLFunctions_4_5_Core* m_gl;
 		Camera* m_camera;
-		GaussianMixture<float>* m_mixture = nullptr;
+		GaussianMixture<DECIMAL_TYPE>* m_mixture = nullptr;
 
 		//Geometry Data per Sphere
 		QVector<QVector3D> m_geoVertices;

@@ -31,7 +31,7 @@ namespace gmvis::pylib {
 		void set_density_accthreshold(bool automatic, float threshold);
 		void set_pointclouds(py::array_t<float> pointclouds);
 		void set_pointclouds_from_paths(py::list paths);
-		void set_gaussian_mixtures(py::array_t<float> mixtures, bool isgmm);
+		void set_gaussian_mixtures(py::array_t<DECIMAL_TYPE> mixtures, bool isgmm);
 		void set_gaussian_mixtures_from_paths(py::list paths, bool isgmm);
 		void set_callback(py::object callback);
 		py::array_t<float> render(int epoch);
@@ -42,7 +42,7 @@ namespace gmvis::pylib {
 		std::unique_ptr<QApplication> m_application;
 		std::unique_ptr<OffscreenRenderSurface> m_surface;
 		std::vector<std::unique_ptr<gmvis::core::PointCloud>> m_pointclouds;
-		std::vector<std::unique_ptr<gmvis::core::GaussianMixture<float>>> m_mixtures;
+		std::vector<std::unique_ptr<gmvis::core::GaussianMixture<DECIMAL_TYPE>>> m_mixtures;
 		std::unique_ptr<py::object> m_callback;
 		std::unique_ptr<std::thread> m_thread;
 		bool m_async = true;

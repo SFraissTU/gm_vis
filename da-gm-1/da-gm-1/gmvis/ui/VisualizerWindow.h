@@ -36,7 +36,7 @@ namespace gmvis::ui {
 	private:
 		Ui::VisualizerWindowClass ui;
 		std::unique_ptr<core::PointCloud> pointcloud;
-		std::unique_ptr<core::GaussianMixture<float>> mixture;
+		std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>> mixture;
 		std::unique_ptr<core::LineStrip> line;
 
 		QString openPcDirectory;

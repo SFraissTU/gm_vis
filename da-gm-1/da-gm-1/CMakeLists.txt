@@ -97,6 +97,8 @@ include_directories(
     SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/pybind11/include
 )
 
+add_compile_definitions(DECIMAL_TYPE=float)
+
 add_subdirectory(pybind11)
 pybind11_add_module(pygmvis
     ${PY_FILES}

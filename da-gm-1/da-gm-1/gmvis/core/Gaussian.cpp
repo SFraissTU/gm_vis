@@ -167,6 +167,7 @@ template bool Gaussian<double>::getBoundingBox(double threshold, QVector3D& min,
 template <typename decimal>
 bool gmvis::core::Gaussian<decimal>::checkValidity() const
 {
+	decimal det = m_covariancematrix.determinant();
 	bool ok = m_covariancematrix.determinant() > 0;
 	if (!ok) 
 		return false;
