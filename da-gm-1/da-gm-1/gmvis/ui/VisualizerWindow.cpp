@@ -33,13 +33,19 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	auto densrenderer = widget->getGMDensityRenderer();
 	ui.spin_dscalemin->setValue(densrenderer->getDensityMin() * 100);
 	ui.spin_dscalemax->setValue(densrenderer->getDensityMax() * 100);
+	ui.sl_dscalepercentage->setValue(100.0 - densrenderer->getDensityMax() / 1000.0);
 	ui.cb_dscaleauto->setChecked(densrenderer->getDensityAuto());
-	ui.sl_dscalepercentage->setValue(densrenderer->getDensityAutoPercentage() * 100);
 	//ui.cb_dscalecutoff->setChecked(densrenderer->getDensityCutoff());
 	ui.co_densrendermode->setCurrentIndex((int)densrenderer->getRenderMode() - 1);
 	ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * 100);
 	ui.spin_accthreshold->setEnabled(!densrenderer->getAccelerationThresholdAuto());
 	ui.cb_accthauto->setChecked(densrenderer->getAccelerationThresholdAuto());
+
+	auto isosurfacerenderer = widget->getGMIsosurfaceRenderer();
+	ui.spin_isovalue->setValue(isosurfacerenderer->getIsolevel());
+	ui.spin_isoslidermax->setValue(0.001);
+	ui.sl_isovalue->setValue(isosurfacerenderer->getIsolevel() / 0.001 * 100);
+
 
 	(void)connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(slotLoadPointcloud()));
 	(void)connect(ui.loadMixtureModelAction, SIGNAL(triggered()), this, SLOT(slotLoadMixtureModel()));
@@ -63,12 +69,16 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.spin_dscalemax, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
 	//(void)connect(ui.cb_dscalecutoff, SIGNAL(stateChanged(int)), this, SLOT(slotDensityValuesChanged()));
 	(void)connect(ui.cb_dscaleauto, SIGNAL(stateChanged(int)), this, SLOT(slotDensityAutoChanged()));
-	(void)connect(ui.sl_dscalepercentage, SIGNAL(valueChanged(int)), this, SLOT(slotDensityAutoChanged()));
+	(void)connect(ui.sl_dscalepercentage, SIGNAL(valueChanged(int)), this, SLOT(slotDensitySliderChanged()));
 
 	(void)connect(ui.co_densrendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotDensityRenderModeChanged()));
 	(void)connect(ui.co_ellrendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotEllipsoidRenderModeChanged()));
 	(void)connect(ui.spin_accthreshold, SIGNAL(valueChanged(double)), this, SLOT(slotAccelerationThresholdChanged()));
 	(void)connect(ui.cb_accthauto, SIGNAL(stateChanged(int)), this, SLOT(slotAccelerationThreshAutoChanged()));
+
+	(void)connect(ui.spin_isovalue, SIGNAL(valueChanged(double)), this, SLOT(slotIsoValueChanged()));
+	(void)connect(ui.spin_isoslidermax, SIGNAL(valueChanged(double)), this, SLOT(slotIsoSliderChanged()));
+	(void)connect(ui.sl_isovalue, SIGNAL(valueChanged(int)), this, SLOT(slotIsoSliderChanged()));
 
 	(void)connect(ui.openGLWidget, SIGNAL(frameSwapped()), this, SLOT(slotPostRender()));
 }
@@ -100,8 +110,12 @@ void VisualizerWindow::slotLoadMixtureModel()
 			mixture = std::move(newGauss);
 			ui.openGLWidget->setMixture(mixture.get());
 			auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
+			ui.spin_ellmin->blockSignals(true);
+			ui.spin_ellmax->blockSignals(true);
 			ui.spin_ellmin->setValue(isoren->getEllMin());
 			ui.spin_ellmax->setValue(isoren->getEllMax());
+			ui.spin_ellmin->blockSignals(false);
+			ui.spin_ellmax->blockSignals(false);
 			lineDirectory = openGmDirectory;
 			QRegularExpression re("pcgmm-0-\\d{5}.ply$");
 			if (re.match(filename).hasMatch()) {
@@ -112,6 +126,7 @@ void VisualizerWindow::slotLoadMixtureModel()
 				ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
 			}
 			setWindowTitle("GMVis: " + filename.right(filename.length() - slashidx - 1));
+			ui.openGLWidget->update();
 		}
 	}
 }
@@ -127,8 +142,12 @@ void VisualizerWindow::slotLoadPureMixture()
 			mixture = std::move(newGauss);
 			ui.openGLWidget->setMixture(mixture.get());
 			auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
+			ui.spin_ellmin->blockSignals(true);
+			ui.spin_ellmax->blockSignals(true);
 			ui.spin_ellmin->setValue(isoren->getEllMin());
 			ui.spin_ellmax->setValue(isoren->getEllMax());
+			ui.spin_ellmin->blockSignals(false);
+			ui.spin_ellmax->blockSignals(false);
 			lineDirectory = openGmDirectory;
 			QRegularExpression re("pcgmm-0-\\d{5}.ply$");
 			if (re.match(filename).hasMatch()) {
@@ -139,6 +158,7 @@ void VisualizerWindow::slotLoadPureMixture()
 				ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
 			}
 			setWindowTitle("GMVis: " + filename.right(filename.length() - slashidx - 1));
+			ui.openGLWidget->update();
 		}
 	}
 }
@@ -188,7 +208,7 @@ void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
 	if (newLine && newLine->getDataSize() > 0) {
 		line = std::move(newLine);
 		ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
-		ui.openGLWidget->repaint();
+		ui.openGLWidget->update();
 	}
 	else {
 		QMessageBox::critical(this, "Empty Line", "Read-in Line is empty or does not exist");
@@ -207,10 +227,14 @@ void VisualizerWindow::slotDisplayOptionsChanged()
 
 void VisualizerWindow::slotEllValuesChanged()
 {
-	auto renderer = ui.openGLWidget->getGMIsoellipsoidRenderer();
-	renderer->setEllMin(ui.spin_ellmin->value());
-	renderer->setEllMax(ui.spin_ellmax->value());
-	renderer->updateColors();
+	auto renderer1 = ui.openGLWidget->getGMIsoellipsoidRenderer();
+	renderer1->setEllMin(ui.spin_ellmin->value());
+	renderer1->setEllMax(ui.spin_ellmax->value());
+	renderer1->updateColors();
+	auto renderer2 = ui.openGLWidget->getGMPositionsRenderer();
+	renderer2->setEllMin(ui.spin_ellmin->value());
+	renderer2->setEllMax(ui.spin_ellmax->value());
+	renderer2->updateColors();
 	ui.openGLWidget->update();
 }
 
@@ -224,10 +248,16 @@ void VisualizerWindow::slotEllAutoValueChanged()
 	renderer2->setRangeMode(val);
 	renderer2->updateColors();
 	if (val != GMColorRangeMode::RANGE_MANUAL) {
+		ui.spin_ellmin->blockSignals(true);
+		ui.spin_ellmax->blockSignals(true);
 		ui.spin_ellmin->setValue(renderer1->getEllMin());
 		ui.spin_ellmax->setValue(renderer1->getEllMax());
 		ui.spin_ellmin->setEnabled(false);
 		ui.spin_ellmax->setEnabled(false);
+		ui.spin_ellmin->blockSignals(false);
+		ui.spin_ellmax->blockSignals(false);
+		renderer1->updateColors();
+		renderer2->updateColors();
 	}
 	else {
 		ui.spin_ellmin->setEnabled(true);
@@ -249,13 +279,34 @@ void VisualizerWindow::slotEllipsoidRenderModeChanged()
 	ui.openGLWidget->update();
 }
 
+void gmvis::ui::VisualizerWindow::slotDensitySliderChanged()
+{
+	bool dauto = ui.cb_dscaleauto->isChecked();
+	if (dauto)
+	{
+		slotDensityAutoChanged();
+	}
+	else
+	{
+		//this will trigger slotDensityValuesChanged for update of values in renderer
+		ui.spin_dscalemax->setValue(100000 * (100 - ui.sl_dscalepercentage->value()));
+	}
+}
+
 void VisualizerWindow::slotDensityValuesChanged()
 {
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
 	renderer->setDensityMin(ui.spin_dscalemin->value() * 0.01);
 	renderer->setDensityMax(ui.spin_dscalemax->value() * 0.01);
 	//renderer->setDensityCutoff(ui.cb_dscalecutoff->isChecked());
-	ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
+	//set Slider Value
+	if (ui.cb_accthauto->isChecked())
+	{
+		ui.spin_accthreshold->blockSignals(true);
+		ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
+		ui.spin_accthreshold->blockSignals(false);
+		slotAccelerationThresholdChanged(false);
+	}
 	if (!ui.cb_dscaleauto->isChecked()) {
 		ui.openGLWidget->update();	//This is where the second rendering might be scheduled
 	}
@@ -266,10 +317,9 @@ void VisualizerWindow::slotDensityAutoChanged()
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
 	bool dauto = ui.cb_dscaleauto->isChecked();
 	renderer->setDensityAuto(dauto);
-	renderer->setDensityAutoPercentage(ui.sl_dscalepercentage->value() * 0.01);
+	renderer->setDensityAutoPercentage(1 - ui.sl_dscalepercentage->value() * 0.0025);
 	ui.spin_dscalemax->setEnabled(!dauto);
 	ui.spin_dscalemin->setEnabled(!dauto);
-	ui.sl_dscalepercentage->setEnabled(dauto);
 	ui.openGLWidget->update();
 }
 
@@ -280,12 +330,13 @@ void VisualizerWindow::slotDensityRenderModeChanged()
 	ui.openGLWidget->update();
 }
 
-void VisualizerWindow::slotAccelerationThresholdChanged()
+void VisualizerWindow::slotAccelerationThresholdChanged(bool update)
 {
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
 	renderer->setAccelerationThreshold(0.01 * ui.spin_accthreshold->value());
 	renderer->updateAccelerationData();
-	if (!ui.cb_accthauto->isChecked() || !ui.cb_dscaleauto->isChecked()) {
+	//if (!ui.cb_accthauto->isChecked() || !ui.cb_dscaleauto->isChecked()) {
+	if (update) {
 		ui.openGLWidget->update();
 	}
 }
@@ -296,16 +347,36 @@ void VisualizerWindow::slotAccelerationThreshAutoChanged()
 	bool autoth = ui.cb_accthauto->isChecked();
 	renderer->setAccelerationThresholdAuto(autoth);
 	ui.spin_accthreshold->setEnabled(!autoth);
+	//This will call slotAccelerationThresholdChanged(true) and automatically update the window
 	ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
-	renderer->updateAccelerationData();
-		ui.openGLWidget->update();
+}
+
+void gmvis::ui::VisualizerWindow::slotIsoValueChanged()
+{
+	auto renderer = ui.openGLWidget->getGMIsosurfaceRenderer();
+	renderer->setIsolevel(ui.spin_isovalue->value());
+	ui.sl_isovalue->blockSignals(true);
+	ui.sl_isovalue->setValue(ui.spin_isovalue->value() / ui.spin_isoslidermax->value() * 100);
+	ui.sl_isovalue->blockSignals(false);
+	ui.openGLWidget->update();
+}
+
+void gmvis::ui::VisualizerWindow::slotIsoSliderChanged()
+{
+	//this triggers slotIsoValueChanged, so widget will be updated
+	ui.spin_isovalue->setValue(ui.sl_isovalue->value() / 100.0 * ui.spin_isoslidermax->value());
 }
 
 void VisualizerWindow::slotPostRender()
 {
 	if (ui.cb_dscaleauto->isChecked()) {
 		auto renderer = ui.openGLWidget->getGMDensityRenderer();
+		ui.spin_dscalemin->blockSignals(true);
+		ui.spin_dscalemax->blockSignals(true);
 		ui.spin_dscalemin->setValue(renderer->getDensityMin() * 100);
 		ui.spin_dscalemax->setValue(renderer->getDensityMax() * 100);
+		ui.sl_dscalepercentage->setValue(100.0 - renderer->getDensityMax() / 1000.0);
+		ui.spin_dscalemin->blockSignals(false);
+		ui.spin_dscalemax->blockSignals(false);
 	}
 }

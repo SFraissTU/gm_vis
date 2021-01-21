@@ -26,11 +26,14 @@ namespace gmvis::ui {
 		void slotEllValuesChanged();
 		void slotEllAutoValueChanged();
 		void slotEllipsoidRenderModeChanged();
+		void slotDensitySliderChanged();
 		void slotDensityValuesChanged();
 		void slotDensityAutoChanged();
 		void slotDensityRenderModeChanged();
-		void slotAccelerationThresholdChanged();
+		void slotAccelerationThresholdChanged(bool update = true);
 		void slotAccelerationThreshAutoChanged();
+		void slotIsoValueChanged();
+		void slotIsoSliderChanged();
 		void slotPostRender();
 
 	private:
