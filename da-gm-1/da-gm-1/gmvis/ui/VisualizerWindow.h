@@ -23,12 +23,14 @@ namespace gmvis::ui {
 		void slotChooseLineDirectory();
 		void slotGaussianSelected(int index);
 		void slotDisplayOptionsChanged();
+		void slotIsovalueDisplayOptionsChanged();
 		void slotEllValuesChanged();
 		void slotEllAutoValueChanged();
 		void slotEllipsoidRenderModeChanged();
 		void slotDensitySliderChanged();
 		void slotDensityValuesChanged();
 		void slotDensityAutoChanged();
+		void slotDensityLogModeChanged();
 		void slotDensityRenderModeChanged();
 		void slotAccelerationThresholdChanged(bool update = true);
 		void slotAccelerationThreshAutoChanged();

@@ -26,14 +26,22 @@ uniform float densitymin;
 uniform float densitymax;
 /* If values beneath densitymin should be cut off*/
 uniform bool cutoff;
+/* If logarithmic scale should be used */
+uniform bool logarithmic;
 
 
 void main() {
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 
 	float sum = imageLoad(img_sum, pixel_coords).r;
+	if (logarithmic) {
+		sum = log(sum);
+	}
 	vec3 color;
-	if (cutoff && sum <= densitymin) {
+	if (isnan(sum)) {
+		color = vec3(255, 0, 255);
+	}
+	else if (cutoff && sum <= densitymin) {
 		color = vec3(0);
 	} else {
 		sum = (sum - densitymin)/(densitymax - densitymin);

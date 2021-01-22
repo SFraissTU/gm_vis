@@ -19,8 +19,12 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	auto widget = ui.openGLWidget;
 	ui.cb_displayPointcloud->setChecked(widget->isPointDisplayEnabled());
 	ui.cb_displayEllipsoids->setChecked(widget->isEllipsoidDisplayEnabled());
+	ui.cb_displayGMPositions->setChecked(widget->isGMPositionsDisplayEnabled());
 	ui.cb_displayIsosurface->setChecked(widget->isIsosurfaceDisplayEnabled());
 	ui.cb_displayDensity->setChecked(widget->isDensityDisplayEnabled());
+	ui.tabs_displayoptions->setTabEnabled(0, widget->isEllipsoidDisplayEnabled() || widget->isGMPositionsDisplayEnabled());
+	ui.tabs_displayoptions->setTabEnabled(1, widget->isDensityDisplayEnabled());
+	ui.tabs_displayoptions->setTabEnabled(2, widget->isIsosurfaceDisplayEnabled());
 
 	auto ellrenderer = widget->getGMIsoellipsoidRenderer();
 	ui.spin_ellmin->setValue(ellrenderer->getEllMin());
@@ -40,6 +44,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * 100);
 	ui.spin_accthreshold->setEnabled(!densrenderer->getAccelerationThresholdAuto());
 	ui.cb_accthauto->setChecked(densrenderer->getAccelerationThresholdAuto());
+	ui.cb_dlog->setChecked(densrenderer->getLogarithmic());
 
 	auto isosurfacerenderer = widget->getGMIsosurfaceRenderer();
 	ui.spin_isovalue->setValue(isosurfacerenderer->getIsolevel());
@@ -58,7 +63,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.cb_displayPointcloud, SIGNAL(clicked(bool)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayGMPositions, SIGNAL(clicked(bool)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayEllipsoids, SIGNAL(clicked(bool)), this, SLOT(slotDisplayOptionsChanged()));
-	(void)connect(ui.cb_displayIsosurface, SIGNAL(clicked(bool)), this, SLOT(slotDisplayOptionsChanged()));
+	(void)connect(ui.cb_displayIsosurface, SIGNAL(clicked(bool)), this, SLOT(slotIsovalueDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayDensity, SIGNAL(clicked(bool)), this, SLOT(slotDisplayOptionsChanged()));
 
 	(void)connect(ui.spin_ellmin, SIGNAL(valueChanged(double)), this, SLOT(slotEllValuesChanged()));
@@ -70,6 +75,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	//(void)connect(ui.cb_dscalecutoff, SIGNAL(stateChanged(int)), this, SLOT(slotDensityValuesChanged()));
 	(void)connect(ui.cb_dscaleauto, SIGNAL(stateChanged(int)), this, SLOT(slotDensityAutoChanged()));
 	(void)connect(ui.sl_dscalepercentage, SIGNAL(valueChanged(int)), this, SLOT(slotDensitySliderChanged()));
+	(void)connect(ui.cb_dlog, SIGNAL(stateChanged(int)), this, SLOT(slotDensityLogModeChanged()));
 
 	(void)connect(ui.co_densrendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotDensityRenderModeChanged()));
 	(void)connect(ui.co_ellrendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotEllipsoidRenderModeChanged()));
@@ -220,8 +226,49 @@ void VisualizerWindow::slotDisplayOptionsChanged()
 	ui.openGLWidget->setPointDisplayEnabled(ui.cb_displayPointcloud->isChecked());
 	ui.openGLWidget->setGMPositionsDisplayEnabled(ui.cb_displayGMPositions->isChecked());
 	ui.openGLWidget->setEllipsoidDisplayEnabled(ui.cb_displayEllipsoids->isChecked());
-	ui.openGLWidget->setIsosurfaceDisplayEnabled(ui.cb_displayIsosurface->isChecked());
 	ui.openGLWidget->setDensityDisplayEnabled(ui.cb_displayDensity->isChecked());
+
+	ui.tabs_displayoptions->setTabEnabled(0, ui.cb_displayGMPositions->isChecked() || ui.cb_displayEllipsoids->isChecked());
+	ui.tabs_displayoptions->setTabEnabled(1, ui.cb_displayDensity->isChecked());
+	ui.tabs_displayoptions->setTabEnabled(2, false);
+
+	ui.openGLWidget->update();
+}
+
+void gmvis::ui::VisualizerWindow::slotIsovalueDisplayOptionsChanged()
+{
+	ui.openGLWidget->setIsosurfaceDisplayEnabled(ui.cb_displayIsosurface->isChecked());
+	ui.cb_displayPointcloud->blockSignals(true);
+	ui.cb_displayGMPositions->blockSignals(true);
+	ui.cb_displayEllipsoids->blockSignals(true);
+	ui.cb_displayDensity->blockSignals(true);
+	if (ui.cb_displayIsosurface->isChecked()) {
+		ui.cb_displayPointcloud->setChecked(false);
+		ui.cb_displayGMPositions->setChecked(false);
+		ui.cb_displayEllipsoids->setChecked(false);
+		ui.cb_displayDensity->setChecked(false);
+		ui.tabs_displayoptions->setTabEnabled(1, false);
+		ui.tabs_displayoptions->setTabEnabled(0, false);
+	}
+	else {
+		ui.cb_displayPointcloud->setChecked(ui.openGLWidget->isPointDisplayEnabled());
+		ui.cb_displayGMPositions->setChecked(ui.openGLWidget->isGMPositionsDisplayEnabled());
+		ui.cb_displayEllipsoids->setChecked(ui.openGLWidget->isEllipsoidDisplayEnabled());
+		ui.cb_displayDensity->setChecked(ui.openGLWidget->isDensityDisplayEnabled());
+		ui.tabs_displayoptions->setTabEnabled(1, ui.cb_displayDensity->isChecked());
+		ui.tabs_displayoptions->setTabEnabled(0, ui.cb_displayGMPositions->isChecked() || ui.cb_displayEllipsoids->isChecked());
+	}
+	ui.cb_displayPointcloud->blockSignals(false);
+	ui.cb_displayGMPositions->blockSignals(false);
+	ui.cb_displayEllipsoids->blockSignals(false);
+	ui.cb_displayDensity->blockSignals(false);
+
+	ui.cb_displayPointcloud->setDisabled(ui.cb_displayIsosurface->isChecked());
+	ui.cb_displayGMPositions->setDisabled(ui.cb_displayIsosurface->isChecked());
+	ui.cb_displayEllipsoids->setDisabled(ui.cb_displayIsosurface->isChecked());
+	ui.cb_displayDensity->setDisabled(ui.cb_displayIsosurface->isChecked());
+	ui.tabs_displayoptions->setTabEnabled(2, ui.cb_displayIsosurface->isChecked());
+
 	ui.openGLWidget->update();
 }
 
@@ -300,15 +347,17 @@ void VisualizerWindow::slotDensityValuesChanged()
 	renderer->setDensityMax(ui.spin_dscalemax->value() * 0.01);
 	//renderer->setDensityCutoff(ui.cb_dscalecutoff->isChecked());
 	//set Slider Value
-	if (ui.cb_accthauto->isChecked())
-	{
+	if (ui.cb_accthauto->isChecked()) {
 		ui.spin_accthreshold->blockSignals(true);
 		ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
 		ui.spin_accthreshold->blockSignals(false);
 		slotAccelerationThresholdChanged(false);
 	}
 	if (!ui.cb_dscaleauto->isChecked()) {
-		ui.openGLWidget->update();	//This is where the second rendering might be scheduled
+		ui.sl_dscalepercentage->blockSignals(true);
+		ui.sl_dscalepercentage->setValue(100 - (ui.spin_dscalemax->value() / 100000));
+		ui.sl_dscalepercentage->blockSignals(false);
+		ui.openGLWidget->update();
 	}
 }
 
@@ -317,9 +366,28 @@ void VisualizerWindow::slotDensityAutoChanged()
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
 	bool dauto = ui.cb_dscaleauto->isChecked();
 	renderer->setDensityAuto(dauto);
-	renderer->setDensityAutoPercentage(1 - ui.sl_dscalepercentage->value() * 0.0025);
+	if (dauto)
+	{
+		renderer->setDensityAutoPercentage(1 - ui.sl_dscalepercentage->value() * 0.0025);
+	}
 	ui.spin_dscalemax->setEnabled(!dauto);
 	ui.spin_dscalemin->setEnabled(!dauto);
+	ui.openGLWidget->update();
+}
+
+void gmvis::ui::VisualizerWindow::slotDensityLogModeChanged()
+{
+	auto renderer = ui.openGLWidget->getGMDensityRenderer();
+	auto log = ui.cb_dlog->isChecked();
+	renderer->setLogarithmic(log);
+	ui.spin_dscalemin->blockSignals(true);
+	ui.spin_dscalemax->blockSignals(true);
+	//if auto off
+	//ui.sl_dscalepercentage->setValue()
+	ui.spin_dscalemin->setValue(renderer->getDensityMin() * 100);
+	ui.spin_dscalemax->setValue(renderer->getDensityMax() * 100);
+	ui.spin_dscalemin->blockSignals(false);
+	ui.spin_dscalemax->blockSignals(false);
 	ui.openGLWidget->update();
 }
 
@@ -356,7 +424,7 @@ void gmvis::ui::VisualizerWindow::slotIsoValueChanged()
 	auto renderer = ui.openGLWidget->getGMIsosurfaceRenderer();
 	renderer->setIsolevel(ui.spin_isovalue->value());
 	ui.sl_isovalue->blockSignals(true);
-	ui.sl_isovalue->setValue(ui.spin_isovalue->value() / ui.spin_isoslidermax->value() * 100);
+	ui.sl_isovalue->setValue(round(ui.spin_isovalue->value() / ui.spin_isoslidermax->value() * 100));
 	ui.sl_isovalue->blockSignals(false);
 	ui.openGLWidget->update();
 }
@@ -375,7 +443,6 @@ void VisualizerWindow::slotPostRender()
 		ui.spin_dscalemax->blockSignals(true);
 		ui.spin_dscalemin->setValue(renderer->getDensityMin() * 100);
 		ui.spin_dscalemax->setValue(renderer->getDensityMax() * 100);
-		ui.sl_dscalepercentage->setValue(100.0 - renderer->getDensityMax() / 1000.0);
 		ui.spin_dscalemin->blockSignals(false);
 		ui.spin_dscalemax->blockSignals(false);
 	}

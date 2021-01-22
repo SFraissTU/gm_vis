@@ -25,15 +25,19 @@ namespace gmvis::core {
 		const double& getAccelerationThreshold() const;
 		const bool& getAccelerationThresholdAuto() const;
 		const bool& getDensityCutoff() const;
+		const bool& getLogarithmic() const;
 
 		void setRenderMode(GMDensityRenderMode mode);
 		void setDensityMin(double densityMin);
 		void setDensityMax(double densityMax);
+		void setDensityMinLog(double densityMinLog);
+		void setDensityMaxLog(double densityMaxLog);
 		void setDensityAuto(bool densityAuto);
 		void setDensityAutoPercentage(double percentage);
 		void setAccelerationThreshold(double accThreshold);
 		void setAccelerationThresholdAuto(bool accThreshAuto);
 		void setDensityCutoff(bool cutoff);
+		void setLogarithmic(bool log);
 
 
 		static bool isAccelerated(GMDensityRenderMode mode);
@@ -49,11 +53,14 @@ namespace gmvis::core {
 		GMDensityRenderMode m_sRenderMode = GMDensityRenderMode::ADDITIVE_ACC_PROJECTED;
 		double m_sDensityMin = 0.0f;
 		double m_sDensityMax = 0.0005f;
+		double m_sDensityMinLog = -5.0f;
+		double m_sDensityMaxLog = 5.0f;
 		bool   m_sDensityAuto = false;
 		double m_sDensityAutoPerc = 0.9;
 		double m_sAccThreshold = 0.0000005;
 		bool   m_sAccThreshAuto = true;
 		bool   m_sDensityCutoff = false;
+		bool   m_sLogarithmic = false;
 
 		ScreenFBO m_fbo_intermediate;
 		ScreenFBO m_fbo_final;
@@ -68,6 +75,7 @@ namespace gmvis::core {
 		GLuint m_col_locDensityMin;
 		GLuint m_col_locDensityMax;
 		GLuint m_col_locCutoff;
+		GLuint m_col_locLogarithmic;
 
 		GLuint m_texTransfer;
 

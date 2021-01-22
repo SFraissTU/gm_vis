@@ -36,6 +36,7 @@ void GMDensityRenderer::initialize()
 	m_col_locDensityMin = m_program_coloring->uniformLocation("densitymin");
 	m_col_locDensityMax = m_program_coloring->uniformLocation("densitymax");
 	m_col_locCutoff = m_program_coloring->uniformLocation("cutoff");
+	m_col_locLogarithmic = m_program_coloring->uniformLocation("logarithmic");
 	m_program_coloring->release();
 
 	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
@@ -121,9 +122,10 @@ void GMDensityRenderer::render(GLuint preTexture, bool blend)
 	m_program_coloring->setUniformValue(m_col_locWidth, screenWidth);
 	m_program_coloring->setUniformValue(m_col_locHeight, screenHeight);
 	m_program_coloring->setUniformValue(m_col_locBlend, blend ? 0.5f : 1.0f);
-	m_program_coloring->setUniformValue(m_col_locDensityMin, (float)m_sDensityMin);
-	m_program_coloring->setUniformValue(m_col_locDensityMax, (float)m_sDensityMax);
+	m_program_coloring->setUniformValue(m_col_locDensityMin, (float)(m_sLogarithmic ? m_sDensityMinLog : m_sDensityMin));
+	m_program_coloring->setUniformValue(m_col_locDensityMax, (float)(m_sLogarithmic ? m_sDensityMaxLog : m_sDensityMax));
 	m_program_coloring->setUniformValue(m_col_locCutoff, m_sDensityCutoff);
+	m_program_coloring->setUniformValue(m_col_locLogarithmic, m_sLogarithmic);
 
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -180,15 +182,25 @@ void GMDensityRenderer::cleanup()
 
 void GMDensityRenderer::setDensityMin(double densityMin)
 {
-	m_sDensityMin = densityMin;
+	(m_sLogarithmic ? m_sDensityMinLog : m_sDensityMin) = densityMin;
 }
 
 void GMDensityRenderer::setDensityMax(double densityMax)
 {
-	m_sDensityMax = densityMax;
+	(m_sLogarithmic ? m_sDensityMaxLog : m_sDensityMax) = densityMax;
 	if (m_sAccThreshAuto) {
 		m_sAccThreshold = std::max(m_sDensityMax * 0.0001, 0.000000000001);
 	}
+}
+
+void gmvis::core::GMDensityRenderer::setDensityMinLog(double densityMinLog)
+{
+	m_sDensityMinLog = densityMinLog;
+}
+
+void gmvis::core::GMDensityRenderer::setDensityMaxLog(double densityMaxLog)
+{
+	m_sDensityMaxLog = densityMaxLog;
 }
 
 void GMDensityRenderer::setDensityAuto(bool densityAuto)
@@ -220,6 +232,11 @@ void gmvis::core::GMDensityRenderer::setDensityCutoff(bool cutoff)
 	m_sDensityCutoff = cutoff;
 }
 
+void gmvis::core::GMDensityRenderer::setLogarithmic(bool log)
+{
+	m_sLogarithmic = log;
+}
+
 const GMDensityRenderMode& GMDensityRenderer::getRenderMode() const
 {
 	return m_sRenderMode;
@@ -227,12 +244,12 @@ const GMDensityRenderMode& GMDensityRenderer::getRenderMode() const
 
 const double& GMDensityRenderer::getDensityMin() const
 {
-	return m_sDensityMin;
+	return m_sLogarithmic ? m_sDensityMinLog : m_sDensityMin;
 }
 
 const double& GMDensityRenderer::getDensityMax() const
 {
-	return m_sDensityMax;
+	return m_sLogarithmic ? m_sDensityMaxLog : m_sDensityMax;
 }
 
 const bool& GMDensityRenderer::getDensityAuto() const
@@ -258,6 +275,11 @@ const bool& GMDensityRenderer::getAccelerationThresholdAuto() const
 const bool& gmvis::core::GMDensityRenderer::getDensityCutoff() const
 {
 	return m_sDensityCutoff;
+}
+
+const bool& gmvis::core::GMDensityRenderer::getLogarithmic() const
+{
+	return m_sLogarithmic;
 }
 
 bool GMDensityRenderer::isAccelerated(GMDensityRenderMode mode)

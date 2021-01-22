@@ -1017,7 +1017,10 @@ QProgressBar::chunk
      <widget class="QWidget" name="widget" native="true">
       <layout class="QGridLayout" name="gridLayout_6">
        <item row="0" column="0">
-        <widget class="QTabWidget" name="tabWidget">
+        <widget class="QTabWidget" name="tabs_displayoptions">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -1031,7 +1034,16 @@ QProgressBar::chunk
           </size>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
+         </property>
+         <property name="tabsClosable">
+          <bool>false</bool>
+         </property>
+         <property name="movable">
+          <bool>false</bool>
+         </property>
+         <property name="tabBarAutoHide">
+          <bool>false</bool>
          </property>
          <widget class="QWidget" name="tab_ellipsoids">
           <attribute name="title">
@@ -1334,7 +1346,7 @@ QProgressBar::chunk
                   </widget>
                  </item>
                  <item row="3" column="1">
-                  <widget class="QCheckBox" name="checkBox">
+                  <widget class="QCheckBox" name="cb_dlog">
                    <property name="text">
                     <string/>
                    </property>
@@ -1608,6 +1620,9 @@ QProgressBar::chunk
                  <property name="maximum">
                   <double>9999999999999999931398190359470212947659194368.000000000000000</double>
                  </property>
+                 <property name="singleStep">
+                  <double>0.000500000000000</double>
+                 </property>
                 </widget>
                </item>
                <item row="1" column="0">
@@ -1627,6 +1642,9 @@ QProgressBar::chunk
                  </property>
                  <property name="maximum">
                   <double>9999999999999999931398190359470212947659194368.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>0.000500000000000</double>
                  </property>
                 </widget>
                </item>
@@ -1683,7 +1701,7 @@ QProgressBar::chunk
          <x>0</x>
          <y>0</y>
          <width>248</width>
-         <height>554</height>
+         <height>551</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_4">
@@ -1791,7 +1809,7 @@ QProgressBar::chunk
          <x>0</x>
          <y>0</y>
          <width>208</width>
-         <height>554</height>
+         <height>551</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
