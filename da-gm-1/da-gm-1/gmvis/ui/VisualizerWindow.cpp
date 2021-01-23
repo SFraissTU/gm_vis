@@ -8,13 +8,9 @@ using namespace gmvis::ui;
 using namespace gmvis::core;
 
 VisualizerWindow::VisualizerWindow(QWidget *parent)
-	: QMainWindow(parent)
+	: QMainWindow(parent), config("SFraissTU", "GMVis")
 {
 	ui.setupUi(this);
-
-	QMap<QString, QString> config = DataLoader::readConfigFile("res/config.txt");
-	openPcDirectory = config.value("default_pc_path");
-	openGmDirectory = config.value("default_gm_path");
 
 	auto widget = ui.openGLWidget;
 	ui.cb_displayPointcloud->setChecked(widget->isPointDisplayEnabled());
@@ -90,9 +86,9 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 }
 
 void VisualizerWindow::slotLoadPointcloud() {
-	QString filename = QFileDialog::getOpenFileName(this, "Load Pointcloud", openPcDirectory, "*.off");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Pointcloud", config.value("openPcDirectory").toString(), "*.off");
 	if (!filename.isNull()) {
-		openPcDirectory = filename.left(std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\")));
+		config.setValue("openPcDirectory", filename.left(std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"))));
 		auto newPC = DataLoader::readPCDfromOFF(filename, false);
 		if (newPC) {
 			bool hasoldpc = pointcloud != nullptr;
@@ -108,10 +104,10 @@ void VisualizerWindow::slotLoadPointcloud() {
 void VisualizerWindow::slotLoadMixtureModel()
 {
 	bool hasprevmix = (mixture.get() != nullptr);
-	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture Model", openGmDirectory, "*.ply");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture Model", config.value("openGmDirectory").toString(), "*.ply");
 	if (!filename.isNull()) {
 		int slashidx = std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
-		openGmDirectory = filename.left(slashidx);
+		config.setValue("openGmDirectory", filename.left(slashidx));
 		auto newGauss = DataLoader::readGMfromPLY<DECIMAL_TYPE>(filename, true, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
@@ -123,7 +119,7 @@ void VisualizerWindow::slotLoadMixtureModel()
 			ui.spin_ellmax->setValue(isoren->getEllMax());
 			ui.spin_ellmin->blockSignals(false);
 			ui.spin_ellmax->blockSignals(false);
-			lineDirectory = openGmDirectory;
+			lineDirectory = filename.left(slashidx);
 			QRegularExpression re("pcgmm-0-\\d{5}.ply$");
 			if (re.match(filename).hasMatch()) {
 				int id = filename.mid(filename.length() - 9, 5).toInt();
@@ -148,10 +144,10 @@ void VisualizerWindow::slotLoadMixtureModel()
 void VisualizerWindow::slotLoadPureMixture()
 {
 	bool hasprevmix = (mixture.get() != nullptr);
-	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", openGmDirectory, "*.ply");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", config.value("openGmDirectory").toString(), "*.ply");
 	if (!filename.isNull()) {
 		int slashidx = std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
-		openGmDirectory = filename.left(slashidx);
+		config.setValue("openGmDirectory", filename.left(slashidx));
 		auto newGauss = DataLoader::readGMfromPLY<DECIMAL_TYPE>(filename, false, false);
 		if (newGauss) {
 			mixture = std::move(newGauss);
@@ -163,7 +159,7 @@ void VisualizerWindow::slotLoadPureMixture()
 			ui.spin_ellmax->setValue(isoren->getEllMax());
 			ui.spin_ellmin->blockSignals(false);
 			ui.spin_ellmax->blockSignals(false);
-			lineDirectory = openGmDirectory;
+			lineDirectory = filename.left(slashidx);
 			QRegularExpression re("pcgmm-0-\\d{5}.ply$");
 			if (re.match(filename).hasMatch()) {
 				int id = filename.mid(filename.length() - 9, 5).toInt();
@@ -187,7 +183,7 @@ void VisualizerWindow::slotLoadPureMixture()
 
 void gmvis::ui::VisualizerWindow::slotLoadLine()
 {
-	QString filename = QFileDialog::getOpenFileName(this, "Load Line", openGmDirectory, "*.txt;*.bin");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Line", config.value("openGmDirectory").toString(), "*.txt;*.bin");
 	if (!filename.isNull()) {
 		std::unique_ptr<LineStrip> newLine;
 		if (filename.endsWith(".txt")) {

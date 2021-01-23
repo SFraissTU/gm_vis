@@ -5,6 +5,7 @@
 #include <memory>
 #include <QtWidgets/QMainWindow>
 #include "ui_VisualizerWindow.h"
+#include <QSettings>
 
 namespace gmvis::ui {
 
@@ -43,9 +44,8 @@ namespace gmvis::ui {
 		std::unique_ptr<core::PointCloud> pointcloud;
 		std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>> mixture;
 		std::unique_ptr<core::LineStrip> line;
+		QSettings config;
 
-		QString openPcDirectory;
-		QString openGmDirectory;
 		QString lineDirectory;
 	};
 }
