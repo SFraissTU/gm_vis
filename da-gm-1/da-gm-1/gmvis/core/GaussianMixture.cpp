@@ -61,6 +61,34 @@ bool gmvis::core::GaussianMixture<decimal>::isValid() const
 	return true;
 }
 
+template<typename decimal>
+void gmvis::core::GaussianMixture<decimal>::computePositionsBoundingBox(QVector3D& min, QVector3D& max) const
+{
+	constexpr float inf = std::numeric_limits<float>::infinity();
+	min = QVector3D(inf, inf, inf);
+	max = QVector3D(-inf, -inf, -inf);
+	for (auto it = gaussians.begin(); it != gaussians.end(); ++it)
+	{
+		EGVector pos = it->getPosition();
+		for (int i = 0; i < 3; ++i)
+		{
+			if (min[i] > pos[i])
+			{
+				min[i] = pos[i];
+			}
+			if (max[i] < pos[i])
+			{
+				max[i] = pos[i];
+			}
+		}
+	}
+	QVector3D extend = max - min;
+	min -= 0.1 * extend;
+	max += 0.1 * extend;
+}
+template void GaussianMixture<float>::computePositionsBoundingBox(QVector3D& min, QVector3D& max) const;
+template void GaussianMixture<double>::computePositionsBoundingBox(QVector3D& min, QVector3D& max) const;
+
 template bool GaussianMixture<float>::isValid() const;
 template bool GaussianMixture<double>::isValid() const;
 

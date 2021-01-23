@@ -26,6 +26,7 @@ namespace gmvis::core {
 		const bool& getAccelerationThresholdAuto() const;
 		const bool& getDensityCutoff() const;
 		const bool& getLogarithmic() const;
+		const double& getSuggestedDensityMaxLimit() const;
 
 		void setRenderMode(GMDensityRenderMode mode);
 		void setDensityMin(double densityMin);
@@ -61,6 +62,7 @@ namespace gmvis::core {
 		bool   m_sAccThreshAuto = true;
 		bool   m_sDensityCutoff = false;
 		bool   m_sLogarithmic = false;
+		float  m_sDensitySuggestedMax = 1.0;
 
 		ScreenFBO m_fbo_intermediate;
 		ScreenFBO m_fbo_final;

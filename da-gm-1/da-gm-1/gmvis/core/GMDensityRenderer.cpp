@@ -58,6 +58,14 @@ void GMDensityRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 	m_mixture = mixture;
 	m_rasterizeRenderer.setMixture(mixture, m_sAccThreshold);
 	m_raycastRenderer.setMixture(mixture);
+	QVector3D bbmin, bbmax;
+	m_mixture->computePositionsBoundingBox(bbmin, bbmax);
+	QVector3D bbextend = bbmax - bbmin;
+	float x = (bbextend.x() * bbextend.y() * bbextend.z());
+	float y = bbextend.lengthSquared();
+	m_sDensitySuggestedMax = 1777 / bbextend.lengthSquared();// / (bbextend.x() * bbextend.y() * bbextend.z());
+	m_sDensityMaxLog = 2.536 - std::log(y);
+	m_sDensityMinLog = m_sDensityMaxLog - 10;
 }
 
 bool gmvis::core::GMDensityRenderer::hasMixture() const
@@ -100,8 +108,18 @@ void GMDensityRenderer::render(GLuint preTexture, bool blend)
 		m_gl->glReadPixels(0, 0, screenWidth, screenHeight, GL_RED, GL_FLOAT, pixeldata);
 		std::vector<float> pixels = std::vector<float>(pixeldata, pixeldata + nrpixels);
 		std::sort(pixels.begin(), pixels.end());
+		int firstnonzeropixel = 0;
+		for (int i = 0; i < pixels.size(); ++i)
+		{
+			if (pixels[i] != 0)
+			{
+				firstnonzeropixel = i;
+				break;
+			}
+		}
 		m_sDensityMin = 0;
-		m_sDensityMax = pixels[(pixels.size() - 1) * m_sDensityAutoPerc];
+		m_sDensityMax = pixels[firstnonzeropixel + (pixels.size() - 1 - firstnonzeropixel) * m_sDensityAutoPerc];
+		//qDebug() << pixels[pixels.size() - 1];
 		delete[] pixeldata;
 	}
 
@@ -280,6 +298,11 @@ const bool& gmvis::core::GMDensityRenderer::getDensityCutoff() const
 const bool& gmvis::core::GMDensityRenderer::getLogarithmic() const
 {
 	return m_sLogarithmic;
+}
+
+const double& gmvis::core::GMDensityRenderer::getSuggestedDensityMaxLimit() const
+{
+	return m_sDensitySuggestedMax;
 }
 
 bool GMDensityRenderer::isAccelerated(GMDensityRenderMode mode)

@@ -35,10 +35,10 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.co_ellrendermode->setCurrentIndex((int)ellrenderer->getRenderMode() - 1);
 
 	auto densrenderer = widget->getGMDensityRenderer();
-	ui.spin_dscalemin->setValue(densrenderer->getDensityMin() * 100);
-	ui.spin_dscalemax->setValue(densrenderer->getDensityMax() * 100);
-	ui.sl_dscalepercentage->setValue(100.0 - densrenderer->getDensityMax() / 1000.0);
-	ui.cb_dscaleauto->setChecked(densrenderer->getDensityAuto());
+	//ui.spin_dscalemin->setValue(densrenderer->getDensityMin() * 100);
+	//ui.spin_dscalemax->setValue(densrenderer->getDensityMax() * 100);
+	//ui.sl_dscalepercentage->setValue(100.0 - densrenderer->getDensityMax() / 1000.0);
+	//ui.cb_dscaleauto->setChecked(densrenderer->getDensityAuto());
 	//ui.cb_dscalecutoff->setChecked(densrenderer->getDensityCutoff());
 	ui.co_densrendermode->setCurrentIndex((int)densrenderer->getRenderMode() - 1);
 	ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * 100);
@@ -73,7 +73,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.spin_dscalemin, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
 	(void)connect(ui.spin_dscalemax, SIGNAL(valueChanged(double)), this, SLOT(slotDensityValuesChanged()));
 	//(void)connect(ui.cb_dscalecutoff, SIGNAL(stateChanged(int)), this, SLOT(slotDensityValuesChanged()));
-	(void)connect(ui.cb_dscaleauto, SIGNAL(stateChanged(int)), this, SLOT(slotDensityAutoChanged()));
+	//(void)connect(ui.cb_dscaleauto, SIGNAL(stateChanged(int)), this, SLOT(slotDensityAutoChanged()));
 	(void)connect(ui.sl_dscalepercentage, SIGNAL(valueChanged(int)), this, SLOT(slotDensitySliderChanged()));
 	(void)connect(ui.cb_dlog, SIGNAL(stateChanged(int)), this, SLOT(slotDensityLogModeChanged()));
 
@@ -107,6 +107,7 @@ void VisualizerWindow::slotLoadPointcloud() {
 
 void VisualizerWindow::slotLoadMixtureModel()
 {
+	bool hasprevmix = (mixture.get() != nullptr);
 	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture Model", openGmDirectory, "*.ply");
 	if (!filename.isNull()) {
 		int slashidx = std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
@@ -131,6 +132,13 @@ void VisualizerWindow::slotLoadMixtureModel()
 			else {
 				ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
 			}
+			auto densrenderer = ui.openGLWidget->getGMDensityRenderer();
+			if (!ui.openGLWidget->isPointDisplayEnabled() || pointcloud == nullptr) {
+				QVector3D min, max;
+				mixture->computePositionsBoundingBox(min, max);
+				ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
+			}
+			slotDensitySliderChanged();
 			setWindowTitle("GMVis: " + filename.right(filename.length() - slashidx - 1));
 			ui.openGLWidget->update();
 		}
@@ -139,6 +147,7 @@ void VisualizerWindow::slotLoadMixtureModel()
 
 void VisualizerWindow::slotLoadPureMixture()
 {
+	bool hasprevmix = (mixture.get() != nullptr);
 	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", openGmDirectory, "*.ply");
 	if (!filename.isNull()) {
 		int slashidx = std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
@@ -163,6 +172,13 @@ void VisualizerWindow::slotLoadPureMixture()
 			else {
 				ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
 			}
+			auto densrenderer = ui.openGLWidget->getGMDensityRenderer();
+			if (!ui.openGLWidget->isPointDisplayEnabled() || pointcloud == nullptr) {
+				QVector3D min, max;
+				mixture->computePositionsBoundingBox(min, max);
+				ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
+			}
+			slotDensitySliderChanged();	//update values
 			setWindowTitle("GMVis: " + filename.right(filename.length() - slashidx - 1));
 			ui.openGLWidget->update();
 		}
@@ -328,7 +344,7 @@ void VisualizerWindow::slotEllipsoidRenderModeChanged()
 
 void gmvis::ui::VisualizerWindow::slotDensitySliderChanged()
 {
-	bool dauto = ui.cb_dscaleauto->isChecked();
+	bool dauto = false;// ui.cb_dscaleauto->isChecked();
 	if (dauto)
 	{
 		slotDensityAutoChanged();
@@ -336,7 +352,12 @@ void gmvis::ui::VisualizerWindow::slotDensitySliderChanged()
 	else
 	{
 		//this will trigger slotDensityValuesChanged for update of values in renderer
-		ui.spin_dscalemax->setValue(100000 * (100 - ui.sl_dscalepercentage->value()));
+		auto renderer = ui.openGLWidget->getGMDensityRenderer();
+		float newval = renderer->getSuggestedDensityMaxLimit() * 0.01 * (100 - ui.sl_dscalepercentage->value());
+		if (newval > ui.spin_dscalemin->value())
+		{
+			ui.spin_dscalemax->setValue(newval);
+		}
 	}
 }
 
@@ -353,22 +374,22 @@ void VisualizerWindow::slotDensityValuesChanged()
 		ui.spin_accthreshold->blockSignals(false);
 		slotAccelerationThresholdChanged(false);
 	}
-	if (!ui.cb_dscaleauto->isChecked()) {
-		ui.sl_dscalepercentage->blockSignals(true);
-		ui.sl_dscalepercentage->setValue(100 - (ui.spin_dscalemax->value() / 100000));
-		ui.sl_dscalepercentage->blockSignals(false);
-		ui.openGLWidget->update();
-	}
+	//if (!ui.cb_dscaleauto->isChecked()) {
+	ui.sl_dscalepercentage->blockSignals(true);
+	ui.sl_dscalepercentage->setValue(100 - 100 * (ui.spin_dscalemax->value() / renderer->getSuggestedDensityMaxLimit()));
+	ui.sl_dscalepercentage->blockSignals(false);
+	ui.openGLWidget->update();
+	//}
 }
 
 void VisualizerWindow::slotDensityAutoChanged()
 {
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
-	bool dauto = ui.cb_dscaleauto->isChecked();
+	bool dauto = false;// ui.cb_dscaleauto->isChecked();
 	renderer->setDensityAuto(dauto);
 	if (dauto)
 	{
-		renderer->setDensityAutoPercentage(1 - ui.sl_dscalepercentage->value() * 0.0025);
+		renderer->setDensityAutoPercentage(1 - ui.sl_dscalepercentage->value() * 0.005);
 	}
 	ui.spin_dscalemax->setEnabled(!dauto);
 	ui.spin_dscalemin->setEnabled(!dauto);
@@ -386,6 +407,7 @@ void gmvis::ui::VisualizerWindow::slotDensityLogModeChanged()
 	//ui.sl_dscalepercentage->setValue()
 	ui.spin_dscalemin->setValue(renderer->getDensityMin() * 100);
 	ui.spin_dscalemax->setValue(renderer->getDensityMax() * 100);
+	ui.spin_isoslidermax->setEnabled(!log);
 	ui.spin_dscalemin->blockSignals(false);
 	ui.spin_dscalemax->blockSignals(false);
 	ui.openGLWidget->update();
@@ -437,7 +459,7 @@ void gmvis::ui::VisualizerWindow::slotIsoSliderChanged()
 
 void VisualizerWindow::slotPostRender()
 {
-	if (ui.cb_dscaleauto->isChecked()) {
+	/*if (ui.cb_dscaleauto->isChecked()) {
 		auto renderer = ui.openGLWidget->getGMDensityRenderer();
 		ui.spin_dscalemin->blockSignals(true);
 		ui.spin_dscalemax->blockSignals(true);
@@ -445,5 +467,5 @@ void VisualizerWindow::slotPostRender()
 		ui.spin_dscalemax->setValue(renderer->getDensityMax() * 100);
 		ui.spin_dscalemin->blockSignals(false);
 		ui.spin_dscalemax->blockSignals(false);
-	}
+	}*/
 }

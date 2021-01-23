@@ -57,6 +57,8 @@ namespace gmvis::core {
 
 		bool isValid() const;
 
+		void computePositionsBoundingBox(QVector3D& min, QVector3D& max) const;
+
 		std::shared_ptr<char[]> gpuData(size_t& arrsize) const;
 		std::shared_ptr<char[]> gpuData(size_t& arrsize, decimal threshold, GLuint& numberOfComponents) const;
 		std::shared_ptr<char[]> gpuPositionData(size_t& arrsize) const;
