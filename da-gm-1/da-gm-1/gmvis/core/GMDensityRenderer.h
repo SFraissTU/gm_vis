@@ -31,8 +31,8 @@ namespace gmvis::core {
 		const double& getSuggestedDensityLogMaxLimit() const;
 
 		void setRenderMode(GMDensityRenderMode mode);
-		void setDensityMin(double densityMin);
-		void setDensityMax(double densityMax);
+		void setDensityMin(double densityMin, bool both=false);
+		void setDensityMax(double densityMax, bool both=false);
 		void setDensityMinLog(double densityMinLog);
 		void setDensityMaxLog(double densityMaxLog);
 		void setDensityAuto(bool densityAuto);

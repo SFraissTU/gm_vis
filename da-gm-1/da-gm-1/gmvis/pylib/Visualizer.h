@@ -21,13 +21,19 @@ namespace gmvis::pylib {
 		Visualizer(Visualizer& v);
 		void set_image_size(int width, int height);
 		void set_view_matrix(py::array_t<float> viewmat);
+		void set_camera_lookat(std::tuple<float, float, float> position, std::tuple<float, float, float> lookAt, std::tuple<float, float, float> up);
 		void set_camera_auto(bool camauto);
-		void set_ellipsoid_rendering(bool ellipsoids, bool pointcloud = true);
-		void set_ellipsoid_coloring(core::GMColoringRenderMode colorMode, gmvis::core::GMColorRangeMode rangeMode, float min, float max);
-		void set_positions_rendering(bool positions, bool pointcloud = true);
-		void set_positions_coloring(core::GMColoringRenderMode colorMode, gmvis::core::GMColorRangeMode rangeMode, float min, float max);
-		void set_density_rendering(bool density, gmvis::core::GMDensityRenderMode renderMode);
-		void set_density_coloring(bool automatic, float autoperc, float min, float max);
+		void set_ellipsoids_rendering(bool ellipsoids, bool pointcloud=true);
+		void set_ellipsoids_colormode(core::GMColoringRenderMode colorMode);
+		void set_ellipsoids_rangemode(gmvis::core::GMColorRangeMode rangeMode, float min=1.0, float max=0.0);
+		void set_positions_rendering(bool positions, bool pointcloud=true);
+		void set_positions_colormode(core::GMColoringRenderMode colorMode);
+		void set_positions_rangemode(gmvis::core::GMColorRangeMode rangeMode, float min = 1.0, float max = 0.0);
+		void set_density_rendering(bool density);
+		void set_density_rendermode(gmvis::core::GMDensityRenderMode renderMode);
+		void set_density_range_auto(float autoperc=0.75);
+		void set_density_range_manual(float min, float max);
+		void set_density_logarithmic(bool logarithmic);
 		void set_density_accthreshold(bool automatic, float threshold);
 		void set_pointclouds(py::array_t<float> pointclouds);
 		void set_pointclouds_from_paths(py::list paths);
@@ -50,11 +56,13 @@ namespace gmvis::pylib {
 		std::queue<std::function<void()>> m_commandrequests;
 		std::mutex m_commandrequests_mutex;
 		bool m_cameraAuto = false;
+		bool m_densityAuto = false;
+		float m_densityAutoPerc = 0.75;
 
 		void pushCommand(std::function<void()> cmd);
 		py::array_t<float> processRenderRequest(int epoch);
 		void visThread();
-		void calculateCameraPositionByPointcloud(int index);
+		void calculateAutoCameraPosition(int index);
 		void cleanup();
 
 	};

@@ -57,11 +57,11 @@ namespace gmvis::pylib {
 		std::unique_ptr<QOpenGLDebugLogger> m_debugLogger;
 
 		//Settings
-		bool m_sDisplayEllipsoids = true;
+		bool m_sDisplayEllipsoids = false;
 		bool m_sDisplayEllipsoids_Points = true;
 		bool m_sDisplayGMPositions = false;
 		bool m_sDisplayGMPositions_Points = true;
-		bool m_sDisplayDensity = true;
+		bool m_sDisplayDensity = false;
 
 		//Renderers
 		std::unique_ptr<core::PointCloudRenderer> m_pointcloudRenderer;

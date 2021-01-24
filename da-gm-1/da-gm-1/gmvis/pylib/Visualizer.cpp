@@ -26,10 +26,12 @@ Visualizer::Visualizer(bool async, int width, int height)
 		m_surface = std::make_unique<OffscreenRenderSurface>();
 		m_surface->initialize(width, height);
 	});
-	set_ellipsoid_rendering(true, true);
-	set_ellipsoid_coloring(GMColoringRenderMode::COLOR_UNIFORM, GMColorRangeMode::RANGE_MANUAL, 0.0f, 1.0f);
-	set_density_rendering(true, GMDensityRenderMode::ADDITIVE_EXACT);
-	set_density_coloring(true, 0.9f, 0.0f, 0.5f);
+	set_ellipsoids_rendering(true, true);
+	set_ellipsoids_colormode(GMColoringRenderMode::COLOR_UNIFORM);
+	set_ellipsoids_rangemode(GMColorRangeMode::RANGE_MANUAL, 0.0f, 1.0f);
+	set_density_rendering(true);
+	set_density_rendermode(GMDensityRenderMode::ADDITIVE_EXACT);
+	set_density_range_auto(0.75f);
 }
 
 gmvis::pylib::Visualizer::Visualizer(Visualizer& v)
@@ -69,6 +71,19 @@ void Visualizer::set_view_matrix(py::array_t<float> viewmat)
 	});
 }
 
+void Visualizer::set_camera_lookat(std::tuple<float, float, float> position, std::tuple<float, float, float> lookAt, std::tuple<float, float, float> up)
+{
+	pushCommand([this, position, lookAt, up]() {
+		QMatrix4x4 qmat;
+		qmat.lookAt(
+			QVector3D(std::get<0>(position), std::get<1>(position), std::get<2>(position)), 
+			QVector3D(std::get<0>(lookAt), std::get<1>(lookAt), std::get<2>(lookAt)),
+			QVector3D(std::get<0>(up), std::get<1>(up), std::get<2>(up)));
+		m_surface->getCamera()->setViewMatrix(qmat);
+		m_cameraAuto = false;
+	});
+}
+
 void Visualizer::set_camera_auto(bool camauto)
 {
 	pushCommand([this, camauto]() {
@@ -76,19 +91,25 @@ void Visualizer::set_camera_auto(bool camauto)
 	});
 }
 
-void Visualizer::set_ellipsoid_rendering(bool ellipsoids, bool pointcloud)
+void Visualizer::set_ellipsoids_rendering(bool ellipsoids, bool pointcloud)
 {
 	pushCommand([this, ellipsoids, pointcloud] {
 		m_surface->setEllipsoidDisplayEnabled(ellipsoids, pointcloud);
 	});
 }
 
-void Visualizer::set_ellipsoid_coloring(GMColoringRenderMode colorMode, GMColorRangeMode rangeMode, float min, float max)
+void Visualizer::set_ellipsoids_colormode(GMColoringRenderMode colorMode)
 {
-	pushCommand([this, colorMode, rangeMode, min, max] {
+	pushCommand([this, colorMode] {
 		m_surface->getGMIsoellipsoidRenderer()->setRenderMode(colorMode);
+	});
+}
+
+void Visualizer::set_ellipsoids_rangemode(gmvis::core::GMColorRangeMode rangeMode, float min, float max)
+{
+	pushCommand([this, rangeMode, min, max] {
 		m_surface->getGMIsoellipsoidRenderer()->setRangeMode(rangeMode);
-		if (rangeMode == GMColorRangeMode::RANGE_MANUAL) {
+		if (min < max) {
 			m_surface->getGMIsoellipsoidRenderer()->setEllMin(min);
 			m_surface->getGMIsoellipsoidRenderer()->setEllMax(max);
 		}
@@ -99,46 +120,63 @@ void gmvis::pylib::Visualizer::set_positions_rendering(bool positions, bool poin
 {
 	pushCommand([this, positions, pointcloud] {
 		m_surface->setGMPositionsDisplayEnabled(positions, pointcloud);
-		});
+	});
 }
 
-void Visualizer::set_positions_coloring(GMColoringRenderMode colorMode, GMColorRangeMode rangeMode, float min, float max)
+void Visualizer::set_positions_colormode(GMColoringRenderMode colorMode)
 {
-	pushCommand([this, colorMode, rangeMode, min, max] {
-		m_surface->getGMPositionsRenderer()->setRenderMode(colorMode);
+	pushCommand([this, colorMode] {
+		m_surface->getGMIsoellipsoidRenderer()->setRenderMode(colorMode);
+	});
+}
+
+void Visualizer::set_positions_rangemode(GMColorRangeMode rangeMode, float min, float max)
+{
+	pushCommand([this, rangeMode, min, max] {
 		m_surface->getGMPositionsRenderer()->setRangeMode(rangeMode);
-		if (rangeMode == GMColorRangeMode::RANGE_MANUAL) {
+		if (min < max) {
 			m_surface->getGMPositionsRenderer()->setEllMin(min);
 			m_surface->getGMPositionsRenderer()->setEllMax(max);
 		}
 	});
 }
 
-void Visualizer::set_density_rendering(bool density, GMDensityRenderMode renderMode)
+void Visualizer::set_density_rendering(bool density)
 {
-	pushCommand([this, density, renderMode] {
+	pushCommand([this, density] {
 		m_surface->setDensityDisplayEnabled(density);
-		if (density) {
-			m_surface->getGMDensityRenderer()->setRenderMode(renderMode);
-		}
 	});
-
 }
 
-void Visualizer::set_density_coloring(bool automatic, float autoperc, float min, float max)
+void Visualizer::set_density_rendermode(GMDensityRenderMode renderMode)
 {
-	pushCommand([this, automatic, autoperc, min, max] {
-		m_surface->getGMDensityRenderer()->setDensityAuto(automatic);
-		if (automatic) {
-			m_surface->getGMDensityRenderer()->setDensityAutoPercentage(autoperc);
-		}
-		else {
-			m_surface->getGMDensityRenderer()->setDensityMin(min);
-			m_surface->getGMDensityRenderer()->setDensityMax(max);
-		}
-		});
+	pushCommand([this, renderMode] {
+		m_surface->getGMDensityRenderer()->setRenderMode(renderMode);
+	});
+}
 
+void Visualizer::set_density_range_auto(float autoperc)
+{
+	pushCommand([this, autoperc] {
+		m_densityAuto = true;
+		m_densityAutoPerc = autoperc;
+	});
+}
 
+void Visualizer::set_density_range_manual(float min, float max)
+{
+	pushCommand([this, min, max] {
+		m_densityAuto = false;
+		m_surface->getGMDensityRenderer()->setDensityMin(min, true);
+		m_surface->getGMDensityRenderer()->setDensityMax(max, true);
+	});
+}
+
+void Visualizer::set_density_logarithmic(bool logarithmic)
+{
+	pushCommand([this, logarithmic] {
+		m_surface->getGMDensityRenderer()->setLogarithmic(logarithmic);
+	});
 }
 
 void Visualizer::set_density_accthreshold(bool automatic, float threshold)
@@ -148,7 +186,7 @@ void Visualizer::set_density_accthreshold(bool automatic, float threshold)
 		if (automatic) {
 			m_surface->getGMDensityRenderer()->setAccelerationThreshold(threshold);
 		}
-		});
+	});
 }
 
 void Visualizer::set_pointclouds(py::array_t<float> pointclouds)
@@ -304,9 +342,23 @@ py::array_t<float> Visualizer::processRenderRequest(int epoch)
 			m_surface->setPointcloud(m_pointclouds[i].get());
 		}
 		if (m_cameraAuto) {
-			calculateCameraPositionByPointcloud(i);
+			calculateAutoCameraPosition(i);
 		}
 		m_surface->setMixture(m_mixtures[i].get());
+		if (m_surface->isDensityDisplayEnabled() && m_densityAuto) {
+			auto renderer = m_surface->getGMDensityRenderer();
+			if (renderer->getLogarithmic()) {
+				double dlmin = renderer->getSuggestedDensityLogMinLimit();
+				double dlmax = renderer->getSuggestedDensityLogMaxLimit();
+				renderer->setDensityMin((dlmin + (dlmax - dlmin) * m_densityAutoPerc));
+				renderer->setDensityMax(dlmax);
+			}
+			else {
+				double newval = renderer->getSuggestedDensityMaxLimit() * (1 - m_densityAutoPerc);
+				renderer->setDensityMin(0);
+				renderer->setDensityMax(newval);
+			}
+		}
 		std::vector<std::unique_ptr<Image>> pixeldata = m_surface->render();
 		//Save!
 		if (m_callback) {
@@ -382,12 +434,17 @@ void Visualizer::visThread()
 	pyprint("Visualizer: Thread stopped");
 }
 
-void Visualizer::calculateCameraPositionByPointcloud(int index)
+void Visualizer::calculateAutoCameraPosition(int index)
 {
 	if (m_pointclouds.size() > index) {
 		PointCloud* pc = m_pointclouds[index].get();
 		QVector3D min = pc->getBBMin();
 		QVector3D max = pc->getBBMax();
+		m_surface->getCamera()->setPositionByBoundingBox(min, max);
+	}
+	else {
+		QVector3D min, max;
+		m_mixtures[index]->computePositionsBoundingBox(min, max);
 		m_surface->getCamera()->setPositionByBoundingBox(min, max);
 	}
 }

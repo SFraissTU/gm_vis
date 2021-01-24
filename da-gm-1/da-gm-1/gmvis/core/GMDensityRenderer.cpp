@@ -200,19 +200,24 @@ void GMDensityRenderer::cleanup()
 	m_raycastRenderer.cleanup();
 }
 
-void GMDensityRenderer::setDensityMin(double densityMin)
+void GMDensityRenderer::setDensityMin(double densityMin, bool both)
 {
 	(m_sLogarithmic ? m_sDensityMinLog : m_sDensityMin) = densityMin;
-	if (m_sAccThreshAuto && m_sLogarithmic)
-	{
+	if (both) {
+		(!m_sLogarithmic ? m_sDensityMinLog : m_sDensityMin) = densityMin;
+	}
+	if (m_sAccThreshAuto && (m_sLogarithmic || both)) {
 		m_sAccThresholdLog = std::max(exp(m_sDensityMinLog) * 0.01, 1e-15);
 	}
 }
 
-void GMDensityRenderer::setDensityMax(double densityMax)
+void GMDensityRenderer::setDensityMax(double densityMax, bool both)
 {
 	(m_sLogarithmic ? m_sDensityMaxLog : m_sDensityMax) = densityMax;
-	if (m_sAccThreshAuto && !m_sLogarithmic) {
+	if (both) {
+		(!m_sLogarithmic ? m_sDensityMaxLog : m_sDensityMax) = densityMax;
+	}
+	if (m_sAccThreshAuto && (!m_sLogarithmic || both)) {
 		m_sAccThreshold = std::max(m_sDensityMax * 0.0001, 0.000000000001);
 	}
 }
