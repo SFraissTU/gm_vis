@@ -56,16 +56,18 @@ void GMDensityRenderer::initialize()
 void GMDensityRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 {
 	m_mixture = mixture;
-	m_rasterizeRenderer.setMixture(mixture, m_sAccThreshold);
+	m_rasterizeRenderer.setMixture(mixture, getAccelerationThreshold());
 	m_raycastRenderer.setMixture(mixture);
 	QVector3D bbmin, bbmax;
 	m_mixture->computePositionsBoundingBox(bbmin, bbmax);
 	QVector3D bbextend = bbmax - bbmin;
 	float x = (bbextend.x() * bbextend.y() * bbextend.z());
 	float y = bbextend.lengthSquared();
-	m_sDensitySuggestedMax = 1777 / bbextend.lengthSquared();// / (bbextend.x() * bbextend.y() * bbextend.z());
+	m_sDensitySuggestedMax = 17.77 / bbextend.lengthSquared();// / (bbextend.x() * bbextend.y() * bbextend.z());
 	m_sDensityMaxLog = 2.536 - std::log(y);
 	m_sDensityMinLog = m_sDensityMaxLog - 10;
+	m_sDensitySuggestedLogMin = m_sDensityMinLog - 20;
+	m_sDensitySuggestedLogMax = m_sDensityMaxLog;
 }
 
 bool gmvis::core::GMDensityRenderer::hasMixture() const
@@ -172,7 +174,7 @@ void GMDensityRenderer::setRenderMode(GMDensityRenderMode mode)
 		break;
 	case GMDensityRenderMode::ADDITIVE_ACC_PROJECTED:
 		m_raycastRenderer.disableAccelerationStructure();
-		m_rasterizeRenderer.updateAccelerationData(m_sAccThreshold);
+		m_rasterizeRenderer.updateAccelerationData(getAccelerationThreshold());
 		break;
 	default:
 		qDebug() << "Unsupported Render Mode\n";
@@ -185,7 +187,7 @@ void GMDensityRenderer::updateAccelerationData()
 		m_raycastRenderer.rebuildAccelerationStructure();
 	}
 	else if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_PROJECTED) {
-		m_rasterizeRenderer.updateAccelerationData(m_sAccThreshold);
+		m_rasterizeRenderer.updateAccelerationData(getAccelerationThreshold());
 	}
 }
 
@@ -201,12 +203,16 @@ void GMDensityRenderer::cleanup()
 void GMDensityRenderer::setDensityMin(double densityMin)
 {
 	(m_sLogarithmic ? m_sDensityMinLog : m_sDensityMin) = densityMin;
+	if (m_sAccThreshAuto && m_sLogarithmic)
+	{
+		m_sAccThresholdLog = std::max(exp(m_sDensityMinLog) * 0.01, 1e-15);
+	}
 }
 
 void GMDensityRenderer::setDensityMax(double densityMax)
 {
 	(m_sLogarithmic ? m_sDensityMaxLog : m_sDensityMax) = densityMax;
-	if (m_sAccThreshAuto) {
+	if (m_sAccThreshAuto && !m_sLogarithmic) {
 		m_sAccThreshold = std::max(m_sDensityMax * 0.0001, 0.000000000001);
 	}
 }
@@ -233,7 +239,7 @@ void GMDensityRenderer::setDensityAutoPercentage(double percentage)
 
 void GMDensityRenderer::setAccelerationThreshold(double accThreshold)
 {
-	m_sAccThreshold = accThreshold;
+	(m_sLogarithmic ? m_sAccThresholdLog : m_sAccThreshold) = accThreshold;
 	m_raycastRenderer.setAccelerationThreshold(accThreshold);
 }
 
@@ -242,6 +248,7 @@ void GMDensityRenderer::setAccelerationThresholdAuto(bool accThreshAuto)
 	m_sAccThreshAuto = accThreshAuto;
 	if (m_sAccThreshAuto) {
 		m_sAccThreshold = m_sDensityMax * 0.0001;
+		m_sAccThresholdLog = std::max(exp(m_sDensityMinLog) * 0.01, 1e-15);
 	}
 }
 
@@ -282,7 +289,7 @@ const double& GMDensityRenderer::getDensityAutoPercentage() const
 
 const double& GMDensityRenderer::getAccelerationThreshold() const
 {
-	return m_sAccThreshold;
+	return m_sLogarithmic ? m_sAccThresholdLog : m_sAccThreshold;
 }
 
 const bool& GMDensityRenderer::getAccelerationThresholdAuto() const
@@ -303,6 +310,16 @@ const bool& gmvis::core::GMDensityRenderer::getLogarithmic() const
 const double& gmvis::core::GMDensityRenderer::getSuggestedDensityMaxLimit() const
 {
 	return m_sDensitySuggestedMax;
+}
+
+const double& gmvis::core::GMDensityRenderer::getSuggestedDensityLogMinLimit() const
+{
+	return m_sDensitySuggestedLogMin;
+}
+
+const double& gmvis::core::GMDensityRenderer::getSuggestedDensityLogMaxLimit() const
+{
+	return m_sDensitySuggestedLogMax;
 }
 
 bool GMDensityRenderer::isAccelerated(GMDensityRenderMode mode)

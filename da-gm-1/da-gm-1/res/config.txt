@@ -1,2 +1,0 @@
-default_pc_path=D:\Simon\Studium\S-11 (WS19-20)\Diplomarbeit\data\dataset_test\pointclouds
-default_gm_path=D:\Simon\Studium\S-11 (WS19-20)\Diplomarbeit\data\dataset_test\logs

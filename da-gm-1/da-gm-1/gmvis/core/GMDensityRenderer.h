@@ -27,6 +27,8 @@ namespace gmvis::core {
 		const bool& getDensityCutoff() const;
 		const bool& getLogarithmic() const;
 		const double& getSuggestedDensityMaxLimit() const;
+		const double& getSuggestedDensityLogMinLimit() const;
+		const double& getSuggestedDensityLogMaxLimit() const;
 
 		void setRenderMode(GMDensityRenderMode mode);
 		void setDensityMin(double densityMin);
@@ -59,10 +61,13 @@ namespace gmvis::core {
 		bool   m_sDensityAuto = false;
 		double m_sDensityAutoPerc = 0.9;
 		double m_sAccThreshold = 0.0000005;
+		double m_sAccThresholdLog = -1000;
 		bool   m_sAccThreshAuto = true;
 		bool   m_sDensityCutoff = false;
 		bool   m_sLogarithmic = false;
-		float  m_sDensitySuggestedMax = 1.0;
+		double m_sDensitySuggestedMax = 1.0;
+		double m_sDensitySuggestedLogMin = -4000;
+		double m_sDensitySuggestedLogMax = 0;
 
 		ScreenFBO m_fbo_intermediate;
 		ScreenFBO m_fbo_final;

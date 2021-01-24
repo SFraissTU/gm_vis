@@ -72,6 +72,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	//(void)connect(ui.cb_dscaleauto, SIGNAL(stateChanged(int)), this, SLOT(slotDensityAutoChanged()));
 	(void)connect(ui.sl_dscalepercentage, SIGNAL(valueChanged(int)), this, SLOT(slotDensitySliderChanged()));
 	(void)connect(ui.cb_dlog, SIGNAL(stateChanged(int)), this, SLOT(slotDensityLogModeChanged()));
+	(void)connect(ui.btn_densityreset, SIGNAL(clicked()), this, SLOT(slotResetDensity()));
 
 	(void)connect(ui.co_densrendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotDensityRenderModeChanged()));
 	(void)connect(ui.co_ellrendermode, SIGNAL(currentIndexChanged(int)), this, SLOT(slotEllipsoidRenderModeChanged()));
@@ -106,38 +107,8 @@ void VisualizerWindow::slotLoadMixtureModel()
 	bool hasprevmix = (mixture.get() != nullptr);
 	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture Model", config.value("openGmDirectory").toString(), "*.ply");
 	if (!filename.isNull()) {
-		int slashidx = std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
-		config.setValue("openGmDirectory", filename.left(slashidx));
 		auto newGauss = DataLoader::readGMfromPLY<DECIMAL_TYPE>(filename, true, false);
-		if (newGauss) {
-			mixture = std::move(newGauss);
-			ui.openGLWidget->setMixture(mixture.get());
-			auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
-			ui.spin_ellmin->blockSignals(true);
-			ui.spin_ellmax->blockSignals(true);
-			ui.spin_ellmin->setValue(isoren->getEllMin());
-			ui.spin_ellmax->setValue(isoren->getEllMax());
-			ui.spin_ellmin->blockSignals(false);
-			ui.spin_ellmax->blockSignals(false);
-			lineDirectory = filename.left(slashidx);
-			QRegularExpression re("pcgmm-0-\\d{5}.ply$");
-			if (re.match(filename).hasMatch()) {
-				int id = filename.mid(filename.length() - 9, 5).toInt();
-				ui.openGLWidget->getLineRenderer()->setMaxIteration(id);
-			}
-			else {
-				ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
-			}
-			auto densrenderer = ui.openGLWidget->getGMDensityRenderer();
-			if (!ui.openGLWidget->isPointDisplayEnabled() || pointcloud == nullptr) {
-				QVector3D min, max;
-				mixture->computePositionsBoundingBox(min, max);
-				ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
-			}
-			slotDensitySliderChanged();
-			setWindowTitle("GMVis: " + filename.right(filename.length() - slashidx - 1));
-			ui.openGLWidget->update();
-		}
+		setNewMixture(newGauss, filename);
 	}
 }
 
@@ -146,38 +117,8 @@ void VisualizerWindow::slotLoadPureMixture()
 	bool hasprevmix = (mixture.get() != nullptr);
 	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", config.value("openGmDirectory").toString(), "*.ply");
 	if (!filename.isNull()) {
-		int slashidx = std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"));
-		config.setValue("openGmDirectory", filename.left(slashidx));
 		auto newGauss = DataLoader::readGMfromPLY<DECIMAL_TYPE>(filename, false, false);
-		if (newGauss) {
-			mixture = std::move(newGauss);
-			ui.openGLWidget->setMixture(mixture.get());
-			auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
-			ui.spin_ellmin->blockSignals(true);
-			ui.spin_ellmax->blockSignals(true);
-			ui.spin_ellmin->setValue(isoren->getEllMin());
-			ui.spin_ellmax->setValue(isoren->getEllMax());
-			ui.spin_ellmin->blockSignals(false);
-			ui.spin_ellmax->blockSignals(false);
-			lineDirectory = filename.left(slashidx);
-			QRegularExpression re("pcgmm-0-\\d{5}.ply$");
-			if (re.match(filename).hasMatch()) {
-				int id = filename.mid(filename.length() - 9, 5).toInt();
-				ui.openGLWidget->getLineRenderer()->setMaxIteration(id);
-			}
-			else {
-				ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
-			}
-			auto densrenderer = ui.openGLWidget->getGMDensityRenderer();
-			if (!ui.openGLWidget->isPointDisplayEnabled() || pointcloud == nullptr) {
-				QVector3D min, max;
-				mixture->computePositionsBoundingBox(min, max);
-				ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
-			}
-			slotDensitySliderChanged();	//update values
-			setWindowTitle("GMVis: " + filename.right(filename.length() - slashidx - 1));
-			ui.openGLWidget->update();
-		}
+		setNewMixture(newGauss, filename);
 	}
 }
 
@@ -347,12 +288,21 @@ void gmvis::ui::VisualizerWindow::slotDensitySliderChanged()
 	}
 	else
 	{
-		//this will trigger slotDensityValuesChanged for update of values in renderer
 		auto renderer = ui.openGLWidget->getGMDensityRenderer();
-		float newval = renderer->getSuggestedDensityMaxLimit() * 0.01 * (100 - ui.sl_dscalepercentage->value());
-		if (newval > ui.spin_dscalemin->value())
-		{
-			ui.spin_dscalemax->setValue(newval);
+		if (ui.cb_dlog->isChecked()) {
+			double dlmin = renderer->getSuggestedDensityLogMinLimit();
+			double dlmax = renderer->getSuggestedDensityLogMaxLimit();
+			double newval = (100 * dlmin + (dlmax - dlmin) * (ui.sl_dscalepercentage->value())); //As we multiply our values with 100, we don't need to divide by 100
+			if (newval < ui.spin_dscalemax->value()) {
+				ui.spin_dscalemin->setValue(newval);
+			}
+		}
+		else {
+			//this will trigger slotDensityValuesChanged for update of values in renderer
+			double newval = renderer->getSuggestedDensityMaxLimit() * (100 - ui.sl_dscalepercentage->value());
+			if (newval > ui.spin_dscalemin->value()) {
+				ui.spin_dscalemax->setValue(newval);
+			}
 		}
 	}
 }
@@ -371,9 +321,19 @@ void VisualizerWindow::slotDensityValuesChanged()
 		slotAccelerationThresholdChanged(false);
 	}
 	//if (!ui.cb_dscaleauto->isChecked()) {
-	ui.sl_dscalepercentage->blockSignals(true);
-	ui.sl_dscalepercentage->setValue(100 - 100 * (ui.spin_dscalemax->value() / renderer->getSuggestedDensityMaxLimit()));
-	ui.sl_dscalepercentage->blockSignals(false);
+	if (ui.cb_dlog->isChecked()) {
+		ui.sl_dscalepercentage->blockSignals(true);
+		double dlmin = renderer->getSuggestedDensityLogMinLimit();
+		double dlmax = renderer->getSuggestedDensityLogMaxLimit();
+		double newpercval = 100 * (0.01 * ui.spin_dscalemin->value() - dlmin) / (dlmax - dlmin);
+		ui.sl_dscalepercentage->setValue(newpercval);
+		ui.sl_dscalepercentage->blockSignals(false);
+	}
+	else {
+		ui.sl_dscalepercentage->blockSignals(true);
+		ui.sl_dscalepercentage->setValue(100 - (ui.spin_dscalemax->value() / renderer->getSuggestedDensityMaxLimit()));
+		ui.sl_dscalepercentage->blockSignals(false);
+	}
 	ui.openGLWidget->update();
 	//}
 }
@@ -406,7 +366,8 @@ void gmvis::ui::VisualizerWindow::slotDensityLogModeChanged()
 	ui.spin_isoslidermax->setEnabled(!log);
 	ui.spin_dscalemin->blockSignals(false);
 	ui.spin_dscalemax->blockSignals(false);
-	ui.openGLWidget->update();
+	slotDensitySliderChanged();
+	slotDensityValuesChanged();
 }
 
 void VisualizerWindow::slotDensityRenderModeChanged()
@@ -419,9 +380,11 @@ void VisualizerWindow::slotDensityRenderModeChanged()
 void VisualizerWindow::slotAccelerationThresholdChanged(bool update)
 {
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
-	renderer->setAccelerationThreshold(0.01 * ui.spin_accthreshold->value());
+	if (!ui.cb_accthauto->isChecked())
+	{
+		renderer->setAccelerationThreshold(0.01 * ui.spin_accthreshold->value());
+	}
 	renderer->updateAccelerationData();
-	//if (!ui.cb_accthauto->isChecked() || !ui.cb_dscaleauto->isChecked()) {
 	if (update) {
 		ui.openGLWidget->update();
 	}
@@ -464,4 +427,70 @@ void VisualizerWindow::slotPostRender()
 		ui.spin_dscalemin->blockSignals(false);
 		ui.spin_dscalemax->blockSignals(false);
 	}*/
+}
+
+void gmvis::ui::VisualizerWindow::slotResetDensity()
+{
+	auto densrenderer = ui.openGLWidget->getGMDensityRenderer();
+	densrenderer->setLogarithmic(true);
+	double dlmin = densrenderer->getSuggestedDensityLogMinLimit();
+	double dlmax = densrenderer->getSuggestedDensityLogMaxLimit();
+	densrenderer->setDensityMin(dlmin + (dlmax - dlmin) * 0.75);
+	densrenderer->setDensityMax(dlmax);
+	densrenderer->setLogarithmic(false);
+	double dnmax = densrenderer->getSuggestedDensityMaxLimit();
+	densrenderer->setDensityMin(0);
+	densrenderer->setDensityMax(dnmax * 0.25);
+	densrenderer->setLogarithmic(ui.cb_dlog->isChecked());
+	ui.sl_dscalepercentage->blockSignals(true);
+	ui.spin_dscalemin->blockSignals(true);
+	ui.spin_dscalemax->blockSignals(true);
+	ui.sl_dscalepercentage->setValue(75);
+	ui.spin_dscalemin->setValue(densrenderer->getDensityMin() * 100);
+	ui.spin_dscalemax->setValue(densrenderer->getDensityMax() * 100);
+	ui.sl_dscalepercentage->blockSignals(false);
+	ui.spin_dscalemin->blockSignals(false);
+	ui.spin_dscalemax->blockSignals(false);
+	if (ui.cb_accthauto->isChecked()) {
+		ui.spin_accthreshold->blockSignals(true);
+		ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * 100);
+		ui.spin_accthreshold->blockSignals(false);
+		slotAccelerationThresholdChanged(false);
+	}
+	ui.openGLWidget->update();
+}
+
+void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>>& newGauss, const QString& fileLoadedFrom)
+{
+	int slashidx = std::max(fileLoadedFrom.lastIndexOf("/"), fileLoadedFrom.lastIndexOf("\\"));
+	config.setValue("openGmDirectory", fileLoadedFrom.left(slashidx));
+	if (newGauss)
+	{
+		mixture = std::move(newGauss);
+		ui.openGLWidget->setMixture(mixture.get());
+		auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
+		ui.spin_ellmin->blockSignals(true);
+		ui.spin_ellmax->blockSignals(true);
+		ui.spin_ellmin->setValue(isoren->getEllMin());
+		ui.spin_ellmax->setValue(isoren->getEllMax());
+		ui.spin_ellmin->blockSignals(false);
+		ui.spin_ellmax->blockSignals(false);
+		lineDirectory = fileLoadedFrom.left(slashidx);
+		QRegularExpression re("pcgmm-0-\\d{5}.ply$");
+		if (re.match(fileLoadedFrom).hasMatch()) {
+			int id = fileLoadedFrom.mid(fileLoadedFrom.length() - 9, 5).toInt();
+			ui.openGLWidget->getLineRenderer()->setMaxIteration(id);
+		}
+		else {
+			ui.openGLWidget->getLineRenderer()->setMaxIteration(-1);
+		}
+		auto densrenderer = ui.openGLWidget->getGMDensityRenderer();
+		if (!ui.openGLWidget->isPointDisplayEnabled() || pointcloud == nullptr) {
+			QVector3D min, max;
+			mixture->computePositionsBoundingBox(min, max);
+			ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
+		}
+		setWindowTitle("GMVis: " + fileLoadedFrom.right(fileLoadedFrom.length() - slashidx - 1));
+		slotResetDensity();	//calls update()
+	}
 }

@@ -1367,7 +1367,7 @@ QProgressBar::chunk
                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                    </property>
                    <property name="decimals">
-                    <number>10</number>
+                    <number>15</number>
                    </property>
                    <property name="minimum">
                     <double>0.000000000000000</double>
@@ -1508,6 +1508,33 @@ QProgressBar::chunk
                     <string>Logarithmic</string>
                    </property>
                   </widget>
+                 </item>
+                 <item row="6" column="1">
+                  <layout class="QHBoxLayout" name="horizontalLayout_6">
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <spacer name="horizontalSpacer_11">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="btn_densityreset">
+                     <property name="text">
+                      <string>Reset Values</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                 </layout>
                </widget>
@@ -1697,7 +1724,7 @@ QProgressBar::chunk
          <x>0</x>
          <y>0</y>
          <width>248</width>
-         <height>562</height>
+         <height>523</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_4">
@@ -1805,7 +1832,7 @@ QProgressBar::chunk
          <x>0</x>
          <y>0</y>
          <width>208</width>
-         <height>562</height>
+         <height>523</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">

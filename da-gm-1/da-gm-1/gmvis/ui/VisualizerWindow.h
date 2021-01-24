@@ -38,6 +38,7 @@ namespace gmvis::ui {
 		void slotIsoValueChanged();
 		void slotIsoSliderChanged();
 		void slotPostRender();
+		void slotResetDensity();
 
 	private:
 		Ui::VisualizerWindowClass ui;
@@ -47,5 +48,7 @@ namespace gmvis::ui {
 		QSettings config;
 
 		QString lineDirectory;
+
+		void setNewMixture(std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>>& newGauss, const QString& fileLoadedFrom);
 	};
 }
