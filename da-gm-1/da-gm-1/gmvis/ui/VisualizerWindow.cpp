@@ -90,6 +90,7 @@ void VisualizerWindow::slotLoadPointcloud() {
 	QString filename = QFileDialog::getOpenFileName(this, "Load Pointcloud", config.value("openPcDirectory").toString(), "*.off");
 	if (!filename.isNull()) {
 		config.setValue("openPcDirectory", filename.left(std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"))));
+		ui.le_pcfile->setText(filename);
 		auto newPC = DataLoader::readPCDfromOFF(filename, false);
 		if (newPC) {
 			bool hasoldpc = pointcloud != nullptr;
@@ -464,6 +465,7 @@ void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMi
 {
 	int slashidx = std::max(fileLoadedFrom.lastIndexOf("/"), fileLoadedFrom.lastIndexOf("\\"));
 	config.setValue("openGmDirectory", fileLoadedFrom.left(slashidx));
+	ui.le_mixfile->setText(fileLoadedFrom);
 	if (newGauss)
 	{
 		mixture = std::move(newGauss);

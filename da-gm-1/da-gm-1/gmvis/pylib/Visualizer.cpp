@@ -26,10 +26,13 @@ Visualizer::Visualizer(bool async, int width, int height)
 		m_surface = std::make_unique<OffscreenRenderSurface>();
 		m_surface->initialize(width, height);
 	});
-	set_ellipsoids_rendering(true, true);
+	set_ellipsoids_rendering(false, true);
 	set_ellipsoids_colormode(GMColoringRenderMode::COLOR_UNIFORM);
 	set_ellipsoids_rangemode(GMColorRangeMode::RANGE_MANUAL, 0.0f, 1.0f);
-	set_density_rendering(true);
+	set_positions_rendering(false, true);
+	set_positions_colormode(GMColoringRenderMode::COLOR_UNIFORM);
+	set_positions_rangemode(GMColorRangeMode::RANGE_MANUAL, 0.0f, 1.0f);
+	set_density_rendering(false);
 	set_density_rendermode(GMDensityRenderMode::ADDITIVE_EXACT);
 	set_density_range_auto(0.75f);
 }
@@ -126,7 +129,7 @@ void gmvis::pylib::Visualizer::set_positions_rendering(bool positions, bool poin
 void Visualizer::set_positions_colormode(GMColoringRenderMode colorMode)
 {
 	pushCommand([this, colorMode] {
-		m_surface->getGMIsoellipsoidRenderer()->setRenderMode(colorMode);
+		m_surface->getGMPositionsRenderer()->setRenderMode(colorMode);
 	});
 }
 
