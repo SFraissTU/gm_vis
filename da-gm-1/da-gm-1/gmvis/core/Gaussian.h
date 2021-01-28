@@ -53,6 +53,8 @@ namespace gmvis::core {
 
 		const EGVector& getPosition() const;
 
+		const EGMatrix& getCovarianceMatrix() const;
+
 		const decimal& getAmplitude() const;
 
 		const decimal& getNormalizedWeight() const;

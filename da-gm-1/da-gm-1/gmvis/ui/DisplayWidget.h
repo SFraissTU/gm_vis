@@ -35,6 +35,7 @@ namespace gmvis::ui {
 		void setGMPositionsDisplayEnabled(bool enabled);
 		void setIsosurfaceDisplayEnabled(bool enabled);
 		void setDensityDisplayEnabled(bool enabled);
+		void setPickingEnabled(bool enabled);
 		
 		bool isPointDisplayEnabled() const;
 		bool isEllipsoidDisplayEnabled() const;
@@ -79,6 +80,7 @@ namespace gmvis::ui {
 		bool m_sDisplayGMPositions = false;
 		bool m_sDisplayIsosurface = false;
 		bool m_sDisplayDensity = true;
+		bool m_picking = false;
 
 		//Renderers
 		std::unique_ptr<core::PointCloudRenderer> m_pointcloudRenderer;

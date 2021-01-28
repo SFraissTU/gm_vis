@@ -33,6 +33,8 @@ namespace gmvis::core {
 		void setEllMax(double max);
 		void setRangeMode(GMColorRangeMode rangeMode);
 
+		void setMarkedGaussian(int index);
+
 	private:
 		QOpenGLFunctions_4_5_Core* m_gl;
 		Camera* m_camera;
@@ -64,6 +66,7 @@ namespace gmvis::core {
 		int m_locSurfaceColor;
 		int m_locTransferTex;
 		int m_locEyePos;
+		int m_locMarkedGaussian;
 
 		//Settings
 		QColor					 m_sUniformColor = QColor(100, 100, 255);
@@ -73,5 +76,7 @@ namespace gmvis::core {
 		double m_sEllMax = 0.05;
 		GMColorRangeMode m_sRangeMode = GMColorRangeMode::RANGE_MINMAX;
 		bool m_sLightDirectionAuto = true;
+
+		int m_markedGaussian = -1;
 	};
 }

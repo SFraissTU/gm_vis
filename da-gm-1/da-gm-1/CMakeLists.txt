@@ -26,7 +26,8 @@ set(UI_FILES
     gmvis/ui/main.cpp
     gmvis/ui/DisplayWidget.h
     gmvis/ui/DisplayWidget.cpp
-)
+    gmvis/ui/GaussianListItem.h
+    gmvis/ui/GaussianListItem.cpp)
 
 set(PY_FILES
     gmvis/pylib/PythonInterface.h

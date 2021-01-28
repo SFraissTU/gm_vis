@@ -66,6 +66,11 @@ void DisplayWidget::setDensityDisplayEnabled(bool enabled)
 	m_sDisplayDensity = enabled;
 }
 
+void gmvis::ui::DisplayWidget::setPickingEnabled(bool enabled)
+{
+	m_picking = enabled;
+}
+
 bool DisplayWidget::isPointDisplayEnabled() const
 {
 	return m_sDisplayPoints;
@@ -288,12 +293,9 @@ void DisplayWidget::resizeGL(int width, int height)
 void DisplayWidget::mousePressEvent(QMouseEvent* event)
 {
 	m_lastPos = event->pos();
-	if (event->modifiers().testFlag(Qt::ShiftModifier) && m_sDisplayGMPositions) {
+	if (m_picking && (m_sDisplayGMPositions || m_sDisplayEllipsoids)) {
 		
-		if (event->button() == Qt::RightButton) {
-			emit gaussianSelected(-1);
-		}
-		else {
+		if (event->button() == Qt::LeftButton) {
 			GLint defaultFbo = 0;
 			glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &defaultFbo);
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fboIntermediate->getID());
@@ -307,20 +309,8 @@ void DisplayWidget::mousePressEvent(QMouseEvent* event)
 			delete[] data;
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFbo);
 			glNamedFramebufferReadBuffer(m_fboIntermediate->getID(), GL_COLOR_ATTACHMENT0);
-			//qDebug() << index << "\n";
-			//Gaussian Info
-			if (index >= 0) {
-				qDebug() << "Selected Gaussian:\n";
-				qDebug() << "  Index: " << index << "\n";
-				const core::Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[index];
-				auto pos = gauss->getPosition();
-				qDebug() << "  Position: " << pos.x() << " / " << pos.y() << " / " << pos.z() << "\n";
-				qDebug() << "  Determinant: " << gauss->getCovDeterminant() << "\n";
-				qDebug() << "\n";
+			if (index != -1) {
 				emit gaussianSelected(index);
-			}
-			else {
-				qDebug() << "No Gaussian selected.\n";
 			}
 		}
 	}
@@ -339,7 +329,7 @@ void DisplayWidget::mouseMoveEvent(QMouseEvent* event)
 		refresh = true;
 	}
 	if (event->buttons() & Qt::MiddleButton) {
-		m_camera->zoom(- 2 * dy);
+		m_camera->zoom(-dy);
 		refresh = true;
 	}
 	if (event->buttons() & Qt::RightButton) {

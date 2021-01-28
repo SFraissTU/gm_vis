@@ -80,13 +80,13 @@ void Camera::rotateY(float amount)
 
 void Camera::zoom(float amount)
 {
-	m_radius = std::max(0.0001f, m_radius - amount);
+	m_radius = std::max(0.0001f, m_radius * powf(0.9f, amount));
 	m_viewDirty = true;
 }
 
 void Camera::translateAlongScreen(const float x, const float y)
 {
-	m_translation += x * m_right + y * m_up;
+	m_translation += x * m_right * m_transSpeed + y * m_up * m_transSpeed; //ToDo: Set Speed according to BB
 	m_viewDirty = true;
 }
 
@@ -120,7 +120,19 @@ void gmvis::core::Camera::setRadius(float radius)
 	m_viewDirty = true;
 }
 
-void gmvis::core::Camera::setPositionByBoundingBox(QVector3D min, QVector3D max)
+void gmvis::core::Camera::setTranslationSpeed(float speed)
+{
+	m_transSpeed = speed;
+}
+
+void gmvis::core::Camera::setTranslationSpeedByBoundingBox(const QVector3D& bbmin, const QVector3D& bbmax)
+{
+	QVector3D bbextend = bbmax - bbmin;
+	float len = bbextend.lengthSquared();
+	m_transSpeed = sqrt(len) / 328;
+}
+
+void gmvis::core::Camera::setPositionByBoundingBox(const QVector3D& min, const QVector3D& max)
 {
 	QVector3D center = (min + max) / 2.0;
 	QVector3D extend = (max - min) / 2.0;

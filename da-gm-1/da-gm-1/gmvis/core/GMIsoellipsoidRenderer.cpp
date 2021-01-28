@@ -23,6 +23,7 @@ void GMIsoellipsoidRenderer::initialize()
 	m_locTransferTex = m_program->uniformLocation("transferTex");
 	m_locUseInColor = m_program->uniformLocation("useInColor");
 	m_locEyePos = m_program->uniformLocation("eyePos");
+	m_locMarkedGaussian = m_program->uniformLocation("markedGaussian");
 
 	m_program->release();
 
@@ -116,6 +117,7 @@ void GMIsoellipsoidRenderer::initialize()
 void GMIsoellipsoidRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 {	
 	m_mixture = mixture;
+	m_markedGaussian = -1;
 	int n = mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	QVector<QMatrix4x4> normalTransfs;
@@ -176,11 +178,20 @@ void GMIsoellipsoidRenderer::setRangeMode(GMColorRangeMode rangeMode)
 	m_sRangeMode = rangeMode;
 }
 
+void gmvis::core::GMIsoellipsoidRenderer::setMarkedGaussian(int index)
+{
+	m_markedGaussian = index;
+}
+
 void GMIsoellipsoidRenderer::render()
 {
 	if (!m_mixture) {
 		return;
 	}
+
+	GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+	m_gl->glDrawBuffers(2, buffers);
+
 	m_gm_vao.bind();
 	m_program->bind();
 	if (m_sLightDirectionAuto) {
@@ -194,6 +205,7 @@ void GMIsoellipsoidRenderer::render()
 	m_program->setUniformValue(m_locEyePos, m_camera->getPosition());
 	m_program->setUniformValue(m_locSurfaceColor, m_sUniformColor);
 	m_program->setUniformValue(m_locUseInColor, (m_sRenderMode != GMColoringRenderMode::COLOR_UNIFORM));
+	m_program->setUniformValue(m_locMarkedGaussian, m_markedGaussian);
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
 	m_program->setUniformValue(m_locTransferTex, 0);

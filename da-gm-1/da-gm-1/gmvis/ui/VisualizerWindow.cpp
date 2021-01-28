@@ -3,6 +3,7 @@
 #include <QDoubleValidator>
 #include <QComboBox>
 #include <QMessageBox>
+#include "GaussianListItem.h"
 
 using namespace gmvis::ui;
 using namespace gmvis::core;
@@ -83,6 +84,10 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.spin_isoslidermax, SIGNAL(valueChanged(double)), this, SLOT(slotIsoSliderChanged()));
 	(void)connect(ui.sl_isovalue, SIGNAL(valueChanged(int)), this, SLOT(slotIsoSliderChanged()));
 
+	(void)connect(ui.list_gaussians, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(slotListGaussianSelected(QListWidgetItem*)));
+	(void)connect(ui.btn_pick, SIGNAL(clicked(bool)), this, SLOT(slotTogglePickGaussian(bool)));
+	(void)connect(ui.btn_clearsel, SIGNAL(clicked(bool)), this, SLOT(slotClearSelection()));
+
 	(void)connect(ui.openGLWidget, SIGNAL(frameSwapped()), this, SLOT(slotPostRender()));
 }
 
@@ -97,7 +102,10 @@ void VisualizerWindow::slotLoadPointcloud() {
 			pointcloud = std::move(newPC);
 			ui.openGLWidget->getPointCloudRenderer()->setPointCloud(pointcloud.get());
 			if (ui.openGLWidget->isPointDisplayEnabled() && (!hasoldpc || !ui.openGLWidget->isGMVisibleInAnyWay() || !mixture)) {
-				ui.openGLWidget->getCamera()->setPositionByBoundingBox(pointcloud->getBBMin(), pointcloud->getBBMax());
+				auto bbmin = pointcloud->getBBMin();
+				auto bbmax = pointcloud->getBBMax();
+				ui.openGLWidget->getCamera()->setPositionByBoundingBox(bbmin, bbmax);
+				ui.openGLWidget->getCamera()->setTranslationSpeedByBoundingBox(bbmin, bbmax);
 			}
 		}
 	}
@@ -151,7 +159,8 @@ void gmvis::ui::VisualizerWindow::slotChooseLineDirectory()
 
 void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
 {
-	if (lineDirectory.isNull()) return;
+	ui.list_gaussians->setCurrentRow(index);
+	/*if (lineDirectory.isNull()) return;
 
 	if (index == -1) {
 		line = nullptr;
@@ -172,7 +181,7 @@ void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
 	}
 	else {
 		QMessageBox::critical(this, "Empty Line", "Read-in Line is empty or does not exist");
-	}
+	}*/
 }
 
 void VisualizerWindow::slotDisplayOptionsChanged()
@@ -461,6 +470,33 @@ void gmvis::ui::VisualizerWindow::slotResetDensity()
 	ui.openGLWidget->update();
 }
 
+void gmvis::ui::VisualizerWindow::slotListGaussianSelected(QListWidgetItem* item)
+{
+	auto gitem = dynamic_cast<GaussianListItem*>(item);
+	if (gitem) {
+		ui.txt_output->setPlainText(gitem->getDescription());
+		int selectedGaussian = gitem->getIndex();
+		ui.openGLWidget->getGMIsoellipsoidRenderer()->setMarkedGaussian(selectedGaussian);
+		ui.openGLWidget->getGMPositionsRenderer()->setMarkedGaussian(selectedGaussian);
+	}
+	else {
+		ui.openGLWidget->getGMIsoellipsoidRenderer()->setMarkedGaussian(-1);
+		ui.openGLWidget->getGMPositionsRenderer()->setMarkedGaussian(-1);
+		ui.txt_output->setPlainText(QString());
+	}
+	ui.openGLWidget->update();
+}
+
+void gmvis::ui::VisualizerWindow::slotTogglePickGaussian(bool checked)
+{
+	ui.openGLWidget->setPickingEnabled(checked);
+}
+
+void gmvis::ui::VisualizerWindow::slotClearSelection()
+{
+	ui.list_gaussians->setCurrentRow(-1);
+}
+
 void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>>& newGauss, const QString& fileLoadedFrom)
 {
 	int slashidx = std::max(fileLoadedFrom.lastIndexOf("/"), fileLoadedFrom.lastIndexOf("\\"));
@@ -491,6 +527,14 @@ void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMi
 			QVector3D min, max;
 			mixture->computePositionsBoundingBox(min, max);
 			ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
+			ui.openGLWidget->getCamera()->setTranslationSpeedByBoundingBox(min, max);
+		}
+		//Fill Gaussian List
+		ui.list_gaussians->clear();
+		for (int i = 0; i < mixture->numberOfGaussians(); ++i)
+		{
+			GaussianListItem* item = new GaussianListItem(i, (*mixture)[i]);
+			ui.list_gaussians->addItem(item);
 		}
 		setWindowTitle("GMVis: " + fileLoadedFrom.right(fileLoadedFrom.length() - slashidx - 1));
 		slotResetDensity();	//calls update()

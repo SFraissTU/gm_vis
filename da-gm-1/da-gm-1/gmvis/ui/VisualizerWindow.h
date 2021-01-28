@@ -6,6 +6,7 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_VisualizerWindow.h"
 #include <QSettings>
+#include "GaussianListItem.h"
 
 namespace gmvis::ui {
 
@@ -39,6 +40,9 @@ namespace gmvis::ui {
 		void slotIsoSliderChanged();
 		void slotPostRender();
 		void slotResetDensity();
+		void slotListGaussianSelected(QListWidgetItem* item);
+		void slotTogglePickGaussian(bool checked);
+		void slotClearSelection();
 
 	private:
 		Ui::VisualizerWindowClass ui;

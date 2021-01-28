@@ -3,6 +3,7 @@
 #include <qvector3d.h>
 
 namespace gmvis::core {
+
 	class Camera {
 	public:
 		Camera();
@@ -27,8 +28,10 @@ namespace gmvis::core {
 		void setXRotation(float xRot);
 		void setYRotation(float yRot);
 		void setRadius(float radius);
+		void setTranslationSpeed(float speed);
+		void setTranslationSpeedByBoundingBox(const QVector3D& min, const QVector3D& max);
 
-		void setPositionByBoundingBox(QVector3D min, QVector3D max);
+		void setPositionByBoundingBox(const QVector3D& min, const QVector3D& max);
 
 		const QMatrix4x4& getViewMatrix();
 		const QMatrix4x4& getProjMatrix() const;
@@ -56,6 +59,7 @@ namespace gmvis::core {
 		float m_xRot = 90.0f;
 		float m_yRot = 0;
 		float m_radius = 40.0f;
+		float m_transSpeed = 0.005f;
 		QVector3D m_translation = QVector3D(0, 0, 0);
 
 		void recalculateProjectionMatrix();

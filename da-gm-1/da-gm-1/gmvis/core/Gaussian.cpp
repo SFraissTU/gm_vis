@@ -94,6 +94,15 @@ const EGVector& gmvis::core::Gaussian<decimal>::getPosition() const
 template const Eigen::Vector3f& Gaussian<float>::getPosition() const;
 template const Eigen::Vector3d& Gaussian<double>::getPosition() const;
 
+template<typename decimal>
+const EGMatrix& gmvis::core::Gaussian<decimal>::getCovarianceMatrix() const
+{
+	return m_covariancematrix;
+}
+
+template const Eigen::Matrix3f& Gaussian<float>::getCovarianceMatrix() const;
+template const Eigen::Matrix3d& Gaussian<double>::getCovarianceMatrix() const;
+
 template <typename decimal>
 const decimal& gmvis::core::Gaussian<decimal>::getAmplitude() const
 {

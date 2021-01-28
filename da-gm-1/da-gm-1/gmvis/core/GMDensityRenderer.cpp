@@ -61,10 +61,9 @@ void GMDensityRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 	QVector3D bbmin, bbmax;
 	m_mixture->computePositionsBoundingBox(bbmin, bbmax);
 	QVector3D bbextend = bbmax - bbmin;
-	float x = (bbextend.x() * bbextend.y() * bbextend.z());
-	float y = bbextend.lengthSquared();
-	m_sDensitySuggestedMax = 17.77 / bbextend.lengthSquared();// / (bbextend.x() * bbextend.y() * bbextend.z());
-	m_sDensityMaxLog = 2.536 - std::log(y);
+	float len = bbextend.lengthSquared();
+	m_sDensitySuggestedMax = 17.77 / len;
+	m_sDensityMaxLog = 2.536 - std::log(len);
 	m_sDensityMinLog = m_sDensityMaxLog - 10;
 	m_sDensitySuggestedLogMin = m_sDensityMinLog - 20;
 	m_sDensitySuggestedLogMax = m_sDensityMaxLog;

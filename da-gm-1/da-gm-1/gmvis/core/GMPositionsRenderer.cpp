@@ -21,6 +21,7 @@ void GMPositionsRenderer::initialize()
 	m_locSurfaceColor = m_program->uniformLocation("surfaceColor");
 	m_locTransferTex = m_program->uniformLocation("transferTex");
 	m_locUseInColor = m_program->uniformLocation("useInColor");
+	m_locMarkedGaussian = m_program->uniformLocation("markedGaussian");
 
 	m_program->release();
 
@@ -60,6 +61,7 @@ void GMPositionsRenderer::initialize()
 void GMPositionsRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 {
 	m_mixture = mixture;
+	m_markedGaussian = -1;
 
 	m_gm_vao.bind();
 	m_pos_vbo.bind();
@@ -98,6 +100,11 @@ void GMPositionsRenderer::setRangeMode(GMColorRangeMode rangeMode)
 	m_sRangeMode = rangeMode;
 }
 
+void gmvis::core::GMPositionsRenderer::setMarkedGaussian(int index)
+{
+	m_markedGaussian = index;
+}
+
 void GMPositionsRenderer::render()
 {
 	if (!m_mixture) {
@@ -113,6 +120,7 @@ void GMPositionsRenderer::render()
 	m_program->setUniformValue(m_locViewMatrix, m_camera->getViewMatrix());
 	m_program->setUniformValue(m_locSurfaceColor, m_sUniformColor);
 	m_program->setUniformValue(m_locUseInColor, (m_sRenderMode != GMColoringRenderMode::COLOR_UNIFORM));
+	m_program->setUniformValue(m_locMarkedGaussian, m_markedGaussian);
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
 	m_program->setUniformValue(m_locTransferTex, 0);
