@@ -175,6 +175,11 @@ const QMatrix4x4& Camera::getProjMatrix() const
 	return m_proj;
 }
 
+const QVector3D& gmvis::core::Camera::getLookAt() const
+{
+	return m_translation;
+}
+
 const QVector3D& gmvis::core::Camera::getPosition()
 {
 	if (m_viewDirty) {

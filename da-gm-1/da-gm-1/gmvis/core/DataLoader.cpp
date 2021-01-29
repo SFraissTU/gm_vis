@@ -7,6 +7,15 @@
 
 using namespace gmvis::core;
 
+#define DL_THROW_ERR(err) std::stringstream ss; \
+ss << err; \
+error = QString::fromStdString(ss.str()); \
+return {};
+
+#define DL_GIVE_WARNING(err) std::stringstream ss; \
+ss << err; \
+error = QString::fromStdString(ss.str());
+
 QMap<QString, QString> gmvis::core::DataLoader::readConfigFile(const QString& path)
 {
 	QMap<QString, QString> map;
@@ -27,22 +36,20 @@ QMap<QString, QString> gmvis::core::DataLoader::readConfigFile(const QString& pa
 	return map;
 }
 
-std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(QFile& file, bool convertCoordinateSystem)
+std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(QFile& file, bool convertCoordinateSystem, QString& error)
 {
 	if (file.open(QIODevice::ReadOnly)) {
 		QTextStream in(&file);
 		//Check Format
 		QString line = in.readLine();
 		if (line.toUpper() != "OFF") {
-			qDebug() << "Invalid format in file " << file.fileName() << "\n";
-			return {};
+			DL_THROW_ERR("Invalid format in file " << file.fileName().toStdString());
 		}
 		line = in.readLine();
 		bool ok;
 		int amount = line.split(" ").at(0).toInt(&ok);
 		if (!ok) {
-			qDebug() << "Could not read amount of points in file " << file.fileName() << "\n";
-			return {};
+			DL_THROW_ERR("Could not read amount of points in file " << file.fileName().toStdString());
 		}
 		point_list result;
 		result.reserve(amount);
@@ -50,23 +57,19 @@ std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(QFile& file, bool convert
 			line = in.readLine();
 			QStringList numbers = line.split(" ");
 			if (numbers.size() != 3) {
-				qDebug() << "Invalid number of coordinates given in line " << (result.size() + 2) << " of file " << file.fileName() << "\n";
-				return {};
+				DL_THROW_ERR("Invalid number of coordinates given in line " << (result.size() + 2) << " of file " << file.fileName().toStdString());
 			}
 			float px = numbers[0].toFloat(&ok);
 			if (!ok) {
-				qDebug() << "Invalid coordinates in line " << (result.size() + 2) << " of file " << file.fileName() << "\n";
-				return {};
+				DL_THROW_ERR("Invalid coordinates in line " << (result.size() + 2) << " of file " << file.fileName().toStdString());
 			}
 			float py = numbers[1].toFloat(&ok);
 			if (!ok) {
-				qDebug() << "Invalid coordinates in line " << (result.size() + 2) << " of file " << file.fileName() << "\n";
-				return {};
+				DL_THROW_ERR("Invalid coordinates in line " << (result.size() + 2) << " of file " << file.fileName().toStdString());
 			}
 			float pz = numbers[2].toFloat(&ok);
 			if (!ok) {
-				qDebug() << "Invalid coordinates in line " << (result.size() + 2) << " of file " << file.fileName() << "\n";
-				return {};
+				DL_THROW_ERR("Invalid coordinates in line " << (result.size() + 2) << " of file " << file.fileName().toStdString());
 			}
 			if (convertCoordinateSystem) {
 				result.push_back(point_item(px, pz, -py));
@@ -76,32 +79,30 @@ std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(QFile& file, bool convert
 			}
 		}
 		if (result.size() != amount) {
-			qDebug() << "Number of points invalid in file " << file.fileName() << "\n";
+			DL_GIVE_WARNING("Number of points invalid in file " << file.fileName().toStdString());
 		}
-		return std::move(std::make_unique<PointCloud>(result));	//ToDo: is move necessary?
+		return std::move(std::make_unique<PointCloud>(result));
 	}
 	else {
-		qDebug() << "Could not open file: " << file.fileName() << "\n";
-		return nullptr;
+		DL_THROW_ERR("Could not open file: " << file.fileName().toStdString());
 	}
 }
 
-std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(const QString& path, bool convertCoordinateSystem)
+std::unique_ptr<PointCloud> DataLoader::readPCDfromOFF(const QString& path, bool convertCoordinateSystem, QString& error)
 {
 	QFile file(path);
-	return readPCDfromOFF(file, convertCoordinateSystem);
+	return readPCDfromOFF(file, convertCoordinateSystem, error);
 }
 
 template <typename decimal>
-std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem)
+std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem, QString& error)
 {
 	if (file.open(QIODevice::ReadOnly)) {
 		QTextStream in(&file);
 
 		QString line = in.readLine();
 		if (line.toUpper() != "PLY") {
-			qDebug() << "Invalid format in file " << file.fileName() << "\n";
-			return {};
+			DL_THROW_ERR("Invalid format in file " << file.fileName().toStdString());
 		}
 		std::vector<RawGaussian<decimal>> rawGaussians;
 		int numberOfGaussians = 0;
@@ -117,32 +118,27 @@ std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(QFile& file,
 			QString type = words[0];
 			if (type == "format") {
 				if (words.length() < 3 || words[1] != "ascii" || words[2] != "1.0") {
-					qDebug() << "Format in ply file " << file.fileName() << " not supported. Only supports ascii 1.0. \n";
-					return {};
+					DL_THROW_ERR("Format in ply file " << file.fileName().toStdString() << " not supported. Only supports ascii 1.0.")
 				}
 			}
 			else if (type == "element") {
 				if (words.length() < 2 || words[1] != "component") {
-					qDebug() << "Invalid element type in ply file " << file.fileName() << ". Only supports component.\n";
-					return {};
+					DL_THROW_ERR("Invalid element type in ply file " << file.fileName().toStdString() << ". Only supports component")
 				}
 				if (words.length() < 3) {
-					qDebug() << "Invalid format: No component count given in ply file " << file.fileName() << ".\n";
-					return {};
+					DL_THROW_ERR("Invalid format: No component count given in ply file " << file.fileName().toStdString())
 				}
 				bool ok; 
 				int number = words[2].toInt(&ok);
 				if (!ok) {
-					qDebug() << "Invalid number of components given in ply file " << file.fileName() << ".\n";
-					return {};
+					DL_THROW_ERR("Invalid number of components given in ply file " << file.fileName().toStdString())
 				}
 				numberOfGaussians = number;
 				remainingGaussians = number;
 			}
 			else if (type == "property") {
 				if (words.length() != 3) {
-					qDebug() << "Invalid property specification in ply file " << file.fileName() << ".\n";
-					return {};
+					DL_THROW_ERR("Invalid property specification in ply file " << file.fileName().toStdString())
 				}
 				if ((words[1] == "float" || words[1] == "double") && supportedProperties.contains(words[2])) {
 					properties.append(words[2]);
@@ -150,12 +146,12 @@ std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(QFile& file,
 					auto tpname = QString(typeid(decimal).name()).trimmed();
 					if (words[1] != tpname)
 					{
-						qDebug() << "Warning: Reading " << words[1] << " as " << tpname << ".\n";
+						DL_GIVE_WARNING("Warning: Reading " << words[1].toStdString() << " as " << tpname.toStdString() << ".");
 					}
 				}
 				else {
 					if (!ignoredProperties.contains(words[2])) {
-						qDebug() << "Unknown property " << words[2] << " in ply file " << file.fileName() << ". Ignoring.\n";
+						DL_GIVE_WARNING("Unknown property " << words[2].toStdString() << " in ply file " << file.fileName().toStdString() << ". Ignoring.");
 					}
 					properties.append(QString());
 				}
@@ -165,25 +161,23 @@ std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(QFile& file,
 				//Check if all necessary properties are specified
 				for (auto it = supportedProperties.constBegin(); it != supportedProperties.constEnd(); ++it) {
 					if (!properties.contains(*it)) {
-						qDebug() << "No property definition given for property " << *it << " in file " << file.fileName() << ".\n";
+						DL_GIVE_WARNING("No property definition given for property " << it->toStdString() << " in file " << file.fileName().toStdString() << ".");
 					}
 				}
 			}
 			else if (type != "comment") {
-				qDebug() << "Unknown command in ply file " << file.fileName() << ": " << type << ". Ignoring.\n";
+				DL_GIVE_WARNING("Unknown command in ply file " << file.fileName().toStdString() << ": " << type.toStdString() << ". Ignoring.");
 			}
 		}
 		if (processing_header) {
-			qDebug() << "File was ended before finished reading file " << file.fileName() << "\n.";
-			return {};
+			DL_THROW_ERR("File was ended before finished reading file " << file.fileName().toStdString());
 		}
 		while (remainingGaussians > 0 && !in.atEnd()) {
 			line = in.readLine();
 			QStringList words = line.split("  ");
 			words.removeAll(QString(""));
 			if (words.length() != properties.length()) {
-				qDebug() << "Not every property was given for an entry in ply file " << file.fileName() << "\n.";
-				return {};
+				DL_THROW_ERR("Not every property was given for an entry in ply file " << file.fileName().toStdString());
 			}
 			RawGaussian<decimal> newGaussian;
 			for (int i = 0; i < words.length(); ++i) {
@@ -191,8 +185,7 @@ std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(QFile& file,
 					bool ok;
 					decimal val = strToDecimal<decimal>(words[i], &ok);
 					if (!ok) {
-						qDebug() << "A value could not be transformed into a decimal in ply file " << file.fileName() << "\n.";
-						return {};
+						DL_THROW_ERR("A value could not be transformed into a decimal in ply file " << file.fileName().toStdString());
 					}
 					if (properties[i] == "x") {
 						newGaussian.mux = val;
@@ -264,39 +257,37 @@ std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(QFile& file,
 			--remainingGaussians;
 		}
 		if (remainingGaussians > 0) {
-			qDebug() << "End of file was reached before all Gaussians were read in file " << file.fileName() << ".\n";
-			return {};
+			DL_THROW_ERR("End of file was reached before all Gaussians were read in file " << file.fileName().toStdString())
 		}
 		//The weights are multiplied by the amount of points, so we have to normalize them
 		if (isgmm) {
 			RawGaussian<decimal>::normalize(rawGaussians);
 		}
 		std::unique_ptr<GaussianMixture<decimal>> mixture = std::make_unique<GaussianMixture<decimal>>(rawGaussians, isgmm);
-		qDebug() << "Successfully read " << mixture->numberOfGaussians() << " Gaussians from " << file.fileName() << ".\n";
 		if (!mixture->isValid())
 		{
-			qDebug() << "Warning: Mixture is not valid!\n";
+			DL_GIVE_WARNING("Warning: Mixture contains invalid Gaussians!");
 		}
 		return std::move(mixture);
 	}
 	else {
-		qDebug() << "Could not open file: " << file.fileName() << "\n";
+		DL_THROW_ERR("Could not open file: " << file.fileName().toStdString())
 	}
 	return std::unique_ptr<GaussianMixture<decimal>>();
 }
 
-template std::unique_ptr<GaussianMixture<float>> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem);
-template std::unique_ptr<GaussianMixture<double>> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem);
+template std::unique_ptr<GaussianMixture<float>> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem, QString& error);
+template std::unique_ptr<GaussianMixture<double>> DataLoader::readGMfromPLY(QFile& file, bool isgmm, bool convertCoordinateSystem, QString& error);
 
 template <typename decimal>
-std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem)
+std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem, QString& error)
 {
 	QFile file(path);
-	return readGMfromPLY<decimal>(file, isgmm, convertCoordinateSystem);
+	return readGMfromPLY<decimal>(file, isgmm, convertCoordinateSystem, error);
 }
 
-template std::unique_ptr<GaussianMixture<float>> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem);
-template std::unique_ptr<GaussianMixture<double>> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem);
+template std::unique_ptr<GaussianMixture<float>> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem, QString& error);
+template std::unique_ptr<GaussianMixture<double>> DataLoader::readGMfromPLY(const QString& path, bool isgmm, bool convertCoordinateSystem, QString& error);
 
 template<> 
 double gmvis::core::DataLoader::strToDecimal<double>(QString str, bool* ok)

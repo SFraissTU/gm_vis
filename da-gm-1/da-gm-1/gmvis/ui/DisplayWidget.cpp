@@ -195,6 +195,8 @@ void DisplayWidget::initializeGL() {
 	
 	auto background = QColor(0, 0, 0);
 	glClearColor(background.redF(), background.blueF(), background.greenF(), 1);
+
+	emit cameraMoved(m_camera.get());
 }
 
 void DisplayWidget::paintGL()
@@ -337,6 +339,7 @@ void DisplayWidget::mouseMoveEvent(QMouseEvent* event)
 		refresh = true;
 	}
 	if (refresh) {
+		emit cameraMoved(m_camera.get());
 		update();
 		m_lastPos = event->pos();
 	}

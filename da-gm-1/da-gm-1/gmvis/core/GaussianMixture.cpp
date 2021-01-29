@@ -46,18 +46,18 @@ template double GaussianMixture<double>::sample(double x, double y, double z) co
 template <typename decimal>
 bool gmvis::core::GaussianMixture<decimal>::isValid() const
 {
-	decimal weightsum = 0.0;
+	//decimal weightsum = 0.0;
 	for (int i = 0; i < gaussians.size(); ++i) {
 		const Gaussian<decimal>& gauss = gaussians[i];
 		if (!gauss.checkValidity()) {
 			return false;
 		}
-		weightsum += gauss.getNormalizedWeight();
+		//weightsum += gauss.getNormalizedWeight();
 	}
-	if (abs(weightsum - 1.0) > 0.01)
+	/*if (abs(weightsum - 1.0) > 0.01)
 	{
 		return false;
-	}
+	}*/
 	return true;
 }
 

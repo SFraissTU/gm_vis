@@ -43,6 +43,8 @@ namespace gmvis::ui {
 		void slotListGaussianSelected(QListWidgetItem* item);
 		void slotTogglePickGaussian(bool checked);
 		void slotClearSelection();
+		void slotResetCamera();
+		void slotCameraMoved(core::Camera* camera);
 
 	private:
 		Ui::VisualizerWindowClass ui;

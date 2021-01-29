@@ -42,9 +42,9 @@ void LineRenderer::setLineStrip(LineStrip* linestrip)
 		m_gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, linestrip->getSinglePointSize(), 0);
 		m_ls_vbo.release();
 		m_ls_vao.release();
-		if (m_maxiteration > linestrip->getPointCount()) {
+		/*if (m_maxiteration > linestrip->getPointCount()) {
 			qDebug() << "Not enough points in line strip!\n";
-		}
+		}*/
 	}
 	m_linestrip = linestrip;
 }

@@ -643,7 +643,7 @@ QListView
 {
 	background-color: qlineargradient(spread:repeat, x1:1, y1:0, x2:1, y2:1, stop:0 rgba(83, 83, 83, 255),stop:0.293269 rgba(81, 81, 81, 255),stop:0.634615 rgba(79, 79, 79, 255),stop:1 rgba(83, 83, 83, 255));
     border : none;
-    color: white;
+    /*color: white;*/
     show-decoration-selected: 1; 
     outline: 0;
 	border: 1px solid gray;
@@ -679,7 +679,6 @@ QListView::item:selected
 {
 	background-color: #e6eaa6;
 	border: 1px solid #e6eaa6;
-	color: #fff;
 
 }
 
@@ -688,7 +687,6 @@ QListView::item:selected:!active
 {
 	background-color: #e6eaa6;
 	border: 1px solid #e6eaa6;
-	color: #fff;
 
 }
 
@@ -697,7 +695,6 @@ QListView::item:selected:active
 {
 	background-color: #e6eaa6;
 	border: 1px solid #e6eaa6;
-	color: #fff;
 
 }
 
@@ -705,7 +702,6 @@ QListView::item:selected:active
 QListView::item:hover {
     background-color: #262626;
     border: none;
-    color: white;
 
 }
 
@@ -1943,6 +1939,41 @@ QProgressBar::chunk
               <string>Isosurface</string>
              </property>
              <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_3">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Camera</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QPushButton" name="btn_camReset">
+             <property name="text">
+              <string>Reset Camera</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPlainTextEdit" name="txt_caminfo">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="readOnly">
               <bool>true</bool>
              </property>
             </widget>

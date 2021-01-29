@@ -59,6 +59,7 @@ namespace gmvis::ui {
 
 	signals:
 		void gaussianSelected(int index);
+		void cameraMoved(core::Camera* camera);
 
 	protected:
 		void initializeGL() override;
