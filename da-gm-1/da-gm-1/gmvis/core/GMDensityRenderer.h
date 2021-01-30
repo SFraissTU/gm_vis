@@ -42,6 +42,7 @@ namespace gmvis::core {
 		void setAccelerationThresholdAuto(bool accThreshAuto);
 		void setDensityCutoff(bool cutoff);
 		void setLogarithmic(bool log);
+		void setWhiteMode(bool white);
 
 
 		static bool isAccelerated(GMDensityRenderMode mode);
@@ -69,6 +70,7 @@ namespace gmvis::core {
 		double m_sDensitySuggestedMax = 1.0;
 		double m_sDensitySuggestedLogMin = -4000;
 		double m_sDensitySuggestedLogMax = 0;
+		bool   m_sWhiteMode = false;
 
 		ScreenFBO m_fbo_intermediate;
 		ScreenFBO m_fbo_final;
@@ -84,6 +86,7 @@ namespace gmvis::core {
 		GLuint m_col_locDensityMax;
 		GLuint m_col_locCutoff;
 		GLuint m_col_locLogarithmic;
+		GLuint m_col_locWhiteMode;
 
 		GLuint m_texTransfer;
 

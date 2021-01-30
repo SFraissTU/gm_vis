@@ -4,7 +4,7 @@
 using namespace gmvis::core;
 
 Camera::Camera()
-	: m_fov(60.0f), m_aspectRatio(1), m_near(0.1), m_far(1000)
+	: m_fov(60.0f), m_aspectRatio(1), m_near(0.1), m_far(100000)
 {
 	recalculateProjectionMatrix();
 }

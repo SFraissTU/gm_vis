@@ -48,6 +48,12 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.spin_isoslidermax->setValue(0.001);
 	ui.sl_isovalue->setValue(isosurfacerenderer->getIsolevel() / 0.001 * 100);
 
+#if _DEBUG:
+	auto dbgmenu = ui.menuBar->addMenu("Debug Options");
+	auto fpsbtn = dbgmenu->addAction("Toggle Render Time Printing");
+	(void)connect(fpsbtn, SIGNAL(triggered()), this, SLOT(slotToggleFPS()));
+#endif
+
 
 	(void)connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(slotLoadPointcloud()));
 	(void)connect(ui.loadMixtureModelAction, SIGNAL(triggered()), this, SLOT(slotLoadMixtureModel()));
@@ -93,6 +99,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 
 	(void)connect(ui.btn_hidezero, SIGNAL(clicked(bool)), this, SLOT(slotHideZeroGaussians(bool)));
 	(void)connect(ui.btn_hideinvalid, SIGNAL(clicked(bool)), this, SLOT(slotHideInvalidGaussians(bool)));
+	(void)connect(ui.btn_backgr, SIGNAL(clicked()), this, SLOT(slotToggleBackground()));
 
 	(void)connect(ui.openGLWidget, SIGNAL(frameSwapped()), this, SLOT(slotPostRender()));
 }
@@ -455,6 +462,7 @@ void VisualizerWindow::slotPostRender()
 void gmvis::ui::VisualizerWindow::slotResetDensity()
 {
 	auto densrenderer = ui.openGLWidget->getGMDensityRenderer();
+	densrenderer->setMixture(mixture.get(), true);
 	densrenderer->setLogarithmic(true);
 	double dlmin = densrenderer->getSuggestedDensityLogMinLimit();
 	double dlmax = densrenderer->getSuggestedDensityLogMaxLimit();
@@ -586,15 +594,28 @@ void gmvis::ui::VisualizerWindow::slotHideInvalidGaussians(bool checked)
 	}
 }
 
+void gmvis::ui::VisualizerWindow::slotToggleBackground()
+{
+	whiteMode = !whiteMode;
+	ui.openGLWidget->setWhiteMode(whiteMode);
+	ui.openGLWidget->update();
+}
+
+void gmvis::ui::VisualizerWindow::slotToggleFPS()
+{
+	ui.openGLWidget->toggleFps();
+}
+
 void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>>& newGauss, const QString& fileLoadedFrom)
 {
 	int slashidx = std::max(fileLoadedFrom.lastIndexOf("/"), fileLoadedFrom.lastIndexOf("\\"));
 	config.setValue("openGmDirectory", fileLoadedFrom.left(slashidx));
+	bool prevmix = mixture.get() != nullptr;
 	if (newGauss)
 	{
 		ui.le_mixfile->setText(fileLoadedFrom);
 		mixture = std::move(newGauss);
-		ui.openGLWidget->setMixture(mixture.get());
+		ui.openGLWidget->setMixture(mixture.get(), !ui.btn_lockdspoptions->isChecked() || !prevmix);
 		auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
 		ui.spin_ellmin->blockSignals(true);
 		ui.spin_ellmax->blockSignals(true);
@@ -627,6 +648,11 @@ void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMi
 			ui.list_gaussians->addItem(item);
 		}
 		setWindowTitle("GMVis: " + fileLoadedFrom.right(fileLoadedFrom.length() - slashidx - 1));
-		slotResetDensity();	//calls update()
+		if (!ui.btn_lockdspoptions->isChecked() || !prevmix) {
+			slotResetDensity();	//calls update()
+		}
+		else {
+			ui.openGLWidget->update();
+		}
 	}
 }

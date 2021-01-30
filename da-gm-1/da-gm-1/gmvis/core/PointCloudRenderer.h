@@ -30,6 +30,8 @@ namespace gmvis::core {
 		void setPointSize(float pointSize);
 		void setPointCircles(bool pointCircles);
 
+		void setWhiteMode(bool white);
+
 	private:
 		QOpenGLFunctions_4_5_Core* m_gl;
 		Camera* m_camera;

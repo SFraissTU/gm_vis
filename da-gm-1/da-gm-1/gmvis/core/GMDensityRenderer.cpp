@@ -37,6 +37,7 @@ void GMDensityRenderer::initialize()
 	m_col_locDensityMax = m_program_coloring->uniformLocation("densitymax");
 	m_col_locCutoff = m_program_coloring->uniformLocation("cutoff");
 	m_col_locLogarithmic = m_program_coloring->uniformLocation("logarithmic");
+	m_col_locWhiteMode = m_program_coloring->uniformLocation("whiteMode");
 	m_program_coloring->release();
 
 	QVector<QVector3D> transferdata = DataLoader::readTransferFunction(QString("res/transfer.txt"));
@@ -153,6 +154,7 @@ void GMDensityRenderer::render(GLuint preTexture, bool blend)
 	m_program_coloring->setUniformValue(m_col_locDensityMax, (float)(m_sLogarithmic ? m_sDensityMaxLog : m_sDensityMax));
 	m_program_coloring->setUniformValue(m_col_locCutoff, m_sDensityCutoff);
 	m_program_coloring->setUniformValue(m_col_locLogarithmic, m_sLogarithmic);
+	m_program_coloring->setUniformValue(m_col_locWhiteMode, m_sWhiteMode);
 
 	m_gl->glDispatchCompute(ceil(screenWidth / 32.0f), ceil(screenHeight / 32.0), 1);
 	m_gl->glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -272,6 +274,11 @@ void gmvis::core::GMDensityRenderer::setDensityCutoff(bool cutoff)
 void gmvis::core::GMDensityRenderer::setLogarithmic(bool log)
 {
 	m_sLogarithmic = log;
+}
+
+void gmvis::core::GMDensityRenderer::setWhiteMode(bool white)
+{
+	m_sWhiteMode = white;
 }
 
 const GMDensityRenderMode& GMDensityRenderer::getRenderMode() const

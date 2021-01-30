@@ -35,6 +35,7 @@ namespace gmvis::core {
 		void setRangeMode(GMColorRangeMode rangeMode);
 
 		void setMarkedGaussian(int index);
+		void setWhiteMode(bool white);
 
 	private:
 		QOpenGLFunctions_4_5_Core* m_gl;
@@ -68,6 +69,7 @@ namespace gmvis::core {
 		int m_locTransferTex;
 		int m_locEyePos;
 		int m_locMarkedGaussian;
+		int m_locWhiteMode;
 
 		//Settings
 		QColor					 m_sUniformColor = QColor(100, 100, 255);
@@ -80,5 +82,6 @@ namespace gmvis::core {
 		GLint m_numberOfValidGaussians;
 
 		int m_markedGaussian = -1;
+		bool m_whiteMode = false;
 	};
 }

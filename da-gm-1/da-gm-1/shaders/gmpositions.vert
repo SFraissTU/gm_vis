@@ -10,6 +10,7 @@ uniform mat4 projMatrix;
 uniform mat4 viewMatrix;
 uniform vec4 surfaceColor;
 uniform sampler1D transferTex;
+uniform bool whiteMode;
 
 void main() {
 	//Correct coordinate system
@@ -19,7 +20,11 @@ void main() {
 		frag_color = vec3(1, 0, 1);
 	} else {
 		if (useInColor) {
-			frag_color = texture(transferTex, 0.25 + 0.75*in_color).rgb;
+			if (whiteMode) {
+				frag_color = texture(transferTex, 0.75 - 0.75*in_color).rgb;
+			} else {
+				frag_color = texture(transferTex, 0.25 + 0.75*in_color).rgb;
+			}
 		} else {
 			frag_color = surfaceColor.rgb;
 		}

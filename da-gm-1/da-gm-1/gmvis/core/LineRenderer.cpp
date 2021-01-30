@@ -60,7 +60,7 @@ void LineRenderer::render(bool transparent)
 		return;
 	}
 	if (m_linestrip->getPointCount() == 0) {
-		qDebug() << "Error: empty line strip!" << "\n";
+		//qDebug() << "Error: empty line strip!" << "\n";
 		return;
 	}
 
