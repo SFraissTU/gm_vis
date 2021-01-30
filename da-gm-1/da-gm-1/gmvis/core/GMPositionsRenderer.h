@@ -17,6 +17,7 @@ namespace gmvis::core {
 		GMPositionsRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera);
 		void initialize();
 		void setMixture(GaussianMixture<DECIMAL_TYPE>* mixture);
+		void updateMixture(); //Call this when having changed the enabled gaussians settings in the mixture!
 		void updateColors();
 		void render();
 		void cleanup();
@@ -63,6 +64,7 @@ namespace gmvis::core {
 		double m_sEllMax = 0.05;
 		GMColorRangeMode m_sRangeMode = GMColorRangeMode::RANGE_MINMAX;
 		float  m_sPointSize = 5.0f;
+		GLuint m_numberOfValidGaussians = 0;
 
 		int m_markedGaussian = -1;
 	};

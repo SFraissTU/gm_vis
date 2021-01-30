@@ -1719,7 +1719,7 @@ QProgressBar::chunk
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>268</width>
+         <width>251</width>
          <height>523</height>
         </rect>
        </property>
@@ -1870,7 +1870,7 @@ QProgressBar::chunk
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>208</width>
+         <width>276</width>
          <height>523</height>
         </rect>
        </property>
@@ -1975,6 +1975,44 @@ QProgressBar::chunk
              </property>
              <property name="readOnly">
               <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_4">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>100</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Display</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QPushButton" name="btn_hidezero">
+             <property name="text">
+              <string>Hide Zero-Weight-Gaussians</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_hideinvalid">
+             <property name="text">
+              <string>Hide invalid Gaussians</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="default">
+              <bool>false</bool>
              </property>
             </widget>
            </item>

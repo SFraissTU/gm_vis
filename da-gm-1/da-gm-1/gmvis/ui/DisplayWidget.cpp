@@ -145,6 +145,14 @@ void gmvis::ui::DisplayWidget::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture
 	m_mixture = mixture;
 }
 
+void gmvis::ui::DisplayWidget::updateMixture()
+{
+	m_isoellipsoidRenderer->updateMixture();
+	m_positionsRenderer->updateMixture();
+	m_isosurfaceRenderer->updateAccelerationData(0.00001);
+	m_densityRenderer->updateMixture();
+}
+
 void DisplayWidget::cleanup() {
 	makeCurrent();
 	//This could be called several times, so make sure things are not deleted already

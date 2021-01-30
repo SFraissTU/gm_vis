@@ -43,9 +43,11 @@ gmvis::core::Gaussian<decimal>::Gaussian(EGVector mu, EGMatrix covariancematrix,
 		(float)inversecovariance(1,0), (float)inversecovariance(1,1), (float)inversecovariance(1,2), 0,
 		(float)inversecovariance(2,0), (float)inversecovariance(2,1), (float)inversecovariance(2,2), 0,
 		0.0f, 0.0f, 0.0f, 1.0f };
-	//2. Create GPU Data object
-	m_gpudata = { QVector4D((float)mu.x(), (float)mu.y(), (float)mu.z(), float(amplitude)), QMatrix4x4(covdata) };
 	m_pi = pi;
+	//2. Check Validty
+	m_valid = checkValidity();
+	//3. Create GPU Data object
+	m_gpudata = { m_valid, (m_pi != 0), QVector4D((float)mu.x(), (float)mu.y(), (float)mu.z(), float(amplitude)), QMatrix4x4(covdata) };
 
 	//---- Calculate Eigenmatrix ----
 	Eigen::EigenSolver<EGMatrixX> eigensolver;
@@ -172,6 +174,15 @@ bool Gaussian<decimal>::getBoundingBox(decimal threshold, QVector3D& min, QVecto
 
 template bool Gaussian<float>::getBoundingBox(float threshold, QVector3D& min, QVector3D& max) const;
 template bool Gaussian<double>::getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const;
+
+template<typename decimal>
+bool gmvis::core::Gaussian<decimal>::isValid() const
+{
+	return m_valid;
+}
+
+template bool Gaussian<float>::isValid() const;
+template bool Gaussian<double>::isValid() const;
 
 template <typename decimal>
 bool gmvis::core::Gaussian<decimal>::checkValidity() const

@@ -53,6 +53,7 @@ namespace gmvis::ui {
 
 		core::Camera* getCamera();
 		void setMixture(gmvis::core::GaussianMixture<DECIMAL_TYPE>* mixture);
+		void updateMixture(); //Call this when having changed the enabled gaussians settings in the mixture!
 
 	public slots:
 		void cleanup();

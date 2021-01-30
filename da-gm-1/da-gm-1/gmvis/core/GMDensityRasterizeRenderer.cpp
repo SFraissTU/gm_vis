@@ -101,12 +101,14 @@ void GMDensityRasterizeRenderer::updateAccelerationData(double accThreshold)
 	int n = m_mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	transforms.reserve(n);
-	for (int i = 0; i < n; ++i) {
+	int i = m_mixture->nextEnabledGaussianIndex(-1);
+	while(i != -1) {
 		const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
 		auto transform = gauss->getTransform(accThreshold);
 		if (transform.has_value()) {
 			transforms.push_back(transform.value());
 		}
+		i = m_mixture->nextEnabledGaussianIndex(i);
 	}
 
 	m_transf_vbo.bind();

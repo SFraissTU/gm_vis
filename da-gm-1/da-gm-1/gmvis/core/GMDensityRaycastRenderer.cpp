@@ -174,7 +174,8 @@ void GMDensityRaycastRenderer::buildAccelerationStructure()
 void GMDensityRaycastRenderer::buildUnacceleratedData()
 {
 	size_t arrsize;
-	std::shared_ptr<char[]> gpudata = m_mixture->gpuData(arrsize);
+	GLuint n;
+	std::shared_ptr<char[]> gpudata = m_mixture->gpuData(arrsize, n);
 
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
 	m_gl->glBufferData(GL_SHADER_STORAGE_BUFFER, arrsize, gpudata.get(), GL_STATIC_DRAW);

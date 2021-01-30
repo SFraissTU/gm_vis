@@ -10,7 +10,8 @@ namespace gmvis::core {
 	public:
 		GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height);
 		void initialize();
-		void setMixture(GaussianMixture<DECIMAL_TYPE>* mixture);
+		void setMixture(GaussianMixture<DECIMAL_TYPE>* mixture, bool updateScale = true);
+		void updateMixture(); //Call this when having changed the enabled gaussians settings in the mixture!
 		bool hasMixture() const;
 		void setSize(int width, int height);
 		void render(GLuint preTexture, bool blend);

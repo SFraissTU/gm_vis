@@ -27,6 +27,24 @@ void GaussianMixture<decimal>::addGaussian(const RawGaussian<decimal>& gauss)
 template void GaussianMixture<float>::addGaussian(const RawGaussian<float>& gauss);
 template void GaussianMixture<double>::addGaussian(const RawGaussian<double>& gauss);
 
+template<typename decimal>
+void gmvis::core::GaussianMixture<decimal>::setDisableInvalidGaussians(bool disable)
+{
+	disableInvalidGaussians = disable;
+}
+
+template void GaussianMixture<float>::setDisableInvalidGaussians(bool disable);
+template void GaussianMixture<double>::setDisableInvalidGaussians(bool disable);
+
+template<typename decimal>
+void gmvis::core::GaussianMixture<decimal>::setDisableZeroGaussians(bool disable)
+{
+	disableZeroGaussians = disable;
+}
+
+template void GaussianMixture<float>::setDisableZeroGaussians(bool disable);
+template void GaussianMixture<double>::setDisableZeroGaussians(bool disable);
+
 template <typename decimal>
 decimal GaussianMixture<decimal>::sample(decimal x, decimal y, decimal z) const
 {
@@ -49,7 +67,7 @@ bool gmvis::core::GaussianMixture<decimal>::isValid() const
 	//decimal weightsum = 0.0;
 	for (int i = 0; i < gaussians.size(); ++i) {
 		const Gaussian<decimal>& gauss = gaussians[i];
-		if (!gauss.checkValidity()) {
+		if (!gauss.isValid()) {
 			return false;
 		}
 		//weightsum += gauss.getNormalizedWeight();
@@ -60,6 +78,68 @@ bool gmvis::core::GaussianMixture<decimal>::isValid() const
 	}*/
 	return true;
 }
+
+template<typename decimal>
+int gmvis::core::GaussianMixture<decimal>::nextEnabledGaussianIndex(int previous) const
+{
+	for (int i = previous + 1; i < gaussians.size(); ++i)
+	{
+		const GaussianGPU& gpudata = gaussians[i].getGPUData();
+		if ((!disableInvalidGaussians || gpudata.isvalid) && (!disableZeroGaussians || gpudata.isnonzero)) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+template int GaussianMixture<float>::nextEnabledGaussianIndex(int) const;
+template int GaussianMixture<double>::nextEnabledGaussianIndex(int) const;
+
+template<typename decimal>
+int gmvis::core::GaussianMixture<decimal>::gaussIndexFromEnabledGaussIndex(int index) const
+{
+	if (!disableInvalidGaussians && !disableZeroGaussians) {
+		return index;
+	}
+	int currentenabledindex = -1;
+	for (int i = 0; i < gaussians.size(); ++i) {
+		const GaussianGPU& gpudata = gaussians[i].getGPUData();
+		if ((!disableInvalidGaussians || gpudata.isvalid) && (!disableZeroGaussians || gpudata.isnonzero)) {
+			//is enabled
+			currentenabledindex++;
+			if (currentenabledindex == index) {
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
+template int GaussianMixture<float>::gaussIndexFromEnabledGaussIndex(int) const;
+template int GaussianMixture<double>::gaussIndexFromEnabledGaussIndex(int) const;
+
+template<typename decimal>
+int gmvis::core::GaussianMixture<decimal>::enabledGaussIndexFromGaussIndex(int index) const
+{
+	if (!disableInvalidGaussians && !disableZeroGaussians) {
+		return index;
+	}
+	int currentenabledindex = -1;
+	for (int i = 0; i < gaussians.size(); ++i) {
+		const GaussianGPU& gpudata = gaussians[i].getGPUData();
+		if ((!disableInvalidGaussians || gpudata.isvalid) && (!disableZeroGaussians || gpudata.isnonzero)) {
+			//is enabled
+			currentenabledindex++;
+			if (i == index) {
+				return currentenabledindex;
+			}
+		}
+	}
+	return -1;
+}
+
+template int GaussianMixture<float>::enabledGaussIndexFromGaussIndex(int) const;
+template int GaussianMixture<double>::enabledGaussIndexFromGaussIndex(int) const;
 
 template<typename decimal>
 void gmvis::core::GaussianMixture<decimal>::computePositionsBoundingBox(QVector3D& min, QVector3D& max) const
@@ -93,24 +173,36 @@ template bool GaussianMixture<float>::isValid() const;
 template bool GaussianMixture<double>::isValid() const;
 
 template <typename decimal>
-std::shared_ptr<char[]> GaussianMixture<decimal>::gpuData(size_t& arrsize) const
+std::shared_ptr<char[]> GaussianMixture<decimal>::gpuData(size_t& arrsize, GLuint& numberOfComponents) const
 {
 	GLint n = (GLint)numberOfGaussians();
 	arrsize = 80 * n;
 	char* result = new char[arrsize];
 	char* gaussmem = result;
+	GLint filteredNumberOfGaussians = 0;
 	for (int i = 0; i < n; i++) {
 		const GaussianGPU& gpudata = gaussians[i].getGPUData();
-		memcpy(gaussmem, &gpudata.mu_alpha, 16);
-		gaussmem += 16;
-		memcpy(gaussmem, gpudata.invsigma.constData(), 64);
-		gaussmem += 64;
+		if ((!disableInvalidGaussians || gpudata.isvalid) && (!disableZeroGaussians || gpudata.isnonzero)) {
+			memcpy(gaussmem, &gpudata.mu_alpha, 16);
+			gaussmem += 16;
+			memcpy(gaussmem, gpudata.invsigma.constData(), 64);
+			gaussmem += 64;
+			filteredNumberOfGaussians++;
+		}
 	}
+	if (n != filteredNumberOfGaussians) {
+		arrsize = 80 * filteredNumberOfGaussians;
+		char* newresult = new char[arrsize];
+		memcpy(newresult, result, arrsize);
+		delete[] result;
+		result = newresult;
+	}
+	numberOfComponents = filteredNumberOfGaussians;
 	return std::shared_ptr<char[]>(result);
 }
 
-template std::shared_ptr<char[]> GaussianMixture<float>::gpuData(size_t& arrsize) const;
-template std::shared_ptr<char[]> GaussianMixture<double>::gpuData(size_t& arrsize) const;
+template std::shared_ptr<char[]> GaussianMixture<float>::gpuData(size_t& arrsize, GLuint& numberOfComponents) const;
+template std::shared_ptr<char[]> GaussianMixture<double>::gpuData(size_t& arrsize, GLuint& numberOfComponents) const;
 
 template <typename decimal>
 std::shared_ptr<char[]> GaussianMixture<decimal>::gpuData(size_t& arrsize, decimal threshold, GLuint& numberOfComponents) const {
@@ -118,7 +210,10 @@ std::shared_ptr<char[]> GaussianMixture<decimal>::gpuData(size_t& arrsize, decim
 	numberOfComponents = 0;
 	for (int i = 0; i < n; i++) {
 		if (gaussians[i].getAmplitude() > threshold) {
-			numberOfComponents++;
+			const GaussianGPU& gpudata = gaussians[i].getGPUData();
+			if ((!disableInvalidGaussians || gpudata.isvalid) && (!disableZeroGaussians || gpudata.isnonzero)) {
+				numberOfComponents++;
+			}
 		}
 	}
 	arrsize = 80 * numberOfComponents;
@@ -127,10 +222,12 @@ std::shared_ptr<char[]> GaussianMixture<decimal>::gpuData(size_t& arrsize, decim
 	for (int i = 0; i < n; i++) {
 		const GaussianGPU& gpudata = gaussians[i].getGPUData();
 		if (gaussians[i].getAmplitude() > threshold) {
-			memcpy(gaussmem, &gpudata.mu_alpha, 16);
-			gaussmem += 16;
-			memcpy(gaussmem, gpudata.invsigma.constData(), 64);
-			gaussmem += 64;
+			if ((!disableInvalidGaussians || gpudata.isvalid) && (!disableZeroGaussians || gpudata.isnonzero)) {
+				memcpy(gaussmem, &gpudata.mu_alpha, 16);
+				gaussmem += 16;
+				memcpy(gaussmem, gpudata.invsigma.constData(), 64);
+				gaussmem += 64;
+			}
 		}
 	}
 	return std::shared_ptr<char[]>(result);
@@ -140,28 +237,42 @@ template std::shared_ptr<char[]> GaussianMixture<float>::gpuData(size_t& arrsize
 template std::shared_ptr<char[]> GaussianMixture<double>::gpuData(size_t& arrsize, double threshold, GLuint& numberOfComponents) const;
 
 template <typename decimal>
-std::shared_ptr<char[]> gmvis::core::GaussianMixture<decimal>::gpuPositionData(size_t& arrsize) const
+std::shared_ptr<char[]> gmvis::core::GaussianMixture<decimal>::gpuPositionData(size_t& arrsize, GLuint& numberOfComponents) const
 {
 	GLint n = (GLint)numberOfGaussians();
 	arrsize = 16 * n;
 	char* result = new char[arrsize];
 	char* gaussmem = result;
 	float one = 1.0f;
+	GLint filteredNumberOfGaussians = 0;
 	for (int i = 0; i < n; i++) {
 		const GaussianGPU& gpudata = gaussians[i].getGPUData();
-		memcpy(gaussmem, &gpudata.mu_alpha, 12);
-		memcpy(gaussmem+12, &one, 4);
-		gaussmem += 16;
+		if ((!disableInvalidGaussians || gpudata.isvalid) && (!disableZeroGaussians || gpudata.isnonzero)) {
+			memcpy(gaussmem, &gpudata.mu_alpha, 12);
+			memcpy(gaussmem + 12, &one, 4);
+			gaussmem += 16;
+			filteredNumberOfGaussians++;
+		}
 	}
+	if (n != filteredNumberOfGaussians) {
+		arrsize = 16 * filteredNumberOfGaussians;
+		char* newresult = new char[arrsize];
+		memcpy(newresult, result, arrsize);
+		delete[] result;
+		result = newresult;
+	}
+	numberOfComponents = filteredNumberOfGaussians;
 	return std::shared_ptr<char[]>(result);
 }
 
-template std::shared_ptr<char[]> gmvis::core::GaussianMixture<float>::gpuPositionData(size_t& arrsize) const;
-template std::shared_ptr<char[]> gmvis::core::GaussianMixture<double>::gpuPositionData(size_t& arrsize) const;
+template std::shared_ptr<char[]> gmvis::core::GaussianMixture<float>::gpuPositionData(size_t& arrsize, GLuint& numberOfComponents) const;
+template std::shared_ptr<char[]> gmvis::core::GaussianMixture<double>::gpuPositionData(size_t& arrsize, GLuint& numberOfComponents) const;
 
 template <typename decimal>
 std::shared_ptr<char[]> GaussianMixture<decimal>::buildOctree(decimal threshold, QVector<GMOctreeNode>& result, size_t& arrsize) const
 {
+	//buildOctree does not ignore invalid or zero Gaussians!
+
 	QTime time;
 	time.start();
 	QVector3D absMin;
@@ -174,8 +285,8 @@ std::shared_ptr<char[]> GaussianMixture<decimal>::buildOctree(decimal threshold,
 
 	QVector<GMOctreeNode> octreelist;
 	QVector<GaussianBoundingBox> boundingBoxes;
-	int n = numberOfGaussians();
-	for (int i = 0; i < n; i++) {
+	int i = nextEnabledGaussianIndex(-1);
+	while (i != -1) {
 		GaussianBoundingBox box;
 		if (gaussians[i].getBoundingBox(threshold, box.min, box.max)) {
 			box.gaussindex = i;
@@ -187,6 +298,7 @@ std::shared_ptr<char[]> GaussianMixture<decimal>::buildOctree(decimal threshold,
 			if (box.max.y() > absMax.y()) absMax.setY(box.max.y());
 			if (box.max.z() > absMax.z()) absMax.setZ(box.max.z());
 		}
+		i = nextEnabledGaussianIndex(i);
 	}
 	//Adapt min and max such that it becomes a regular cube
 	float extent = std::max(absMax.x() - absMin.x(), std::max(absMax.y() - absMin.y(), absMax.z() - absMin.z()));
@@ -347,7 +459,7 @@ std::shared_ptr<char[]> GaussianMixture<decimal>::buildOctree(decimal threshold,
 		memcpy(gaussmem, gpudata.invsigma.constData(), 64);
 		gaussmem += 64;
 	}
-	qDebug() << "Time for building the octree: " << time.elapsed() << "ms (" << n << " Gaussians)";
+	//qDebug() << "Time for building the octree: " << time.elapsed() << "ms (" << n << " Gaussians)";
 
 	return std::shared_ptr<char[]>(gaussRes);
 }

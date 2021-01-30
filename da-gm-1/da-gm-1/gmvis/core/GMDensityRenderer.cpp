@@ -53,20 +53,28 @@ void GMDensityRenderer::initialize()
 	setRenderMode(m_sRenderMode);
 }
 
-void GMDensityRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
+void GMDensityRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture, bool updateScale)
 {
 	m_mixture = mixture;
 	m_rasterizeRenderer.setMixture(mixture, getAccelerationThreshold());
 	m_raycastRenderer.setMixture(mixture);
-	QVector3D bbmin, bbmax;
-	m_mixture->computePositionsBoundingBox(bbmin, bbmax);
-	QVector3D bbextend = bbmax - bbmin;
-	float len = bbextend.lengthSquared();
-	m_sDensitySuggestedMax = 17.77 / len;
-	m_sDensityMaxLog = 2.536 - std::log(len);
-	m_sDensityMinLog = m_sDensityMaxLog - 10;
-	m_sDensitySuggestedLogMin = m_sDensityMinLog - 20;
-	m_sDensitySuggestedLogMax = m_sDensityMaxLog;
+	if (updateScale)
+	{
+		QVector3D bbmin, bbmax;
+		m_mixture->computePositionsBoundingBox(bbmin, bbmax);
+		QVector3D bbextend = bbmax - bbmin;
+		float len = bbextend.lengthSquared();
+		m_sDensitySuggestedMax = 17.77 / len;
+		m_sDensityMaxLog = 2.536 - std::log(len);
+		m_sDensityMinLog = m_sDensityMaxLog - 10;
+		m_sDensitySuggestedLogMin = m_sDensityMinLog - 20;
+		m_sDensitySuggestedLogMax = m_sDensityMaxLog;
+	}
+}
+
+void gmvis::core::GMDensityRenderer::updateMixture()
+{
+	setMixture(m_mixture, false);
 }
 
 bool gmvis::core::GMDensityRenderer::hasMixture() const

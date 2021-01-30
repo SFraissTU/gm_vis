@@ -11,10 +11,14 @@ GaussianListItem::GaussianListItem(int index, const Gaussian<DECIMAL_TYPE>* gaus
 	auto pos = m_gaussian->getPosition();
 	stream << "#" << m_index << ": " << pos[0] << ", " << pos[1] << ", " << pos[2];
 	setText(QString::fromStdString(stream.str()));
-	if (m_gaussian->checkValidity()) {
-		setForeground(QBrush(QColor(255, 255, 255)));
-	} else {
+	if (!m_gaussian->isValid()) {
 		setForeground(QBrush(QColor(255, 0, 255)));
+	}
+	else if (m_gaussian->getNormalizedWeight() == 0) {
+		setForeground(QBrush(QColor(127, 127, 127)));
+	}
+	else {
+		setForeground(QBrush(QColor(255, 255, 255)));
 	}
 }
 

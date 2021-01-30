@@ -45,6 +45,8 @@ namespace gmvis::ui {
 		void slotClearSelection();
 		void slotResetCamera();
 		void slotCameraMoved(core::Camera* camera);
+		void slotHideZeroGaussians(bool checked);
+		void slotHideInvalidGaussians(bool checked);
 
 	private:
 		Ui::VisualizerWindowClass ui;

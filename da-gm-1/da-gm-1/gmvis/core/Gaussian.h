@@ -21,6 +21,8 @@ namespace gmvis::core {
 	Representation of a Gaussian that will be passed to the shader.
 	*/
 	struct GaussianGPU {
+		bool isvalid;
+		bool isnonzero;
 		/* First three components represent the center of the Gaussian.
 		The fourth value is the amplitude. Necessary for shader calculations */
 		QVector4D mu_alpha;
@@ -80,7 +82,7 @@ namespace gmvis::core {
 		*/
 		bool getBoundingBox(decimal threshold, QVector3D& min, QVector3D& max) const;
 
-		bool checkValidity() const;
+		bool isValid() const;
 		
 	private:
 		/* GPU data */
@@ -94,10 +96,12 @@ namespace gmvis::core {
 		/* Amplitude of this Gaussian */
 		decimal m_amplitude;
 		decimal m_pi;
+		bool m_valid;
 		/* Vectors containing the eigenvectors multiplied by their eigenvalues. */
 		QGenericMatrix<3, 3, decimal> m_eigenmatrix;
 
 		Gaussian(EGVector mu, EGMatrix covariancematrix, EGMatrix inversecovariance, decimal amplitude, decimal beta);
+		bool checkValidity() const;
 
 		static const inline decimal GAUSS_PI_FACTOR = 1.0 / pow(2 * M_PI, 3.0 / 2.0);
 	};

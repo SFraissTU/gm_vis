@@ -39,7 +39,7 @@ void main() {
 	}
 	vec3 color;
 	if (isnan(sum)) {
-		color = vec3(255, 0, 255);
+		color = vec3(1, 0, 1);
 	}
 	else if (cutoff && sum <= densitymin) {
 		color = vec3(0);

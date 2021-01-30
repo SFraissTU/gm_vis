@@ -121,26 +121,31 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 	int n = mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	QVector<QMatrix4x4> normalTransfs;
-	transforms.resize(n);
-	normalTransfs.resize(n);
-	for (int i = 0; i < n; ++i) {
+	transforms.reserve(n);
+	normalTransfs.reserve(n);
+	int i = m_mixture->nextEnabledGaussianIndex(-1);
+	while (i != -1) {
 		const Gaussian<DECIMAL_TYPE>* gauss = (*mixture)[i];
 
 		auto eigenMatrix = gauss->getEigenMatrix();
 		auto mu = gauss->getPosition();
-		transforms[i] = QMatrix4x4(
+		auto transform = QMatrix4x4(
 			(float)eigenMatrix(0, 0), (float)eigenMatrix(0,1),  (float)eigenMatrix(0,2),  (float)mu.x(),
 			(float)eigenMatrix(1, 0), (float)eigenMatrix(1,1),  (float)eigenMatrix(1, 2), (float)mu.y(),
 			(float)eigenMatrix(2, 0), (float)eigenMatrix(2, 1), (float)eigenMatrix(2, 2), (float)mu.z(),
 			0, 0, 0, 1
 		);
-		if (transforms[i].determinant() < 0) {
+		if (transform.determinant() < 0) {
 			//Mirror object so that determinant becomes positive
 			//otherwise face ordering might switch
-			transforms[i] = transforms[i] * QMatrix4x4(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
+			transform = transform * QMatrix4x4(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
 		}
-		normalTransfs[i] = transforms[i].inverted().transposed();
+		transforms.push_back(transform);
+		normalTransfs.push_back(transform.inverted().transposed());
+		i = m_mixture->nextEnabledGaussianIndex(i);
 	}
+	n = transforms.size();
+	m_numberOfValidGaussians = n;
 
 	m_transf_vbo.bind();
 	m_transf_vbo.allocate(transforms.data(), n * sizeof(QMatrix4x4));
@@ -150,6 +155,11 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 	m_normtr_vbo.release();
 
 	updateColors();
+}
+
+void gmvis::core::GMIsoellipsoidRenderer::updateMixture()
+{
+	setMixture(m_mixture);
 }
 
 void GMIsoellipsoidRenderer::setUniformColor(const QColor& uniformColor)
@@ -209,7 +219,7 @@ void GMIsoellipsoidRenderer::render()
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
 	m_program->setUniformValue(m_locTransferTex, 0);
-	m_gl->glDrawElementsInstanced(GL_TRIANGLES, m_geoIndices.count(), GL_UNSIGNED_INT, nullptr, m_mixture->numberOfGaussians());
+	m_gl->glDrawElementsInstanced(GL_TRIANGLES, m_geoIndices.count(), GL_UNSIGNED_INT, nullptr, m_numberOfValidGaussians);
 	m_program->release();
 	m_gm_vao.release();
 }
@@ -256,7 +266,7 @@ void GMIsoellipsoidRenderer::updateColors()
 
 	int n = m_mixture->numberOfGaussians();
 	QVector<DECIMAL_TYPE> colors;
-	colors.resize(n);
+	colors.reserve(n);
 	if (m_sRenderMode != GMColoringRenderMode::COLOR_UNIFORM) {
 		//Find min and max Values
 		double minVal = m_sEllMin;
@@ -299,15 +309,35 @@ void GMIsoellipsoidRenderer::updateColors()
 			maxVal = std::min(median + medmed, values[n - 1]);
 		}
 		double range = maxVal - minVal;
-		for (int i = 0; i < n; ++i) {
+		int i = m_mixture->nextEnabledGaussianIndex(-1);
+		while (i != -1) {
 			const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
-			double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
-			float t = std::min(1.0f, float((val - minVal) / range));
-			t = std::max(t, 0.0f);
-			colors[i] = t;
+			if (gauss->isValid()) {
+				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
+				float t = std::min(1.0f, float((val - minVal) / range));
+				t = std::max(t, 0.0f);
+				colors.push_back(t);
+			}
+			else {
+				colors.push_back(-1);
+			}
+			i = m_mixture->nextEnabledGaussianIndex(i);
 		}
 		m_sEllMin = minVal;
 		m_sEllMax = maxVal;
+	}
+	else {
+		int i = m_mixture->nextEnabledGaussianIndex(-1);
+		while (i != -1) {
+			const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
+			if (gauss->isValid()) {
+				colors.push_back(1);
+			}
+			else {
+				colors.push_back(-1);
+			}
+			i = m_mixture->nextEnabledGaussianIndex(i);
+		}
 	}
 
 	m_color_vbo.bind();

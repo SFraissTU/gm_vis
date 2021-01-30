@@ -91,6 +91,9 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.btn_pick, SIGNAL(clicked(bool)), this, SLOT(slotTogglePickGaussian(bool)));
 	(void)connect(ui.btn_clearsel, SIGNAL(clicked(bool)), this, SLOT(slotClearSelection()));
 
+	(void)connect(ui.btn_hidezero, SIGNAL(clicked(bool)), this, SLOT(slotHideZeroGaussians(bool)));
+	(void)connect(ui.btn_hideinvalid, SIGNAL(clicked(bool)), this, SLOT(slotHideInvalidGaussians(bool)));
+
 	(void)connect(ui.openGLWidget, SIGNAL(frameSwapped()), this, SLOT(slotPostRender()));
 }
 
@@ -191,7 +194,7 @@ void gmvis::ui::VisualizerWindow::slotChooseLineDirectory()
 
 void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
 {
-	ui.list_gaussians->setCurrentRow(index);
+	ui.list_gaussians->setCurrentRow(mixture->gaussIndexFromEnabledGaussIndex(index));
 }
 
 void VisualizerWindow::slotDisplayOptionsChanged()
@@ -485,7 +488,7 @@ void gmvis::ui::VisualizerWindow::slotListGaussianSelected(QListWidgetItem* item
 	auto gitem = dynamic_cast<GaussianListItem*>(item);
 	if (gitem) {
 		ui.txt_output->setPlainText(gitem->getDescription());
-		int selectedGaussian = gitem->getIndex();
+		int selectedGaussian = mixture->enabledGaussIndexFromGaussIndex(gitem->getIndex());
 		ui.openGLWidget->getGMIsoellipsoidRenderer()->setMarkedGaussian(selectedGaussian);
 		ui.openGLWidget->getGMPositionsRenderer()->setMarkedGaussian(selectedGaussian);
 	}
@@ -557,6 +560,30 @@ void gmvis::ui::VisualizerWindow::slotCameraMoved(core::Camera* camera)
 	stream << "Camera Position: \n" << "  " << pos.x() << " / " << pos.y() << " / " << pos.z() << "\n";
 	stream << "Looking At: \n" << "  " << lookat.x() << " / " << lookat.y() << " / " << lookat.z();
 	ui.txt_caminfo->setPlainText(QString::fromStdString(stream.str()));
+}
+
+void gmvis::ui::VisualizerWindow::slotHideZeroGaussians(bool checked)
+{
+	mixture->setDisableZeroGaussians(checked);
+	ui.openGLWidget->updateMixture();
+	if (ui.list_gaussians->currentRow() != -1) {
+		ui.list_gaussians->setCurrentRow(-1);
+	}
+	else {
+		ui.openGLWidget->update();
+	}
+}
+
+void gmvis::ui::VisualizerWindow::slotHideInvalidGaussians(bool checked)
+{
+	mixture->setDisableInvalidGaussians(checked);
+	ui.openGLWidget->updateMixture();
+	if (ui.list_gaussians->currentRow() != -1) {
+		ui.list_gaussians->setCurrentRow(-1);
+	}
+	else {
+		ui.openGLWidget->update();
+	}
 }
 
 void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>>& newGauss, const QString& fileLoadedFrom)
