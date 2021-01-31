@@ -18,9 +18,17 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 	m_program_projection->addShaderFromSourceCode(QOpenGLShader::Fragment, DataLoader::readRessource("shaders/isosurface_proj.frag"));
 	m_program_projection->link();
 
-	m_program_sort_and_render = std::make_unique<QOpenGLShaderProgram>();
-	m_program_sort_and_render->addShaderFromSourceCode(QOpenGLShader::Compute, DataLoader::readRessource("shaders/isosurface_sort_and_render.comp"));
-	m_program_sort_and_render->link();
+	QByteArray sort_and_render_code = DataLoader::readRessource("shaders/isosurface_sort_and_render.comp");
+#define CREATE_SORT_AND_RENDER_SHADER(fraglistmaxlen) \
+	m_program_sort_and_render_##fraglistmaxlen = std::make_unique<QOpenGLShaderProgram>(); \
+	m_program_sort_and_render_##fraglistmaxlen->addShaderFromSourceCode(QOpenGLShader::Compute, QString(sort_and_render_code).replace("<FRAG_LIST_MAX_LEN>", QString::number(fraglistmaxlen))); \
+	m_program_sort_and_render_##fraglistmaxlen->link();
+
+	CREATE_SORT_AND_RENDER_SHADER(16);
+	CREATE_SORT_AND_RENDER_SHADER(32);
+	CREATE_SORT_AND_RENDER_SHADER(64);
+	CREATE_SORT_AND_RENDER_SHADER(128);
+	
 
 	m_program_projection->bind();
 	m_proj_locProjMatrix = m_program_projection->uniformLocation("projMatrix");
@@ -33,17 +41,17 @@ void gmvis::core::GMIsosurfaceRenderer::initialize()
 	m_proj_locFov = m_program_projection->uniformLocation("fov");
 	/*m_proj_locGaussTex = m_program_projection->uniformLocation("gaussTex");*/
 
-	m_program_sort_and_render->bind();
-	m_rend_locImgStart = m_program_sort_and_render->uniformLocation("img_startidx");
-	m_rend_locImgRendered = m_program_sort_and_render->uniformLocation("img_rendered");
-	m_rend_locListSize = m_program_sort_and_render->uniformLocation("listSize");
-	m_rend_locWidth = m_program_sort_and_render->uniformLocation("width");
-	m_rend_locHeight = m_program_sort_and_render->uniformLocation("height");
-	m_rend_locIsolevel = m_program_sort_and_render->uniformLocation("isolevel");
-	m_rend_locFov = m_program_sort_and_render->uniformLocation("fov");
-	m_rend_locGaussTex = m_program_sort_and_render->uniformLocation("gaussTex");
-	m_rend_locInvViewMatrix = m_program_sort_and_render->uniformLocation("invViewMatrix");
-	m_rend_locImgTest = m_program_sort_and_render->uniformLocation("img_test");
+	m_program_sort_and_render_16->bind();
+	m_rend_locImgStart = m_program_sort_and_render_16->uniformLocation("img_startidx");
+	m_rend_locImgRendered = m_program_sort_and_render_16->uniformLocation("img_rendered");
+	m_rend_locListSize = m_program_sort_and_render_16->uniformLocation("listSize");
+	m_rend_locWidth = m_program_sort_and_render_16->uniformLocation("width");
+	m_rend_locHeight = m_program_sort_and_render_16->uniformLocation("height");
+	m_rend_locIsolevel = m_program_sort_and_render_16->uniformLocation("isolevel");
+	m_rend_locFov = m_program_sort_and_render_16->uniformLocation("fov");
+	m_rend_locGaussTex = m_program_sort_and_render_16->uniformLocation("gaussTex");
+	m_rend_locInvViewMatrix = m_program_sort_and_render_16->uniformLocation("invViewMatrix");
+	m_rend_locImgTest = m_program_sort_and_render_16->uniformLocation("img_test");
 
 	//ToDo: Rest of Uniforms
 
@@ -262,36 +270,47 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 	*countp = 0;
 	m_gl->glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
 
-	qDebug() << listsize << "\n";
+	//qDebug() << listsize << "\n";
 
 	//qDebug() << m_gl->glGetError() << "\n";
 
-	m_program_sort_and_render->bind();
-	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_ssboFragmentList);
-	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_ssboMixture);
-	m_gl->glUniform1ui(m_rend_locListSize, listsize);
-	m_gl->glUniform1ui(m_rend_locWidth, screenWidth);
-	m_gl->glUniform1ui(m_rend_locHeight, screenHeight);
-	m_gl->glUniform1f(m_rend_locIsolevel, m_sIsolevel);
-	m_gl->glUniform1f(m_rend_locFov, qDegreesToRadians(m_camera->getFoV()));
-	m_gl->glActiveTexture(GL_TEXTURE0);
-	//m_gl->glBindImageTexture(0, m_stencilFBO.getColorTexture(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
-	m_gl->glBindImageTexture(0, m_imgStartIdx, 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32I);
-	m_gl->glUniform1i(m_rend_locImgStart, 0);
-	//qDebug() << m_gl->glGetError() << "\n";
-	m_gl->glActiveTexture(GL_TEXTURE1);
-	m_gl->glBindImageTexture(1, m_renderFBO.getColorTexture(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-	m_gl->glUniform1i(m_rend_locImgRendered, 1);
-	m_gl->glActiveTexture(GL_TEXTURE2);
-	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
-	m_gl->glUniform1i(m_rend_locGaussTex, 2);
-	m_gl->glActiveTexture(GL_TEXTURE3);
-	m_gl->glBindImageTexture(3, m_stencilFBO.getColorTexture(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
-	m_gl->glUniform1i(m_rend_locImgTest, 3);
-	m_program_sort_and_render->setUniformValue(m_rend_locInvViewMatrix, m_camera->getViewMatrix().inverted());
+	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, m_renderFBO.getID());
+	m_gl->glClearColor(0, 0, 0, 1);
+	m_gl->glClear(GL_COLOR_BUFFER_BIT);
+	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	//qDebug() << m_gl->glGetError() << "\n";
+#define BIND_SORT_AND_RENDER_SHADER(fraglistmaxlen) \
+	m_program_sort_and_render_##fraglistmaxlen->bind(); \
+	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_ssboFragmentList); \
+	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_ssboMixture); \
+	m_gl->glUniform1ui(m_rend_locListSize, listsize); \
+	m_gl->glUniform1ui(m_rend_locWidth, screenWidth); \
+	m_gl->glUniform1ui(m_rend_locHeight, screenHeight); \
+	m_gl->glUniform1f(m_rend_locIsolevel, m_sIsolevel); \
+	m_gl->glUniform1f(m_rend_locFov, qDegreesToRadians(m_camera->getFoV())); \
+	m_gl->glActiveTexture(GL_TEXTURE0); \
+	m_gl->glBindImageTexture(0, m_imgStartIdx, 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32I); \
+	m_gl->glUniform1i(m_rend_locImgStart, 0); \
+	m_gl->glActiveTexture(GL_TEXTURE1); \
+	m_gl->glBindImageTexture(1, m_renderFBO.getColorTexture(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F); \
+	m_gl->glUniform1i(m_rend_locImgRendered, 1); \
+	m_gl->glActiveTexture(GL_TEXTURE2); \
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss); \
+	m_gl->glUniform1i(m_rend_locGaussTex, 2); \
+	m_gl->glActiveTexture(GL_TEXTURE3); \
+	m_gl->glBindImageTexture(3, m_stencilFBO.getColorTexture(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F); \
+	m_gl->glUniform1i(m_rend_locImgTest, 3); \
+	m_program_sort_and_render_##fraglistmaxlen->setUniformValue(m_rend_locInvViewMatrix, m_camera->getViewMatrix().inverted());
 
+	m_gl->glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
+
+	BIND_SORT_AND_RENDER_SHADER(16);
+	m_gl->glDispatchCompute(screenWidth / 32 + 1, screenHeight / 32 + 1, 1);
+	BIND_SORT_AND_RENDER_SHADER(32);
+	m_gl->glDispatchCompute(screenWidth / 32 + 1, screenHeight / 32 + 1, 1);
+	BIND_SORT_AND_RENDER_SHADER(64);
+	m_gl->glDispatchCompute(screenWidth / 32 + 1, screenHeight / 32 + 1, 1);
+	BIND_SORT_AND_RENDER_SHADER(128);
 	m_gl->glDispatchCompute(screenWidth / 32 + 1, screenHeight / 32 + 1, 1);
 	
 	//qDebug() << m_gl->glGetError() << "\n";

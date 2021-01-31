@@ -14,7 +14,7 @@ struct FragmentData {
 	int gIndex;
 	int flags;
 	int next;
-	int padding1;
+	int count;
 	double z;
 	double padding2;
 	//ivec4 g_f_n;
@@ -52,6 +52,7 @@ void main() {
 	//imageSize is wrong anyway, as this might be larger than w + h
 	//imageStore(img_startidx, ivec2(gl_FragCoord.xy), ivec4(1));
 	flb.fragmentList[i].next = oldhead;
+	flb.fragmentList[i].count = int(oldhead != -1) * (flb.fragmentList[oldhead].count + 1) - int(oldhead == -1);
 
 
 //	ivec2 pixel_coords = ivec2(gl_FragCoord.xy);

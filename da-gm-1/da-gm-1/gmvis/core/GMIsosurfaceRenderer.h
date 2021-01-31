@@ -69,7 +69,10 @@ namespace gmvis::core {
 		ScreenFBO m_renderFBO;
 
 		std::unique_ptr<QOpenGLShaderProgram> m_program_projection;
-		std::unique_ptr<QOpenGLShaderProgram> m_program_sort_and_render;
+		std::unique_ptr<QOpenGLShaderProgram> m_program_sort_and_render_16;
+		std::unique_ptr<QOpenGLShaderProgram> m_program_sort_and_render_32;
+		std::unique_ptr<QOpenGLShaderProgram> m_program_sort_and_render_64;
+		std::unique_ptr<QOpenGLShaderProgram> m_program_sort_and_render_128;
 
 		float m_sIsolevel = 0.0001;
 	};

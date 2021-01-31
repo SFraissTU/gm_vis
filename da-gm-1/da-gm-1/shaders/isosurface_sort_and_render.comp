@@ -1,6 +1,7 @@
 #version 450
 
 #define FRAG_LIST_MAX_LEN 128
+//<FRAG_LIST_MAX_LEN>
 
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
@@ -8,7 +9,7 @@ struct FragmentData {
 	int gIndex;
 	int flags;
 	int next;
-	int padding1;
+	int count;
 	double z;
 	double padding2;
 	//ivec4 g_f_n;
@@ -354,6 +355,15 @@ void main() {
 //		} else {
 //			imageStore(img_rendered, pixel_coords, vec4(0));
 //		}
+		int node = imageLoad(img_startidx, pixel_coords).r;
+		if (node == -1) {
+			//imageStore(img_rendered, pixel_coords, vec4(0));
+			return;
+		}
+		if (flb.fragmentList[node].count > FRAG_LIST_MAX_LEN) {
+			return;
+		}
+		imageStore(img_startidx, pixel_coords, ivec4(-1));
 
 		double fragZ[FRAG_LIST_MAX_LEN];
 		int fragGIdx[FRAG_LIST_MAX_LEN];
@@ -365,12 +375,7 @@ void main() {
 		int gaussList[FRAG_LIST_MAX_LEN / 2];
 		int gaussCount = 0;
 		GaussianRay gaussRayList[FRAG_LIST_MAX_LEN / 2];
-
-		int node = imageLoad(img_startidx, pixel_coords).r;
-		if (node == -1) {
-			imageStore(img_rendered, pixel_coords, vec4(0));
-			return;
-		}
+		
 		while (node != -1 && count < FRAG_LIST_MAX_LEN) {
 			fragFlags[count] = flb.fragmentList[node].flags;
 			fragZ[count] = flb.fragmentList[node].z;
