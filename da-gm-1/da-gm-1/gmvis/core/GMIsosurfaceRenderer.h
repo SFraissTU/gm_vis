@@ -16,6 +16,7 @@ namespace gmvis::core {
 		void setMixture(GaussianMixture<DECIMAL_TYPE>* mixture, double accThreshold);
 		void updateMixture(); //Call this when having changed the enabled gaussians settings in the mixture!
 		void updateAccelerationData(double accThreshold);
+		void setWhiteMode(bool white);
 		void render(int screenWidth, int screenHeight);
 		void cleanup();
 
@@ -72,6 +73,7 @@ namespace gmvis::core {
 		std::unique_ptr<QOpenGLShaderProgram> m_program_sort_and_render;
 
 		float m_sIsolevel = 0.0001;
+		bool m_sWhiteMode = false;
 	};
 
 }

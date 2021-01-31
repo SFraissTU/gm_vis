@@ -78,6 +78,7 @@ void gmvis::ui::DisplayWidget::setWhiteMode(bool white)
 	m_isoellipsoidRenderer->setWhiteMode(white);
 	m_positionsRenderer->setWhiteMode(white);
 	m_densityRenderer->setWhiteMode(white);
+	m_isosurfaceRenderer->setWhiteMode(white);
 }
 
 void gmvis::ui::DisplayWidget::toggleFps()

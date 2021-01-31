@@ -170,6 +170,11 @@ void gmvis::core::GMIsosurfaceRenderer::updateAccelerationData(double accThresho
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
+void gmvis::core::GMIsosurfaceRenderer::setWhiteMode(bool white)
+{
+	m_sWhiteMode = white;
+}
+
 void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight)
 {
 	if (!m_mixture) {
@@ -262,9 +267,17 @@ void gmvis::core::GMIsosurfaceRenderer::render(int screenWidth, int screenHeight
 	*countp = 0;
 	m_gl->glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
 
-	qDebug() << listsize << "\n";
-
 	//qDebug() << m_gl->glGetError() << "\n";
+
+	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, m_renderFBO.getID());
+	if (m_sWhiteMode) {
+		m_gl->glClearColor(1, 1, 1, 1);
+	}
+	else {
+		m_gl->glClearColor(0, 0, 0, 1);
+	}
+	m_gl->glClear(GL_COLOR_BUFFER_BIT);
+	m_gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	m_program_sort_and_render->bind();
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_ssboFragmentList);
