@@ -43,12 +43,19 @@ namespace gmvis::ui {
 		void slotListGaussianSelected(QListWidgetItem* item);
 		void slotTogglePickGaussian(bool checked);
 		void slotClearSelection();
+		void slotResetCamera();
+		void slotCameraMoved(core::Camera* camera);
+		void slotHideZeroGaussians(bool checked);
+		void slotHideInvalidGaussians(bool checked);
+		void slotToggleBackground();
+		void slotToggleFPS();
 
 	private:
 		Ui::VisualizerWindowClass ui;
 		std::unique_ptr<core::PointCloud> pointcloud;
 		std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>> mixture;
 		std::unique_ptr<core::LineStrip> line;
+		bool whiteMode = false;
 		QSettings config;
 
 		QString lineDirectory;

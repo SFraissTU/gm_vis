@@ -215,7 +215,11 @@ void Visualizer::set_pointclouds_from_paths(py::list paths)
 	pushCommand([this, paths] {
 		m_pointclouds.clear();
 		for (int i = 0; i < paths.size(); ++i) {
-			auto newPC = DataLoader::readPCDfromOFF(QString(paths[i].cast<std::string>().c_str()), false);
+			QString error;
+			auto newPC = DataLoader::readPCDfromOFF(QString(paths[i].cast<std::string>().c_str()), false, error);
+			if (!error.isEmpty()) {
+				pyprint(error.toStdString());
+			}
 			if (newPC) {
 				m_pointclouds.push_back(std::move(newPC));
 			}
@@ -261,7 +265,11 @@ void gmvis::pylib::Visualizer::set_gaussian_mixtures_from_paths(py::list paths, 
 	pushCommand([this, paths, isgmm] {
 		m_mixtures.clear();
 		for (int i = 0; i < paths.size(); ++i) {
-			auto newGM = DataLoader::readGMfromPLY<DECIMAL_TYPE>(QString(paths[i].cast<std::string>().c_str()), isgmm, false);
+			QString error;
+			auto newGM = DataLoader::readGMfromPLY<DECIMAL_TYPE>(QString(paths[i].cast<std::string>().c_str()), isgmm, false, error);
+			if (!error.isEmpty()) {
+				pyprint(error.toStdString());
+			}
 			if (newGM) {
 				m_mixtures.push_back(std::move(newGM));
 			}

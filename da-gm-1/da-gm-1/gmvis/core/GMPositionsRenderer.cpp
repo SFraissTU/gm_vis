@@ -22,6 +22,7 @@ void GMPositionsRenderer::initialize()
 	m_locTransferTex = m_program->uniformLocation("transferTex");
 	m_locUseInColor = m_program->uniformLocation("useInColor");
 	m_locMarkedGaussian = m_program->uniformLocation("markedGaussian");
+	m_locWhiteMode = m_program->uniformLocation("whiteMode");
 
 	m_program->release();
 
@@ -66,12 +67,17 @@ void GMPositionsRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 	m_gm_vao.bind();
 	m_pos_vbo.bind();
 	size_t arrsize = 0;
-	auto data = mixture->gpuPositionData(arrsize);
+	auto data = mixture->gpuPositionData(arrsize, m_numberOfValidGaussians);
 	m_pos_vbo.allocate(data.get(), arrsize);
 	m_pos_vbo.release();
 	m_gm_vao.release();
 
 	updateColors();
+}
+
+void gmvis::core::GMPositionsRenderer::updateMixture()
+{
+	setMixture(m_mixture);
 }
 
 void GMPositionsRenderer::setUniformColor(const QColor& uniformColor)
@@ -105,6 +111,11 @@ void gmvis::core::GMPositionsRenderer::setMarkedGaussian(int index)
 	m_markedGaussian = index;
 }
 
+void gmvis::core::GMPositionsRenderer::setWhiteMode(bool white)
+{
+	m_whiteMode = white;
+}
+
 void GMPositionsRenderer::render()
 {
 	if (!m_mixture) {
@@ -121,11 +132,12 @@ void GMPositionsRenderer::render()
 	m_program->setUniformValue(m_locSurfaceColor, m_sUniformColor);
 	m_program->setUniformValue(m_locUseInColor, (m_sRenderMode != GMColoringRenderMode::COLOR_UNIFORM));
 	m_program->setUniformValue(m_locMarkedGaussian, m_markedGaussian);
+	m_program->setUniformValue(m_locWhiteMode, m_whiteMode);
 	m_gl->glActiveTexture(GL_TEXTURE0);
 	m_gl->glBindTexture(GL_TEXTURE_1D, m_texTransfer);
 	m_program->setUniformValue(m_locTransferTex, 0);
 	m_gl->glPointSize(m_sPointSize);
-	m_gl->glDrawArrays(GL_POINTS, 0, m_mixture->numberOfGaussians());
+	m_gl->glDrawArrays(GL_POINTS, 0, m_numberOfValidGaussians);
 	m_program->release();
 	m_gm_vao.release();
 }
@@ -171,7 +183,7 @@ void GMPositionsRenderer::updateColors()
 
 	int n = m_mixture->numberOfGaussians();
 	QVector<float> colors;
-	colors.resize(n);
+	colors.reserve(n);
 	if (m_sRenderMode != GMColoringRenderMode::COLOR_UNIFORM) {
 		//Find min and max Values
 		double minVal = m_sEllMin;
@@ -214,15 +226,35 @@ void GMPositionsRenderer::updateColors()
 			maxVal = std::min(median + medmed, values[n - 1]);
 		}
 		double range = maxVal - minVal;
-		for (int i = 0; i < n; ++i) {
+		int i = m_mixture->nextEnabledGaussianIndex(-1);
+		while (i != -1) {
 			const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
-			double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
-			float t = std::min(1.0f, float((val - minVal) / range));
-			t = std::max(t, 0.0f);
-			colors[i] = t;
+			if (gauss->isValid()) {
+				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
+				float t = std::min(1.0f, float((val - minVal) / range));
+				t = std::max(t, 0.0f);
+				colors.push_back(t);
+			}
+			else {
+				colors.push_back(-1);
+			}
+			i = m_mixture->nextEnabledGaussianIndex(i);
 		}
 		m_sEllMin = minVal;
 		m_sEllMax = maxVal;
+	}
+	else {
+		int i = m_mixture->nextEnabledGaussianIndex(-1);
+		while (i != -1) {
+			const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
+			if (gauss->isValid()) {
+				colors.push_back(1);
+			}
+			else {
+				colors.push_back(-1);
+			}
+			i = m_mixture->nextEnabledGaussianIndex(i);
+		}
 	}
 
 	m_color_vbo.bind();

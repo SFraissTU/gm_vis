@@ -10,7 +10,8 @@ namespace gmvis::core {
 	public:
 		GMDensityRenderer(QOpenGLFunctions_4_5_Core* gl, Camera* camera, int width, int height);
 		void initialize();
-		void setMixture(GaussianMixture<DECIMAL_TYPE>* mixture);
+		void setMixture(GaussianMixture<DECIMAL_TYPE>* mixture, bool updateScale = true);
+		void updateMixture(); //Call this when having changed the enabled gaussians settings in the mixture!
 		bool hasMixture() const;
 		void setSize(int width, int height);
 		void render(GLuint preTexture, bool blend);
@@ -41,6 +42,7 @@ namespace gmvis::core {
 		void setAccelerationThresholdAuto(bool accThreshAuto);
 		void setDensityCutoff(bool cutoff);
 		void setLogarithmic(bool log);
+		void setWhiteMode(bool white);
 
 
 		static bool isAccelerated(GMDensityRenderMode mode);
@@ -68,6 +70,7 @@ namespace gmvis::core {
 		double m_sDensitySuggestedMax = 1.0;
 		double m_sDensitySuggestedLogMin = -4000;
 		double m_sDensitySuggestedLogMax = 0;
+		bool   m_sWhiteMode = false;
 
 		ScreenFBO m_fbo_intermediate;
 		ScreenFBO m_fbo_final;
@@ -83,6 +86,7 @@ namespace gmvis::core {
 		GLuint m_col_locDensityMax;
 		GLuint m_col_locCutoff;
 		GLuint m_col_locLogarithmic;
+		GLuint m_col_locWhiteMode;
 
 		GLuint m_texTransfer;
 

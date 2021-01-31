@@ -19,7 +19,7 @@ DisplayWidget::DisplayWidget(QWidget* parent) : QOpenGLWidget(parent)
 	setFormat(format);
 	setFocusPolicy(Qt::StrongFocus);
 
-	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width()) / height(), 0.01f, 1000.0f);
+	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width()) / height(), 0.01f, 100000.0f);
 	auto gl = static_cast<QOpenGLFunctions_4_5_Core*>(this);
 	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(gl, m_camera.get());
 	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(gl, m_camera.get());
@@ -69,6 +69,21 @@ void DisplayWidget::setDensityDisplayEnabled(bool enabled)
 void gmvis::ui::DisplayWidget::setPickingEnabled(bool enabled)
 {
 	m_picking = enabled;
+}
+
+void gmvis::ui::DisplayWidget::setWhiteMode(bool white)
+{
+	m_whiteMode = white;
+	m_pointcloudRenderer->setWhiteMode(white);
+	m_isoellipsoidRenderer->setWhiteMode(white);
+	m_positionsRenderer->setWhiteMode(white);
+	m_densityRenderer->setWhiteMode(white);
+	m_isosurfaceRenderer->setWhiteMode(white);
+}
+
+void gmvis::ui::DisplayWidget::toggleFps()
+{
+	m_logFPS = !m_logFPS;
 }
 
 bool DisplayWidget::isPointDisplayEnabled() const
@@ -136,13 +151,21 @@ Camera* gmvis::ui::DisplayWidget::getCamera()
 	return m_camera.get();
 }
 
-void gmvis::ui::DisplayWidget::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
+void gmvis::ui::DisplayWidget::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture, bool updateDisplayOptions)
 {
 	m_isoellipsoidRenderer->setMixture(mixture);
 	m_positionsRenderer->setMixture(mixture);
 	m_isosurfaceRenderer->setMixture(mixture, 0.00001);
-	m_densityRenderer->setMixture(mixture);
+	m_densityRenderer->setMixture(mixture, updateDisplayOptions);
 	m_mixture = mixture;
+}
+
+void gmvis::ui::DisplayWidget::updateMixture()
+{
+	m_isoellipsoidRenderer->updateMixture();
+	m_positionsRenderer->updateMixture();
+	m_isosurfaceRenderer->updateAccelerationData(0.00001);
+	m_densityRenderer->updateMixture();
 }
 
 void DisplayWidget::cleanup() {
@@ -187,14 +210,14 @@ void DisplayWidget::initializeGL() {
 #if _DEBUG
 	m_debugLogger = std::make_unique<QOpenGLDebugLogger>(this);
 	if (m_debugLogger->initialize()) {
-		qDebug() << "GL_DEBUG Debug Logger " << m_debugLogger.get() << "\n";
 		(void)connect(m_debugLogger.get(), &QOpenGLDebugLogger::messageLogged, this, &DisplayWidget::messageLogged);
 		m_debugLogger->startLogging();
 	}
 #endif
 	
-	auto background = QColor(0, 0, 0);
-	glClearColor(background.redF(), background.blueF(), background.greenF(), 1);
+	glClearColor(0, 0, 0, 1);
+
+	emit cameraMoved(m_camera.get());
 }
 
 void DisplayWidget::paintGL()
@@ -220,7 +243,9 @@ void DisplayWidget::paintGL()
 
 		GLuint64 elapsed;
 		glGetQueryObjectui64v(query, GL_QUERY_RESULT, &elapsed);
-		qDebug() << elapsed / 1000000.0 << "ms\n";
+		if (m_logFPS) {
+			qDebug() << elapsed / 1000000.0 << "ms";
+		}
 		return;
 	}
 
@@ -230,6 +255,13 @@ void DisplayWidget::paintGL()
 	if (m_sDisplayPoints || m_sDisplayEllipsoids || m_sDisplayGMPositions) {
 		//Only set FBO if we will render volume later on
 		glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
+
+		if (m_whiteMode) {
+			glClearColor(1, 1, 1, 1);
+		}
+		else {
+			glClearColor(0, 0, 0, 1);
+		}
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
@@ -262,6 +294,7 @@ void DisplayWidget::paintGL()
 	if (renderDensity) {
 		//Second pass: Pass old depth texture to ray marcher and render on screen
 		glBindFramebuffer(GL_FRAMEBUFFER, defaultFbo);
+		glClearColor(0, 0, 0, 1);
 		
 		GLuint query;
 		glGenQueries(1, &query);
@@ -278,8 +311,9 @@ void DisplayWidget::paintGL()
 
 		GLuint64 elapsed;
 		glGetQueryObjectui64v(query, GL_QUERY_RESULT, &elapsed);
-		qDebug() << elapsed / 1000000.0 << "ms\n";
-
+		if (m_logFPS) {
+			qDebug() << elapsed / 1000000.0 << "ms";
+		}
 	}
 }
 
@@ -337,6 +371,7 @@ void DisplayWidget::mouseMoveEvent(QMouseEvent* event)
 		refresh = true;
 	}
 	if (refresh) {
+		emit cameraMoved(m_camera.get());
 		update();
 		m_lastPos = event->pos();
 	}

@@ -48,6 +48,12 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.spin_isoslidermax->setValue(0.001);
 	ui.sl_isovalue->setValue(isosurfacerenderer->getIsolevel() / 0.001 * 100);
 
+#if _DEBUG:
+	auto dbgmenu = ui.menuBar->addMenu("Debug Options");
+	auto fpsbtn = dbgmenu->addAction("Toggle Render Time Printing");
+	(void)connect(fpsbtn, SIGNAL(triggered()), this, SLOT(slotToggleFPS()));
+#endif
+
 
 	(void)connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(slotLoadPointcloud()));
 	(void)connect(ui.loadMixtureModelAction, SIGNAL(triggered()), this, SLOT(slotLoadMixtureModel()));
@@ -62,6 +68,9 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.cb_displayEllipsoids, SIGNAL(clicked(bool)), this, SLOT(slotDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayIsosurface, SIGNAL(clicked(bool)), this, SLOT(slotIsovalueDisplayOptionsChanged()));
 	(void)connect(ui.cb_displayDensity, SIGNAL(clicked(bool)), this, SLOT(slotDisplayOptionsChanged()));
+
+	(void)connect(ui.btn_camReset, SIGNAL(clicked(bool)), this, SLOT(slotResetCamera()));
+	(void)connect(ui.openGLWidget, SIGNAL(cameraMoved(core::Camera*)), this, SLOT(slotCameraMoved(core::Camera*)));
 
 	(void)connect(ui.spin_ellmin, SIGNAL(valueChanged(double)), this, SLOT(slotEllValuesChanged()));
 	(void)connect(ui.spin_ellmax, SIGNAL(valueChanged(double)), this, SLOT(slotEllValuesChanged()));
@@ -88,15 +97,28 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.btn_pick, SIGNAL(clicked(bool)), this, SLOT(slotTogglePickGaussian(bool)));
 	(void)connect(ui.btn_clearsel, SIGNAL(clicked(bool)), this, SLOT(slotClearSelection()));
 
+	(void)connect(ui.btn_hidezero, SIGNAL(clicked(bool)), this, SLOT(slotHideZeroGaussians(bool)));
+	(void)connect(ui.btn_hideinvalid, SIGNAL(clicked(bool)), this, SLOT(slotHideInvalidGaussians(bool)));
+	(void)connect(ui.btn_backgr, SIGNAL(clicked()), this, SLOT(slotToggleBackground()));
+
 	(void)connect(ui.openGLWidget, SIGNAL(frameSwapped()), this, SLOT(slotPostRender()));
 }
 
 void VisualizerWindow::slotLoadPointcloud() {
-	QString filename = QFileDialog::getOpenFileName(this, "Load Pointcloud", config.value("openPcDirectory").toString(), "*.off");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Pointcloud", config.value("openPcDirectory").toString(), "OFF (*.off);;All Files(*.*)");
 	if (!filename.isNull()) {
 		config.setValue("openPcDirectory", filename.left(std::max(filename.lastIndexOf("/"), filename.lastIndexOf("\\"))));
 		ui.le_pcfile->setText(filename);
-		auto newPC = DataLoader::readPCDfromOFF(filename, false);
+		QString error;
+		auto newPC = DataLoader::readPCDfromOFF(filename, false, error);
+		if (!error.isEmpty()) {
+			if (newPC) {
+				QMessageBox::warning(this, "Warning", error);
+			}
+			else {
+				QMessageBox::critical(this, "Error", error);
+			}
+		}
 		if (newPC) {
 			bool hasoldpc = pointcloud != nullptr;
 			pointcloud = std::move(newPC);
@@ -106,7 +128,9 @@ void VisualizerWindow::slotLoadPointcloud() {
 				auto bbmax = pointcloud->getBBMax();
 				ui.openGLWidget->getCamera()->setPositionByBoundingBox(bbmin, bbmax);
 				ui.openGLWidget->getCamera()->setTranslationSpeedByBoundingBox(bbmin, bbmax);
+				slotCameraMoved(ui.openGLWidget->getCamera());
 			}
+			ui.openGLWidget->update();
 		}
 	}
 }
@@ -114,9 +138,18 @@ void VisualizerWindow::slotLoadPointcloud() {
 void VisualizerWindow::slotLoadMixtureModel()
 {
 	bool hasprevmix = (mixture.get() != nullptr);
-	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture Model", config.value("openGmDirectory").toString(), "*.ply");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture Model", config.value("openGmDirectory").toString(), "PLY (*.ply);;All Files(*.*)");
 	if (!filename.isNull()) {
-		auto newGauss = DataLoader::readGMfromPLY<DECIMAL_TYPE>(filename, true, false);
+		QString error;
+		auto newGauss = DataLoader::readGMfromPLY<DECIMAL_TYPE>(filename, true, false, error);
+		if (!error.isEmpty()) {
+			if (newGauss) {
+				QMessageBox::warning(this, "Warning", error);
+			}
+			else {
+				QMessageBox::critical(this, "Error", error);
+			}
+		}
 		setNewMixture(newGauss, filename);
 	}
 }
@@ -124,9 +157,18 @@ void VisualizerWindow::slotLoadMixtureModel()
 void VisualizerWindow::slotLoadPureMixture()
 {
 	bool hasprevmix = (mixture.get() != nullptr);
-	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", config.value("openGmDirectory").toString(), "*.ply");
+	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", config.value("openGmDirectory").toString(), "*PLY (*.ply);;All Files(*.*)");
 	if (!filename.isNull()) {
-		auto newGauss = DataLoader::readGMfromPLY<DECIMAL_TYPE>(filename, false, false);
+		QString error;
+		auto newGauss = DataLoader::readGMfromPLY<DECIMAL_TYPE>(filename, false, false, error);
+		if (!error.isEmpty()) {
+			if (newGauss) {
+				QMessageBox::warning(this, "Warning", error);
+			}
+			else {
+				QMessageBox::critical(this, "Error", error);
+			}
+		}
 		setNewMixture(newGauss, filename);
 	}
 }
@@ -159,29 +201,7 @@ void gmvis::ui::VisualizerWindow::slotChooseLineDirectory()
 
 void gmvis::ui::VisualizerWindow::slotGaussianSelected(int index)
 {
-	ui.list_gaussians->setCurrentRow(index);
-	/*if (lineDirectory.isNull()) return;
-
-	if (index == -1) {
-		line = nullptr;
-		ui.openGLWidget->getLineRenderer()->setLineStrip(nullptr);
-		ui.openGLWidget->repaint();
-	}
-
-	QString path = lineDirectory + "/pos-g" + std::to_string(index).c_str() + ".bin";
-	auto newLine = DataLoader::readLSfromBIN(path);
-	if (!newLine) {
-		QString path = lineDirectory + "/pos-g" + std::to_string(index).c_str() + ".txt";
-		newLine = DataLoader::readLSfromTXT(path);
-	}
-	if (newLine && newLine->getDataSize() > 0) {
-		line = std::move(newLine);
-		ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
-		ui.openGLWidget->update();
-	}
-	else {
-		QMessageBox::critical(this, "Empty Line", "Read-in Line is empty or does not exist");
-	}*/
+	ui.list_gaussians->setCurrentRow(mixture->gaussIndexFromEnabledGaussIndex(index));
 }
 
 void VisualizerWindow::slotDisplayOptionsChanged()
@@ -442,6 +462,7 @@ void VisualizerWindow::slotPostRender()
 void gmvis::ui::VisualizerWindow::slotResetDensity()
 {
 	auto densrenderer = ui.openGLWidget->getGMDensityRenderer();
+	densrenderer->setMixture(mixture.get(), true);
 	densrenderer->setLogarithmic(true);
 	double dlmin = densrenderer->getSuggestedDensityLogMinLimit();
 	double dlmax = densrenderer->getSuggestedDensityLogMaxLimit();
@@ -475,7 +496,7 @@ void gmvis::ui::VisualizerWindow::slotListGaussianSelected(QListWidgetItem* item
 	auto gitem = dynamic_cast<GaussianListItem*>(item);
 	if (gitem) {
 		ui.txt_output->setPlainText(gitem->getDescription());
-		int selectedGaussian = gitem->getIndex();
+		int selectedGaussian = mixture->enabledGaussIndexFromGaussIndex(gitem->getIndex());
 		ui.openGLWidget->getGMIsoellipsoidRenderer()->setMarkedGaussian(selectedGaussian);
 		ui.openGLWidget->getGMPositionsRenderer()->setMarkedGaussian(selectedGaussian);
 	}
@@ -483,6 +504,29 @@ void gmvis::ui::VisualizerWindow::slotListGaussianSelected(QListWidgetItem* item
 		ui.openGLWidget->getGMIsoellipsoidRenderer()->setMarkedGaussian(-1);
 		ui.openGLWidget->getGMPositionsRenderer()->setMarkedGaussian(-1);
 		ui.txt_output->setPlainText(QString());
+	}
+	if (!lineDirectory.isNull()) {
+		if (gitem) {
+			int index = gitem->getIndex();
+			QString path = lineDirectory + "/pos-g" + std::to_string(index).c_str() + ".bin";
+			auto newLine = DataLoader::readLSfromBIN(path);
+			if (!newLine) {
+				QString path = lineDirectory + "/pos-g" + std::to_string(index).c_str() + ".txt";
+				newLine = DataLoader::readLSfromTXT(path);
+			}
+			if (newLine && newLine->getDataSize() > 0) {
+				line = std::move(newLine);
+				ui.openGLWidget->getLineRenderer()->setLineStrip(line.get());
+			}
+			else {
+				line = nullptr;
+				ui.openGLWidget->getLineRenderer()->setLineStrip(nullptr);
+			}
+		}
+		else {
+			line = nullptr;
+			ui.openGLWidget->getLineRenderer()->setLineStrip(nullptr);
+		}
 	}
 	ui.openGLWidget->update();
 }
@@ -497,15 +541,81 @@ void gmvis::ui::VisualizerWindow::slotClearSelection()
 	ui.list_gaussians->setCurrentRow(-1);
 }
 
+void gmvis::ui::VisualizerWindow::slotResetCamera()
+{
+	if (pointcloud)
+	{
+		auto bbmin = pointcloud->getBBMin();
+		auto bbmax = pointcloud->getBBMax();
+		ui.openGLWidget->getCamera()->setPositionByBoundingBox(bbmin, bbmax);
+		ui.openGLWidget->update();
+	}
+	else if (mixture)
+	{
+		QVector3D min, max;
+		mixture->computePositionsBoundingBox(min, max);
+		ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
+		ui.openGLWidget->update();
+	}
+	slotCameraMoved(ui.openGLWidget->getCamera());
+}
+
+void gmvis::ui::VisualizerWindow::slotCameraMoved(core::Camera* camera)
+{
+	std::stringstream stream;
+	auto pos = camera->getPosition();
+	auto lookat = camera->getLookAt();
+	stream << "Camera Position: \n" << "  " << pos.x() << " / " << pos.y() << " / " << pos.z() << "\n";
+	stream << "Looking At: \n" << "  " << lookat.x() << " / " << lookat.y() << " / " << lookat.z();
+	ui.txt_caminfo->setPlainText(QString::fromStdString(stream.str()));
+}
+
+void gmvis::ui::VisualizerWindow::slotHideZeroGaussians(bool checked)
+{
+	mixture->setDisableZeroGaussians(checked);
+	ui.openGLWidget->updateMixture();
+	if (ui.list_gaussians->currentRow() != -1) {
+		ui.list_gaussians->setCurrentRow(-1);
+	}
+	else {
+		ui.openGLWidget->update();
+	}
+}
+
+void gmvis::ui::VisualizerWindow::slotHideInvalidGaussians(bool checked)
+{
+	mixture->setDisableInvalidGaussians(checked);
+	ui.openGLWidget->updateMixture();
+	if (ui.list_gaussians->currentRow() != -1) {
+		ui.list_gaussians->setCurrentRow(-1);
+	}
+	else {
+		ui.openGLWidget->update();
+	}
+}
+
+void gmvis::ui::VisualizerWindow::slotToggleBackground()
+{
+	whiteMode = !whiteMode;
+	ui.openGLWidget->setWhiteMode(whiteMode);
+	ui.openGLWidget->update();
+}
+
+void gmvis::ui::VisualizerWindow::slotToggleFPS()
+{
+	ui.openGLWidget->toggleFps();
+}
+
 void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>>& newGauss, const QString& fileLoadedFrom)
 {
 	int slashidx = std::max(fileLoadedFrom.lastIndexOf("/"), fileLoadedFrom.lastIndexOf("\\"));
 	config.setValue("openGmDirectory", fileLoadedFrom.left(slashidx));
-	ui.le_mixfile->setText(fileLoadedFrom);
+	bool prevmix = mixture.get() != nullptr;
 	if (newGauss)
 	{
+		ui.le_mixfile->setText(fileLoadedFrom);
 		mixture = std::move(newGauss);
-		ui.openGLWidget->setMixture(mixture.get());
+		ui.openGLWidget->setMixture(mixture.get(), !ui.btn_lockdspoptions->isChecked() || !prevmix);
 		auto isoren = ui.openGLWidget->getGMIsoellipsoidRenderer();
 		ui.spin_ellmin->blockSignals(true);
 		ui.spin_ellmax->blockSignals(true);
@@ -528,6 +638,7 @@ void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMi
 			mixture->computePositionsBoundingBox(min, max);
 			ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
 			ui.openGLWidget->getCamera()->setTranslationSpeedByBoundingBox(min, max);
+			slotCameraMoved(ui.openGLWidget->getCamera());
 		}
 		//Fill Gaussian List
 		ui.list_gaussians->clear();
@@ -537,6 +648,11 @@ void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMi
 			ui.list_gaussians->addItem(item);
 		}
 		setWindowTitle("GMVis: " + fileLoadedFrom.right(fileLoadedFrom.length() - slashidx - 1));
-		slotResetDensity();	//calls update()
+		if (!ui.btn_lockdspoptions->isChecked() || !prevmix) {
+			slotResetDensity();	//calls update()
+		}
+		else {
+			ui.openGLWidget->update();
+		}
 	}
 }

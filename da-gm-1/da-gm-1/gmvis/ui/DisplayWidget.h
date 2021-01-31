@@ -36,6 +36,8 @@ namespace gmvis::ui {
 		void setIsosurfaceDisplayEnabled(bool enabled);
 		void setDensityDisplayEnabled(bool enabled);
 		void setPickingEnabled(bool enabled);
+		void setWhiteMode(bool white);
+		void toggleFps();
 		
 		bool isPointDisplayEnabled() const;
 		bool isEllipsoidDisplayEnabled() const;
@@ -52,13 +54,15 @@ namespace gmvis::ui {
 		core::LineRenderer* getLineRenderer();
 
 		core::Camera* getCamera();
-		void setMixture(gmvis::core::GaussianMixture<DECIMAL_TYPE>* mixture);
+		void setMixture(gmvis::core::GaussianMixture<DECIMAL_TYPE>* mixture, bool updateDisplayOptions = true);
+		void updateMixture(); //Call this when having changed the enabled gaussians settings in the mixture!
 
 	public slots:
 		void cleanup();
 
 	signals:
 		void gaussianSelected(int index);
+		void cameraMoved(core::Camera* camera);
 
 	protected:
 		void initializeGL() override;
@@ -81,6 +85,8 @@ namespace gmvis::ui {
 		bool m_sDisplayIsosurface = false;
 		bool m_sDisplayDensity = true;
 		bool m_picking = false;
+		bool m_whiteMode = false;
+		bool m_logFPS = false;
 
 		//Renderers
 		std::unique_ptr<core::PointCloudRenderer> m_pointcloudRenderer;

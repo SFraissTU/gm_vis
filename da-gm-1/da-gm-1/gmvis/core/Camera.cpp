@@ -4,7 +4,7 @@
 using namespace gmvis::core;
 
 Camera::Camera()
-	: m_fov(60.0f), m_aspectRatio(1), m_near(0.1), m_far(1000)
+	: m_fov(60.0f), m_aspectRatio(1), m_near(0.1), m_far(100000)
 {
 	recalculateProjectionMatrix();
 }
@@ -173,6 +173,11 @@ const QMatrix4x4& Camera::getViewMatrix()
 const QMatrix4x4& Camera::getProjMatrix() const
 {
 	return m_proj;
+}
+
+const QVector3D& gmvis::core::Camera::getLookAt() const
+{
+	return m_translation;
 }
 
 const QVector3D& gmvis::core::Camera::getPosition()

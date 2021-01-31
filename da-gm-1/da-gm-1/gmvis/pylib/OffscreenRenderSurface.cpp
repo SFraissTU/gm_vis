@@ -27,7 +27,7 @@ void OffscreenRenderSurface::initialize(int width, int height) {
 	m_context->makeCurrent(static_cast<QOffscreenSurface*>(this));
 	setOwningContext(m_context.get());
 
-	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width) / height, 0.01f, 1000.0f);
+	m_camera = std::make_unique<Camera>(60.0f, GLfloat(width) / height, 0.01f, 100000.0f);
 	m_pointcloudRenderer = std::make_unique<PointCloudRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 	m_isoellipsoidRenderer = std::make_unique<GMIsoellipsoidRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
 	m_positionRenderer = std::make_unique<GMPositionsRenderer>(static_cast<QOpenGLFunctions_4_5_Core*>(this), m_camera.get());
@@ -47,7 +47,7 @@ void OffscreenRenderSurface::initialize(int width, int height) {
 	
 	m_debugLogger = std::make_unique<QOpenGLDebugLogger>(this);
 	if (m_debugLogger->initialize()) {
-		qDebug() << "GL_DEBUG Debug Logger " << m_debugLogger.get() << "\n";
+		//qDebug() << "GL_DEBUG Debug Logger " << m_debugLogger.get() << "\n";
 		(void)QObject::connect(m_debugLogger.get(), &QOpenGLDebugLogger::messageLogged, this, &OffscreenRenderSurface::messageLogged);
 		m_debugLogger->startLogging();
 	}
@@ -295,5 +295,7 @@ void OffscreenRenderSurface::messageLogged(const QOpenGLDebugMessage& msg) {
 #undef CASE
 
 	error += ")";
-	qDebug() << qPrintable(error) << "\n" << qPrintable(msg.message()) << "\n";
+	QTextStream str;
+	str << qPrintable(error) << "\n" << qPrintable(msg.message()) << "\n";
+	pyprint(str.string()->toStdString());
 }

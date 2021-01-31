@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1061</width>
-    <height>842</height>
+    <height>858</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -643,7 +643,7 @@ QListView
 {
 	background-color: qlineargradient(spread:repeat, x1:1, y1:0, x2:1, y2:1, stop:0 rgba(83, 83, 83, 255),stop:0.293269 rgba(81, 81, 81, 255),stop:0.634615 rgba(79, 79, 79, 255),stop:1 rgba(83, 83, 83, 255));
     border : none;
-    color: white;
+    /*color: white;*/
     show-decoration-selected: 1; 
     outline: 0;
 	border: 1px solid gray;
@@ -679,7 +679,6 @@ QListView::item:selected
 {
 	background-color: #e6eaa6;
 	border: 1px solid #e6eaa6;
-	color: #fff;
 
 }
 
@@ -688,7 +687,6 @@ QListView::item:selected:!active
 {
 	background-color: #e6eaa6;
 	border: 1px solid #e6eaa6;
-	color: #fff;
 
 }
 
@@ -697,7 +695,6 @@ QListView::item:selected:active
 {
 	background-color: #e6eaa6;
 	border: 1px solid #e6eaa6;
-	color: #fff;
 
 }
 
@@ -705,7 +702,6 @@ QListView::item:selected:active
 QListView::item:hover {
     background-color: #262626;
     border: none;
-    color: white;
 
 }
 
@@ -1509,11 +1505,21 @@ QProgressBar::chunk
                    </property>
                   </widget>
                  </item>
-                 <item row="6" column="1">
+                 <item row="6" column="0" colspan="2">
                   <layout class="QHBoxLayout" name="horizontalLayout_6">
                    <property name="spacing">
                     <number>0</number>
                    </property>
+                   <item>
+                    <widget class="QPushButton" name="btn_lockdspoptions">
+                     <property name="text">
+                      <string>Lock Values</string>
+                     </property>
+                     <property name="checkable">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
                    <item>
                     <spacer name="horizontalSpacer_11">
                      <property name="orientation">
@@ -1723,8 +1729,8 @@ QProgressBar::chunk
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>268</width>
-         <height>523</height>
+         <width>251</width>
+         <height>559</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_4">
@@ -1874,8 +1880,8 @@ QProgressBar::chunk
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>208</width>
-         <height>523</height>
+         <width>276</width>
+         <height>559</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1951,6 +1957,86 @@ QProgressBar::chunk
          </widget>
         </item>
         <item>
+         <widget class="QGroupBox" name="groupBox_3">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>160</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Camera</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QPushButton" name="btn_camReset">
+             <property name="text">
+              <string>Reset Camera</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPlainTextEdit" name="txt_caminfo">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_4">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>140</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Display</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QPushButton" name="btn_hidezero">
+             <property name="text">
+              <string>Hide Zero-Weight-Gaussians</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_hideinvalid">
+             <property name="text">
+              <string>Hide invalid Gaussians</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="default">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_backgr">
+             <property name="text">
+              <string>Toggle Background Color</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
          <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -1990,7 +2076,6 @@ QProgressBar::chunk
    </widget>
    <addaction name="menuFile"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <action name="loadPointcloudAction">
    <property name="text">
     <string>Load Pointcloud</string>

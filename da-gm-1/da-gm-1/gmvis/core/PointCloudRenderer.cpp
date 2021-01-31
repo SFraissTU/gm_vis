@@ -107,3 +107,13 @@ void PointCloudRenderer::setPointCircles(bool pointCircles)
 {
 	m_sPointCircles = pointCircles;
 }
+
+void gmvis::core::PointCloudRenderer::setWhiteMode(bool white)
+{
+	if (white) {
+		m_sPointColor = QColor(0, 0, 0);
+	}
+	else {
+		m_sPointColor = QColor(255, 255, 255);
+	}
+}

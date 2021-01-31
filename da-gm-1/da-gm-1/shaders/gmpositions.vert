@@ -10,15 +10,24 @@ uniform mat4 projMatrix;
 uniform mat4 viewMatrix;
 uniform vec4 surfaceColor;
 uniform sampler1D transferTex;
+uniform bool whiteMode;
 
 void main() {
 	//Correct coordinate system
 	vec4 frag_position = vec4(in_position.x, in_position.z, -in_position.y, in_position.w);
 	gl_Position = projMatrix * viewMatrix  * frag_position;
-	if (useInColor) {
-		frag_color = texture(transferTex, 0.25 + 0.75*in_color).rgb;
+	if (in_color < 0) {
+		frag_color = vec3(1, 0, 1);
 	} else {
-		frag_color = surfaceColor.rgb;
+		if (useInColor) {
+			if (whiteMode) {
+				frag_color = texture(transferTex, 0.75 - 0.75*in_color).rgb;
+			} else {
+				frag_color = texture(transferTex, 0.25 + 0.75*in_color).rgb;
+			}
+		} else {
+			frag_color = surfaceColor.rgb;
+		}
 	}
 	//frag_color = vec3(1, -frag_position.z / 5.0, 0);
 	frag_index = gl_VertexID;

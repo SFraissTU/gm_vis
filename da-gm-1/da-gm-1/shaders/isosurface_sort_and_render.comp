@@ -368,7 +368,6 @@ void main() {
 
 		int node = imageLoad(img_startidx, pixel_coords).r;
 		if (node == -1) {
-			imageStore(img_rendered, pixel_coords, vec4(0));
 			return;
 		}
 		while (node != -1 && count < FRAG_LIST_MAX_LEN) {
@@ -513,7 +512,7 @@ void main() {
 			}
 			
 		}
-		imageStore(img_rendered, pixel_coords, vec4(0));
+		//imageStore(img_rendered, pixel_coords, vec4(0));
 		return;
 	}
 	//für den stencil test können wir keinen compute shader verwenden!
