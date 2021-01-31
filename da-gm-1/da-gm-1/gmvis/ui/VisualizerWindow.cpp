@@ -159,17 +159,7 @@ void VisualizerWindow::slotLoadPureMixture()
 	bool hasprevmix = (mixture.get() != nullptr);
 	QString filename = QFileDialog::getOpenFileName(this, "Load Mixture", config.value("openGmDirectory").toString(), "*PLY (*.ply);;All Files(*.*)");
 	if (!filename.isNull()) {
-		QString error;
-		auto newGauss = DataLoader::readGMfromPLY<DECIMAL_TYPE>(filename, false, false, error);
-		if (!error.isEmpty()) {
-			if (newGauss) {
-				QMessageBox::warning(this, "Warning", error);
-			}
-			else {
-				QMessageBox::critical(this, "Error", error);
-			}
-		}
-		setNewMixture(newGauss, filename);
+        loadPureMixture(filename);
 	}
 }
 
@@ -603,7 +593,22 @@ void gmvis::ui::VisualizerWindow::slotToggleBackground()
 
 void gmvis::ui::VisualizerWindow::slotToggleFPS()
 {
-	ui.openGLWidget->toggleFps();
+    ui.openGLWidget->toggleFps();
+}
+
+void VisualizerWindow::loadPureMixture(const QString& filename)
+{
+    QString error;
+    auto newGauss = DataLoader::readGMfromPLY<DECIMAL_TYPE>(filename, false, false, error);
+    if (!error.isEmpty()) {
+        if (newGauss) {
+            QMessageBox::warning(this, "Warning", error);
+        }
+        else {
+            QMessageBox::critical(this, "Error", error);
+        }
+    }
+    setNewMixture(newGauss, filename);
 }
 
 void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>>& newGauss, const QString& fileLoadedFrom)

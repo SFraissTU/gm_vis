@@ -50,6 +50,8 @@ namespace gmvis::ui {
 		void slotToggleBackground();
 		void slotToggleFPS();
 
+        void loadPureMixture(const QString& path);
+
 	private:
 		Ui::VisualizerWindowClass ui;
 		std::unique_ptr<core::PointCloud> pointcloud;
