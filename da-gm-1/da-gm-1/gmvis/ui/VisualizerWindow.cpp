@@ -48,7 +48,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.spin_isoslidermax->setValue(0.001);
 	ui.sl_isovalue->setValue(isosurfacerenderer->getIsolevel() / 0.001 * 100);
 
-#if _DEBUG:
+#if _DEBUG
 	auto dbgmenu = ui.menuBar->addMenu("Debug Options");
 	auto fpsbtn = dbgmenu->addAction("Toggle Render Time Printing");
 	(void)connect(fpsbtn, SIGNAL(triggered()), this, SLOT(slotToggleFPS()));
