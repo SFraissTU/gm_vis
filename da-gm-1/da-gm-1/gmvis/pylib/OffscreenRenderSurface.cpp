@@ -45,12 +45,14 @@ void OffscreenRenderSurface::initialize(int width, int height) {
 	m_fbo->attachColorTexture();
 	m_fbo->attachDepthTexture();
 	
+#ifdef _DEBUG
 	m_debugLogger = std::make_unique<QOpenGLDebugLogger>(this);
 	if (m_debugLogger->initialize()) {
 		//qDebug() << "GL_DEBUG Debug Logger " << m_debugLogger.get() << "\n";
 		(void)QObject::connect(m_debugLogger.get(), &QOpenGLDebugLogger::messageLogged, this, &OffscreenRenderSurface::messageLogged);
 		m_debugLogger->startLogging();
 	}
+#endif
 	
 	glClearColor(0, 0, 0, 1);
 }
