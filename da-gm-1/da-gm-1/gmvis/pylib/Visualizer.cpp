@@ -407,7 +407,7 @@ py::array_t<float> Visualizer::processRenderRequest(int epoch)
 		}
 	}
 	auto ms = timer.elapsed();
-	pyprint("Visualizer: GM rendered. Time: " + std::to_string(ms) + "ms");
+//	pyprint("Visualizer: GM rendered. Time: " + std::to_string(ms) + "ms");
 	if (!m_async && !m_callback) {
 		int h = m_surface->getHeight();
 		int w = m_surface->getWidth();

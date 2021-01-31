@@ -1,6 +1,6 @@
 mkdir build
 cd build
-cmake -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_INSTALL_PREFIX=../ -S ../da-gm-1/da-gm-1/ -B .
+cmake -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_INSTALL_PREFIX=../../../gmc_net/src/gmc/cpp/gm_vis/build -S ../da-gm-1/da-gm-1/ -B .
 # -DCMAKE_PREFIX_PATH=$CONDA_PREFIX is important so that cmake finds the correct version of python and numpy
 make -j16 install
 # where 16 is the number of threads
