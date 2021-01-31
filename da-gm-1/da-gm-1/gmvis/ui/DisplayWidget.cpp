@@ -319,9 +319,9 @@ void DisplayWidget::paintGL()
 
 void DisplayWidget::resizeGL(int width, int height)
 {
-	m_camera->setAspectRatio(GLfloat(width) / height);
-	m_densityRenderer->setSize(width, height);
-	m_fboIntermediate->setSize(width, height);
+    m_camera->setAspectRatio(GLfloat(width) / GLfloat(height));
+    m_densityRenderer->setSize(int(width * this->devicePixelRatioF()), int(height * this->devicePixelRatioF()));
+    m_fboIntermediate->setSize(int(width * this->devicePixelRatioF()), int(height * this->devicePixelRatioF()));
 }
 
 void DisplayWidget::mousePressEvent(QMouseEvent* event)
