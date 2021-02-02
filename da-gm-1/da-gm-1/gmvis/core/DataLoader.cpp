@@ -16,6 +16,18 @@ return {};
 ss << err; \
 error = QString::fromStdString(ss.str());
 
+template <typename T>
+QString my_typename() { return "unknown"; }
+
+template<>
+QString my_typename<float>() { return "float"; }
+
+template<>
+QString my_typename<double>() { return "double"; }
+
+template<>
+QString my_typename<int>() { return "int"; }
+
 QMap<QString, QString> gmvis::core::DataLoader::readConfigFile(const QString& path)
 {
 	QMap<QString, QString> map;
@@ -142,15 +154,10 @@ std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(QFile& file,
 				}
 				if ((words[1] == "float" || words[1] == "double") && supportedProperties.contains(words[2])) {
 					properties.append(words[2]);
-					auto x = typeid(decimal).name();
-					auto tpname = QString(typeid(decimal).name()).trimmed();
-					if (words[1] == "float" && typeid(decimal) == typeid(double))
+                    auto tpname = my_typename<decimal>();
+					if (words[1] != tpname)
 					{
-						DL_GIVE_WARNING("Warning: Reading float as double.");
-					}
-					else if (words[1] == "double" && typeid(decimal) == typeid(float))
-					{
-						DL_GIVE_WARNING("Warning: Reading double as float.");
+						DL_GIVE_WARNING("Warning: Reading " << words[1].toStdString() << " as " << tpname.toStdString() << ".");
 					}
 				}
 				else {
