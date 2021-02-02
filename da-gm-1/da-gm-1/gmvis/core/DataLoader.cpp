@@ -144,9 +144,13 @@ std::unique_ptr<GaussianMixture<decimal>> DataLoader::readGMfromPLY(QFile& file,
 					properties.append(words[2]);
 					auto x = typeid(decimal).name();
 					auto tpname = QString(typeid(decimal).name()).trimmed();
-					if (words[1] != tpname)
+					if (words[1] == "float" && typeid(decimal) == typeid(double))
 					{
-						DL_GIVE_WARNING("Warning: Reading " << words[1].toStdString() << " as " << tpname.toStdString() << ".");
+						DL_GIVE_WARNING("Warning: Reading float as double.");
+					}
+					else if (words[1] == "double" && typeid(decimal) == typeid(float))
+					{
+						DL_GIVE_WARNING("Warning: Reading double as float.");
 					}
 				}
 				else {

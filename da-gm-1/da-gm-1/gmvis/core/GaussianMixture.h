@@ -30,6 +30,7 @@ namespace gmvis::core {
 		QVector<Gaussian<decimal>> gaussians;
 		bool disableInvalidGaussians = false;
 		bool disableZeroGaussians = false;
+		bool hasNegativeGaussians = false;
 
 	public:
 		GaussianMixture() {};
@@ -40,6 +41,9 @@ namespace gmvis::core {
 
 		void addGaussian(const Gaussian<decimal>& gauss) {
 			gaussians.push_back(gauss);
+			if (gauss.getNormalizedWeight() < 0 || gauss.getAmplitude() < 0) {
+				hasNegativeGaussians = true;
+			}
 		}
 
 		int numberOfGaussians() const {
@@ -48,6 +52,8 @@ namespace gmvis::core {
 
 		void setDisableInvalidGaussians(bool disable);
 		void setDisableZeroGaussians(bool disable);
+		
+		bool containsNegativeGaussians() const;
 
 		decimal sample(decimal x, decimal y, decimal z) const;
 

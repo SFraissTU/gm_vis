@@ -48,11 +48,10 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.spin_isoslidermax->setValue(0.001);
 	ui.sl_isovalue->setValue(isosurfacerenderer->getIsolevel() / 0.001 * 100);
 
-#if _DEBUG
-	auto dbgmenu = ui.menuBar->addMenu("Debug Options");
-	auto fpsbtn = dbgmenu->addAction("Toggle Render Time Printing");
+	auto dbgmenu = ui.menuBar->addMenu("Options");
+	auto fpsbtn = dbgmenu->addAction("Print Render Times");
+	fpsbtn->setCheckable(true);
 	(void)connect(fpsbtn, SIGNAL(triggered()), this, SLOT(slotToggleFPS()));
-#endif
 
 
 	(void)connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(slotLoadPointcloud()));
@@ -460,7 +459,12 @@ void gmvis::ui::VisualizerWindow::slotResetDensity()
 	densrenderer->setDensityMax(dlmax);
 	densrenderer->setLogarithmic(false);
 	double dnmax = densrenderer->getSuggestedDensityMaxLimit();
-	densrenderer->setDensityMin(0);
+	if (mixture->containsNegativeGaussians()) {
+		densrenderer->setDensityMin(-dnmax * 0.25);
+	}
+	else {
+		densrenderer->setDensityMin(0);
+	}
 	densrenderer->setDensityMax(dnmax * 0.25);
 	densrenderer->setLogarithmic(ui.cb_dlog->isChecked());
 	ui.sl_dscalepercentage->blockSignals(true);

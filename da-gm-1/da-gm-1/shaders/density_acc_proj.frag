@@ -31,7 +31,7 @@ float evalGaussian(vec3 rorig, vec3 rdir, Gaussian gauss) {
 	float sig2 = 1.0 / dot(rs, rdir);
 	float mu = dot(rs, gauss.mu_alpha.xyz-rorig) * sig2;
 	float sig = sqrt(sig2);
-	vec3 pivec = rorig + mu*rdir- gauss.mu_alpha.xyz;
+	vec3 pivec = rorig + mu*rdir - gauss.mu_alpha.xyz;
 	float gammak = sqrt2pi * gauss.mu_alpha.w * sig * exp(-0.5*dot(pivec*inv, pivec));
 	return gammak * texture(gaussTex, mu / sig).r;
 }

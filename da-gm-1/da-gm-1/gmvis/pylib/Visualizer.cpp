@@ -366,7 +366,12 @@ py::array_t<float> Visualizer::processRenderRequest(int epoch)
 			}
 			else {
 				double newval = renderer->getSuggestedDensityMaxLimit() * (1 - m_densityAutoPerc);
-				renderer->setDensityMin(0);
+				if (m_mixtures[i]->containsNegativeGaussians()) {
+					renderer->setDensityMin(-newval);
+				}
+				else {
+					renderer->setDensityMin(0);
+				}
 				renderer->setDensityMax(newval);
 			}
 		}

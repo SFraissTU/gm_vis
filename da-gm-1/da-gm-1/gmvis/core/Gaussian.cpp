@@ -29,9 +29,6 @@ Gaussian<decimal> gmvis::core::Gaussian<decimal>::createGaussian(const RawGaussi
 	return Gaussian(mu, covariancematrix, inversecovariance, amplitude, pi);
 }
 
-template Gaussian<float> gmvis::core::Gaussian<float>::createGaussian(const RawGaussian<float>& original, bool normalizedWeight);
-template Gaussian<double> gmvis::core::Gaussian<double>::createGaussian(const RawGaussian<double>& original, bool normalizedWeight);
-
 template <typename decimal>
 gmvis::core::Gaussian<decimal>::Gaussian(EGVector mu, EGMatrix covariancematrix, EGMatrix inversecovariance, decimal amplitude, decimal pi)
 	: m_mu(mu), m_covariancematrix(covariancematrix), m_inversecovariance(inversecovariance), m_amplitude(amplitude)
@@ -65,9 +62,6 @@ gmvis::core::Gaussian<decimal>::Gaussian(EGVector mu, EGMatrix covariancematrix,
 	m_eigenmatrix = QGenericMatrix<3, 3, decimal>(values);
 }
 
-template Gaussian<float>::Gaussian(Eigen::Vector3f mu, Eigen::Matrix3f covariancematrix, Eigen::Matrix3f inversecovariance, float amplitude, float pi);
-template Gaussian<double>::Gaussian(Eigen::Vector3d mu, Eigen::Matrix3d covariancematrix, Eigen::Matrix3d inversecovariance, double amplitude, double pi);
-
 template <typename decimal>
 decimal Gaussian<decimal>::sample(decimal x, decimal y, decimal z) const {
 	EGVector relpos = EGVector(x, y, z) - m_mu;
@@ -76,16 +70,10 @@ decimal Gaussian<decimal>::sample(decimal x, decimal y, decimal z) const {
 	return val;
 }
 
-template float Gaussian<float>::sample(float x, float y, float z) const;
-template double Gaussian<double>::sample(double x, double y, double z) const;
-
 template <typename decimal>
 const QGenericMatrix<3, 3, decimal>& Gaussian<decimal>::getEigenMatrix() const {
 	return m_eigenmatrix;
 }
-
-template const QGenericMatrix<3, 3, float>& Gaussian<float>::getEigenMatrix() const;
-template const QGenericMatrix<3, 3, double>& Gaussian<double>::getEigenMatrix() const;
 
 template <typename decimal>
 const EGVector& gmvis::core::Gaussian<decimal>::getPosition() const
@@ -93,17 +81,11 @@ const EGVector& gmvis::core::Gaussian<decimal>::getPosition() const
 	return m_mu;
 }
 
-template const Eigen::Vector3f& Gaussian<float>::getPosition() const;
-template const Eigen::Vector3d& Gaussian<double>::getPosition() const;
-
 template<typename decimal>
 const EGMatrix& gmvis::core::Gaussian<decimal>::getCovarianceMatrix() const
 {
 	return m_covariancematrix;
 }
-
-template const Eigen::Matrix3f& Gaussian<float>::getCovarianceMatrix() const;
-template const Eigen::Matrix3d& Gaussian<double>::getCovarianceMatrix() const;
 
 template <typename decimal>
 const decimal& gmvis::core::Gaussian<decimal>::getAmplitude() const
@@ -111,17 +93,11 @@ const decimal& gmvis::core::Gaussian<decimal>::getAmplitude() const
 	return m_amplitude;
 }
 
-template const float& Gaussian<float>::getAmplitude() const;
-template const double& Gaussian<double>::getAmplitude() const;
-
 template <typename decimal>
 const decimal& gmvis::core::Gaussian<decimal>::getNormalizedWeight() const
 {
 	return m_pi;
 }
-
-template const float& Gaussian<float>::getNormalizedWeight() const;
-template const double& Gaussian<double>::getNormalizedWeight() const;
 
 template <typename decimal>
 decimal gmvis::core::Gaussian<decimal>::getCovDeterminant() const
@@ -129,15 +105,12 @@ decimal gmvis::core::Gaussian<decimal>::getCovDeterminant() const
 	return m_covariancematrix.determinant();
 }
 
-template float Gaussian<float>::getCovDeterminant() const;
-template double Gaussian<double>::getCovDeterminant() const;
-
 template <typename decimal>
 std::optional<QMatrix4x4> Gaussian<decimal>::getTransform(decimal threshold) const {
-	if (threshold >= m_amplitude) {
+	if (threshold >= abs(m_amplitude)) {
 		return {};
 	}
-	decimal scalar = sqrt(-2 * log(threshold / m_amplitude));
+	decimal scalar = sqrt(-2 * log(abs(threshold / m_amplitude)));
 	QGenericMatrix<3, 3, decimal> mat = m_eigenmatrix * scalar;
 	QMatrix4x4 mat4 = QMatrix4x4(
 		(float)mat(0, 0), (float)mat(0, 1), (float)mat(0, 2), (float)m_mu.x(),
@@ -151,16 +124,13 @@ std::optional<QMatrix4x4> Gaussian<decimal>::getTransform(decimal threshold) con
 	return mat4;
 }
 
-template std::optional<QMatrix4x4> Gaussian<float>::getTransform(float threshold) const;
-template std::optional<QMatrix4x4> Gaussian<double>::getTransform(double threshold) const;
-
 template <typename decimal>
 bool Gaussian<decimal>::getBoundingBox(decimal threshold, QVector3D& min, QVector3D& max) const {
 	//This ellipsoid only exists, if the threshold is smaller than the amplitude. Otherwise no result will be given
-	if (threshold >= m_amplitude) {
+	if (threshold >= abs(m_amplitude)) {
 		return false;
 	}
-	decimal scalar = sqrt(-2 * log(threshold / m_amplitude));
+	decimal scalar = sqrt(-2 * log(threshold / abs(m_amplitude)));
 	QGenericMatrix<3, 3, decimal> transfo = m_eigenmatrix * scalar;
 	QVector3D r0 = QVector3D((float)transfo(0, 0), (float)transfo(0, 1), (float)transfo(0, 2));
 	QVector3D r1 = QVector3D((float)transfo(1, 0), (float)transfo(1, 1), (float)transfo(1, 2));
@@ -172,17 +142,11 @@ bool Gaussian<decimal>::getBoundingBox(decimal threshold, QVector3D& min, QVecto
 	return true;
 }
 
-template bool Gaussian<float>::getBoundingBox(float threshold, QVector3D& min, QVector3D& max) const;
-template bool Gaussian<double>::getBoundingBox(double threshold, QVector3D& min, QVector3D& max) const;
-
 template<typename decimal>
 bool gmvis::core::Gaussian<decimal>::isValid() const
 {
 	return m_valid;
 }
-
-template bool Gaussian<float>::isValid() const;
-template bool Gaussian<double>::isValid() const;
 
 template <typename decimal>
 bool gmvis::core::Gaussian<decimal>::checkValidity() const
@@ -215,14 +179,11 @@ bool gmvis::core::Gaussian<decimal>::checkValidity() const
 	return true;
 }
 
-template bool Gaussian<float>::checkValidity() const;
-template bool Gaussian<double>::checkValidity() const;
-
 template <typename decimal>
 const GaussianGPU& Gaussian<decimal>::getGPUData() const
 {
 	return m_gpudata;
 }
 
-template const GaussianGPU& Gaussian<float>::getGPUData() const;
-template const GaussianGPU& Gaussian<double>::getGPUData() const;
+template class Gaussian<float>;
+template class Gaussian<double>;
