@@ -24,6 +24,9 @@ layout(std430, binding=0) buffer GaussianMixture {
 
 void main() {
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	if (pixel_coords.x >= width || pixel_coords.y >= height) {
+		return;
+	}
 	vec2 pixel_center = vec2(pixel_coords) + vec2(0.5);
 	vec2 pixel_uv = pixel_center / vec2(width, height);
 	vec2 d = pixel_uv * 2.0 - 1.0;
