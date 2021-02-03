@@ -35,6 +35,10 @@ uniform bool whiteMode;
 void main() {
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 
+	if (pixel_coords.x >= width || pixel_coords.y >= height) {
+		return;
+	}
+
 	float sum = imageLoad(img_sum, pixel_coords).r;
 	if (logarithmic) {
 		sum = log(sum);
