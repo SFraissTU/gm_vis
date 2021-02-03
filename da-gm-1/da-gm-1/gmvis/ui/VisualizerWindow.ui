@@ -2088,7 +2088,7 @@ QProgressBar::chunk
   </action>
   <action name="loadPureMixtureAction">
    <property name="text">
-    <string>Load Mixture</string>
+    <string>Load Mixture with Amplitudes</string>
    </property>
   </action>
   <action name="loadLineAction">
