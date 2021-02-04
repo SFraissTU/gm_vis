@@ -14,5 +14,8 @@
     <file>shaders/linestrip.vert</file>
     <file>shaders/pointcloud.frag</file>
     <file>shaders/pointcloud.vert</file>
+	<file>shaders/isosurface_proj.vert</file>
+	<file>shaders/isosurface_proj.frag</file>
+	<file>shaders/isosurface_sort_and_render.comp</file>
 </qresource>
 </RCC> 
