@@ -249,21 +249,21 @@ void DisplayWidget::paintGL()
 		return;
 	}
 
+	//Clear intermediate FBO first
+	glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
+	if (m_whiteMode) {
+		glClearColor(1, 1, 1, 1);
+	}
+	else {
+		glClearColor(0, 0, 0, 1);
+	}
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	bool renderDensity = m_sDisplayDensity && m_densityRenderer->hasMixture();
 
 	//Only render points and ellipsoids if blending mode requires it
 	if (m_sDisplayPoints || m_sDisplayEllipsoids || m_sDisplayGMPositions) {
-		//Only set FBO if we will render volume later on
-		glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
-
-		if (m_whiteMode) {
-			glClearColor(1, 1, 1, 1);
-		}
-		else {
-			glClearColor(0, 0, 0, 1);
-		}
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//We're rendering into the intermediate fbo now!
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
@@ -292,7 +292,7 @@ void DisplayWidget::paintGL()
 
 	//Render volume if necessary
 	if (renderDensity) {
-		//Second pass: Pass old depth texture to ray marcher and render on screen
+		//Second pass: Pass previously rendered texture to density renderer and render on screen
 		glBindFramebuffer(GL_FRAMEBUFFER, defaultFbo);
 		glClearColor(0, 0, 0, 1);
 		
