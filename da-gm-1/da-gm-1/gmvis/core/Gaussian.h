@@ -106,5 +106,6 @@ namespace gmvis::core {
 		static const inline decimal GAUSS_PI_FACTOR = 1.0 / pow(2 * M_PI, 3.0 / 2.0);
 	};
 
-
+    extern template struct gmvis::core::Gaussian<float>;
+    extern template struct gmvis::core::Gaussian<double>;
 }

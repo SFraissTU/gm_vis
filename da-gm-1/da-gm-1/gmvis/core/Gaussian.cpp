@@ -185,5 +185,5 @@ const GaussianGPU& Gaussian<decimal>::getGPUData() const
 	return m_gpudata;
 }
 
-template class Gaussian<float>;
-template class Gaussian<double>;
+template struct gmvis::core::Gaussian<float>;
+template struct gmvis::core::Gaussian<double>;
