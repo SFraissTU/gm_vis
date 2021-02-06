@@ -128,21 +128,11 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 	while (i != -1) {
 		const Gaussian<DECIMAL_TYPE>* gauss = (*mixture)[i];
 
-		auto eigenMatrix = gauss->getEigenMatrix();
-		auto mu = gauss->getPosition();
-		auto transform = QMatrix4x4(
-			(float)eigenMatrix(0, 0), (float)eigenMatrix(0,1),  (float)eigenMatrix(0,2),  (float)mu.x(),
-			(float)eigenMatrix(1, 0), (float)eigenMatrix(1,1),  (float)eigenMatrix(1, 2), (float)mu.y(),
-			(float)eigenMatrix(2, 0), (float)eigenMatrix(2, 1), (float)eigenMatrix(2, 2), (float)mu.z(),
-			0, 0, 0, 1
-		);
-		if (transform.determinant() < 0) {
-			//Mirror object so that determinant becomes positive
-			//otherwise face ordering might switch
-			transform = transform * QMatrix4x4(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
-		}
-		transforms.push_back(transform);
-		normalTransfs.push_back(transform.inverted().transposed());
+        auto transform = gauss->getTransform(m_isoEllipsoidThreshold, m_drawIsoEllipsoids);
+        if (transform) {
+            transforms.push_back(transform.value());
+            normalTransfs.push_back(transform->inverted().transposed());
+        }
 		i = m_mixture->nextEnabledGaussianIndex(i);
 	}
 	n = transforms.size();
@@ -197,6 +187,26 @@ void gmvis::core::GMIsoellipsoidRenderer::setMarkedGaussian(int index)
 void gmvis::core::GMIsoellipsoidRenderer::setWhiteMode(bool white)
 {
 	m_whiteMode = white;
+}
+
+bool GMIsoellipsoidRenderer::getDrawIsoEllipsoids() const
+{
+    return m_drawIsoEllipsoids;
+}
+
+void GMIsoellipsoidRenderer::setDrawIsoEllipsoids(bool drawIsoEllipsoids)
+{
+    m_drawIsoEllipsoids = drawIsoEllipsoids;
+}
+
+double GMIsoellipsoidRenderer::getIsoEllipsoidThreshold() const
+{
+    return m_isoEllipsoidThreshold;
+}
+
+void GMIsoellipsoidRenderer::setIsoEllipsoidThreshold(double isoEllipsoidThreshold)
+{
+    m_isoEllipsoidThreshold = isoEllipsoidThreshold;
 }
 
 void GMIsoellipsoidRenderer::render()

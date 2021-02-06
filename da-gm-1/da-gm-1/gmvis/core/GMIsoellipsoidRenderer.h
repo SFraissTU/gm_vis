@@ -37,10 +37,16 @@ namespace gmvis::core {
 		void setMarkedGaussian(int index);
 		void setWhiteMode(bool white);
 
-	private:
-		QOpenGLFunctions_4_5_Core* m_gl;
-		Camera* m_camera;
-		GaussianMixture<DECIMAL_TYPE>* m_mixture = nullptr;
+        bool getDrawIsoEllipsoids() const;
+        void setDrawIsoEllipsoids(bool drawIsoEllipsoids);
+
+        double getIsoEllipsoidThreshold() const;
+        void setIsoEllipsoidThreshold(double isoEllipsoidThreshold);
+
+    private:
+        QOpenGLFunctions_4_5_Core* m_gl;
+        Camera* m_camera;
+        GaussianMixture<DECIMAL_TYPE>* m_mixture = nullptr;
 
 		//Geometry Data per Sphere
 		QVector<QVector3D> m_geoVertices;
@@ -83,5 +89,8 @@ namespace gmvis::core {
 
 		int m_markedGaussian = -1;
 		bool m_whiteMode = false;
+
+        bool m_drawIsoEllipsoids = false;
+        double m_isoEllipsoidThreshold = 0.1;
 	};
 }

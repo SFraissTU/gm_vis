@@ -26,6 +26,7 @@ namespace gmvis::ui {
 		void slotGaussianSelected(int index);
 		void slotDisplayOptionsChanged();
 		void slotIsovalueDisplayOptionsChanged();
+        void slotEllipsoidCovOrIsoChanged();
 		void slotEllValuesChanged();
 		void slotEllAutoValueChanged();
 		void slotEllipsoidRenderModeChanged();

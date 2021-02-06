@@ -71,7 +71,7 @@ namespace gmvis::core {
 		does not result in an isoellipsoid, as it's bigger than any density value
 		appearing in this Gaussian.
 		*/
-		std::optional<QMatrix4x4> getTransform(decimal threshold) const;
+        std::optional<QMatrix4x4> getTransform(decimal threshold, bool multiply_with_amplitude = true) const;
 
 		/*
 		Takes the isoellipsoid of this gaussian with the constant density value

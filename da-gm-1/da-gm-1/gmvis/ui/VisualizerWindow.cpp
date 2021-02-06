@@ -2,6 +2,8 @@
 #include <qfiledialog.h>
 #include <QDoubleValidator>
 #include <QComboBox>
+#include <QCheckBox>
+#include <QDoubleSpinBox>
 #include <QMessageBox>
 #include "GaussianListItem.h"
 
@@ -101,6 +103,9 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	(void)connect(ui.btn_backgr, SIGNAL(clicked()), this, SLOT(slotToggleBackground()));
 
 	(void)connect(ui.openGLWidget, SIGNAL(frameSwapped()), this, SLOT(slotPostRender()));
+
+    connect(ui.cb_isoEllipsoidRender, &QCheckBox::stateChanged, this, &VisualizerWindow::slotEllipsoidCovOrIsoChanged);
+    connect(ui.spin_isoEllipsoidThreshold, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &VisualizerWindow::slotEllipsoidCovOrIsoChanged);
 }
 
 void VisualizerWindow::slotLoadPointcloud() {
@@ -241,7 +246,15 @@ void gmvis::ui::VisualizerWindow::slotIsovalueDisplayOptionsChanged()
 	ui.cb_displayDensity->setDisabled(ui.cb_displayIsosurface->isChecked());
 	ui.tabs_displayoptions->setTabEnabled(2, ui.cb_displayIsosurface->isChecked());
 
-	ui.openGLWidget->update();
+    ui.openGLWidget->update();
+}
+
+void VisualizerWindow::slotEllipsoidCovOrIsoChanged()
+{
+    ui.openGLWidget->getGMIsoellipsoidRenderer()->setDrawIsoEllipsoids(ui.cb_isoEllipsoidRender->isChecked());
+    ui.openGLWidget->getGMIsoellipsoidRenderer()->setIsoEllipsoidThreshold(ui.spin_isoEllipsoidThreshold->value());
+    ui.openGLWidget->getGMIsoellipsoidRenderer()->updateMixture();
+    ui.openGLWidget->update();
 }
 
 void VisualizerWindow::slotEllValuesChanged()

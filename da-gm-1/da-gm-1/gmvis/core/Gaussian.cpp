@@ -106,11 +106,13 @@ decimal gmvis::core::Gaussian<decimal>::getCovDeterminant() const
 }
 
 template <typename decimal>
-std::optional<QMatrix4x4> Gaussian<decimal>::getTransform(decimal threshold) const {
-	if (threshold >= abs(m_amplitude)) {
+std::optional<QMatrix4x4> Gaussian<decimal>::getTransform(decimal threshold, bool multiply_with_amplitude) const {
+    if (threshold >= abs(m_amplitude) && multiply_with_amplitude) {
 		return {};
 	}
-	decimal scalar = sqrt(-2 * log(abs(threshold / m_amplitude)));
+    decimal scalar = sqrt(-2 * log(abs(threshold / m_amplitude)));
+    if (!multiply_with_amplitude)
+        scalar = 1;
 	QGenericMatrix<3, 3, decimal> mat = m_eigenmatrix * scalar;
 	QMatrix4x4 mat4 = QMatrix4x4(
 		(float)mat(0, 0), (float)mat(0, 1), (float)mat(0, 2), (float)m_mu.x(),
