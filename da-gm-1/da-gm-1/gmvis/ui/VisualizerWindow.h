@@ -63,6 +63,8 @@ namespace gmvis::ui {
 
 		QString lineDirectory;
 
+        double m_scaling_actual2ui = 1.0;
+
 		void setNewMixture(std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>>& newGauss, const QString& fileLoadedFrom);
 	};
 }

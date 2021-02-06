@@ -34,13 +34,13 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.co_ellrendermode->setCurrentIndex((int)ellrenderer->getRenderMode() - 1);
 
 	auto densrenderer = widget->getGMDensityRenderer();
-	//ui.spin_dscalemin->setValue(densrenderer->getDensityMin() * 100);
-	//ui.spin_dscalemax->setValue(densrenderer->getDensityMax() * 100);
-	//ui.sl_dscalepercentage->setValue(100.0 - densrenderer->getDensityMax() / 1000.0);
+    //ui.spin_dscalemin->setValue(densrenderer->getDensityMin() * m_scaling_actual2ui);
+    //ui.spin_dscalemax->setValue(densrenderer->getDensityMax() * m_scaling_actual2ui);
+    //ui.sl_dscalepercentage->setValue(100.0 - densrenderer->getDensityMax() / 1000.0);
 	//ui.cb_dscaleauto->setChecked(densrenderer->getDensityAuto());
 	//ui.cb_dscalecutoff->setChecked(densrenderer->getDensityCutoff());
 	ui.co_densrendermode->setCurrentIndex((int)densrenderer->getRenderMode() - 1);
-	ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * 100);
+    ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * m_scaling_actual2ui);
 	ui.spin_accthreshold->setEnabled(!densrenderer->getAccelerationThresholdAuto());
 	ui.cb_accthauto->setChecked(densrenderer->getAccelerationThresholdAuto());
 	ui.cb_dlog->setChecked(densrenderer->getLogarithmic());
@@ -48,7 +48,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	auto isosurfacerenderer = widget->getGMIsosurfaceRenderer();
 	ui.spin_isovalue->setValue(isosurfacerenderer->getIsolevel());
 	ui.spin_isoslidermax->setValue(0.001);
-	ui.sl_isovalue->setValue(isosurfacerenderer->getIsolevel() / 0.001 * 100);
+    ui.sl_isovalue->setValue(isosurfacerenderer->getIsolevel() / 0.001 * 100);
 
 	auto dbgmenu = ui.menuBar->addMenu("Options");
 	auto fpsbtn = dbgmenu->addAction("Print Render Times");
@@ -324,14 +324,14 @@ void gmvis::ui::VisualizerWindow::slotDensitySliderChanged()
 		if (ui.cb_dlog->isChecked()) {
 			double dlmin = renderer->getSuggestedDensityLogMinLimit();
 			double dlmax = renderer->getSuggestedDensityLogMaxLimit();
-			double newval = (100 * dlmin + (dlmax - dlmin) * (ui.sl_dscalepercentage->value())); //As we multiply our values with 100, we don't need to divide by 100
+            double newval = (m_scaling_actual2ui * dlmin + (dlmax - dlmin) * (ui.sl_dscalepercentage->value() / 100.0) * m_scaling_actual2ui);
 			if (newval < ui.spin_dscalemax->value()) {
 				ui.spin_dscalemin->setValue(newval);
 			}
 		}
 		else {
 			//this will trigger slotDensityValuesChanged for update of values in renderer
-			double newval = renderer->getSuggestedDensityMaxLimit() * (100 - ui.sl_dscalepercentage->value());
+            double newval = renderer->getSuggestedDensityMaxLimit() * (1.0 - ui.sl_dscalepercentage->value() / 100.) * m_scaling_actual2ui;
 			if (newval > ui.spin_dscalemin->value()) {
 				ui.spin_dscalemax->setValue(newval);
 			}
@@ -341,14 +341,21 @@ void gmvis::ui::VisualizerWindow::slotDensitySliderChanged()
 
 void VisualizerWindow::slotDensityValuesChanged()
 {
+    auto val_max = ui.spin_dscalemax->value() / m_scaling_actual2ui;
+    auto val_min = ui.spin_dscalemin->value() / m_scaling_actual2ui;
+    if (ui.btn_density_lock_symmetry->isChecked() && !ui.cb_dlog->isChecked()) {
+        val_min = -val_max;
+        ui.spin_dscalemin->setValue(val_min);
+    }
+
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
-	renderer->setDensityMin(ui.spin_dscalemin->value() * 0.01);
-	renderer->setDensityMax(ui.spin_dscalemax->value() * 0.01);
+    renderer->setDensityMin(val_min);
+    renderer->setDensityMax(val_max);
 	//renderer->setDensityCutoff(ui.cb_dscalecutoff->isChecked());
 	//set Slider Value
 	if (ui.cb_accthauto->isChecked()) {
 		ui.spin_accthreshold->blockSignals(true);
-		ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
+        ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * m_scaling_actual2ui);
 		ui.spin_accthreshold->blockSignals(false);
 		slotAccelerationThresholdChanged(false);
 	}
@@ -357,13 +364,13 @@ void VisualizerWindow::slotDensityValuesChanged()
 		ui.sl_dscalepercentage->blockSignals(true);
 		double dlmin = renderer->getSuggestedDensityLogMinLimit();
 		double dlmax = renderer->getSuggestedDensityLogMaxLimit();
-		double newpercval = 100 * (0.01 * ui.spin_dscalemin->value() - dlmin) / (dlmax - dlmin);
-		ui.sl_dscalepercentage->setValue(newpercval);
+        double newpercval = 100 * (ui.spin_dscalemin->value() / m_scaling_actual2ui - dlmin) / (dlmax - dlmin);
+        ui.sl_dscalepercentage->setValue(int(newpercval));   // always 0-100%
 		ui.sl_dscalepercentage->blockSignals(false);
 	}
 	else {
 		ui.sl_dscalepercentage->blockSignals(true);
-		ui.sl_dscalepercentage->setValue(100 - (ui.spin_dscalemax->value() / renderer->getSuggestedDensityMaxLimit()));
+        ui.sl_dscalepercentage->setValue(100 - int((ui.spin_dscalemax->value() / m_scaling_actual2ui) / renderer->getSuggestedDensityMaxLimit()));
 		ui.sl_dscalepercentage->blockSignals(false);
 	}
 	ui.openGLWidget->update();
@@ -393,8 +400,8 @@ void gmvis::ui::VisualizerWindow::slotDensityLogModeChanged()
 	ui.spin_dscalemax->blockSignals(true);
 	//if auto off
 	//ui.sl_dscalepercentage->setValue()
-	ui.spin_dscalemin->setValue(renderer->getDensityMin() * 100);
-	ui.spin_dscalemax->setValue(renderer->getDensityMax() * 100);
+    ui.spin_dscalemin->setValue(renderer->getDensityMin() * m_scaling_actual2ui);
+    ui.spin_dscalemax->setValue(renderer->getDensityMax() * m_scaling_actual2ui);
 	ui.spin_isoslidermax->setEnabled(!log);
 	ui.spin_dscalemin->blockSignals(false);
 	ui.spin_dscalemax->blockSignals(false);
@@ -414,7 +421,7 @@ void VisualizerWindow::slotAccelerationThresholdChanged(bool update)
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
 	if (!ui.cb_accthauto->isChecked())
 	{
-		renderer->setAccelerationThreshold(0.01 * ui.spin_accthreshold->value());
+        renderer->setAccelerationThreshold(ui.spin_accthreshold->value() / m_scaling_actual2ui);
 	}
 	renderer->updateAccelerationData();
 	if (update) {
@@ -429,7 +436,7 @@ void VisualizerWindow::slotAccelerationThreshAutoChanged()
 	renderer->setAccelerationThresholdAuto(autoth);
 	ui.spin_accthreshold->setEnabled(!autoth);
 	//This will call slotAccelerationThresholdChanged(true) and automatically update the window
-	ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * 100);
+    ui.spin_accthreshold->setValue(renderer->getAccelerationThreshold() * m_scaling_actual2ui);
 }
 
 void gmvis::ui::VisualizerWindow::slotIsoValueChanged()
@@ -437,7 +444,7 @@ void gmvis::ui::VisualizerWindow::slotIsoValueChanged()
 	auto renderer = ui.openGLWidget->getGMIsosurfaceRenderer();
 	renderer->setIsolevel(ui.spin_isovalue->value());
 	ui.sl_isovalue->blockSignals(true);
-	ui.sl_isovalue->setValue(round(ui.spin_isovalue->value() / ui.spin_isoslidermax->value() * 100));
+    ui.sl_isovalue->setValue(round(ui.spin_isovalue->value() / ui.spin_isoslidermax->value() * m_scaling_actual2ui));
 	ui.sl_isovalue->blockSignals(false);
 	ui.openGLWidget->update();
 }
@@ -445,7 +452,7 @@ void gmvis::ui::VisualizerWindow::slotIsoValueChanged()
 void gmvis::ui::VisualizerWindow::slotIsoSliderChanged()
 {
 	//this triggers slotIsoValueChanged, so widget will be updated
-	ui.spin_isovalue->setValue(ui.sl_isovalue->value() / 100.0 * ui.spin_isoslidermax->value());
+    ui.spin_isovalue->setValue(ui.sl_isovalue->value() / m_scaling_actual2ui * ui.spin_isoslidermax->value());
 }
 
 void VisualizerWindow::slotPostRender()
@@ -454,8 +461,8 @@ void VisualizerWindow::slotPostRender()
 		auto renderer = ui.openGLWidget->getGMDensityRenderer();
 		ui.spin_dscalemin->blockSignals(true);
 		ui.spin_dscalemax->blockSignals(true);
-		ui.spin_dscalemin->setValue(renderer->getDensityMin() * 100);
-		ui.spin_dscalemax->setValue(renderer->getDensityMax() * 100);
+        ui.spin_dscalemin->setValue(renderer->getDensityMin() * m_scaling_actual2ui);
+        ui.spin_dscalemax->setValue(renderer->getDensityMax() * m_scaling_actual2ui);
 		ui.spin_dscalemin->blockSignals(false);
 		ui.spin_dscalemax->blockSignals(false);
 	}*/
@@ -484,14 +491,14 @@ void gmvis::ui::VisualizerWindow::slotResetDensity()
 	ui.spin_dscalemin->blockSignals(true);
 	ui.spin_dscalemax->blockSignals(true);
 	ui.sl_dscalepercentage->setValue(75);
-	ui.spin_dscalemin->setValue(densrenderer->getDensityMin() * 100);
-	ui.spin_dscalemax->setValue(densrenderer->getDensityMax() * 100);
+    ui.spin_dscalemin->setValue(densrenderer->getDensityMin() * m_scaling_actual2ui);
+    ui.spin_dscalemax->setValue(densrenderer->getDensityMax() * m_scaling_actual2ui);
 	ui.sl_dscalepercentage->blockSignals(false);
 	ui.spin_dscalemin->blockSignals(false);
 	ui.spin_dscalemax->blockSignals(false);
 	if (ui.cb_accthauto->isChecked()) {
 		ui.spin_accthreshold->blockSignals(true);
-		ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * 100);
+        ui.spin_accthreshold->setValue(densrenderer->getAccelerationThreshold() * m_scaling_actual2ui);
 		ui.spin_accthreshold->blockSignals(false);
 		slotAccelerationThresholdChanged(false);
 	}
