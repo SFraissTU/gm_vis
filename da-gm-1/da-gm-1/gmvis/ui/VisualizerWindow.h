@@ -55,6 +55,7 @@ namespace gmvis::ui {
 
     private slots:
         void on_btn_adams_scale_clicked();
+        void on_cb_actual_x100_to_ui_scaling_toggled(bool checked);
 
     private:
 		Ui::VisualizerWindowClass ui;

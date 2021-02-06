@@ -16,6 +16,11 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 {
 	ui.setupUi(this);
 
+    // settings
+    QSettings settings;
+    m_scaling_actual2ui = settings.value("scaling_actual2ui_is_100", true).toBool() ? 100 : 1;
+    ui.cb_actual_x100_to_ui_scaling->setChecked(settings.value("scaling_actual2ui_is_100", true).toBool());
+
 	auto widget = ui.openGLWidget;
 	ui.cb_displayPointcloud->setChecked(widget->isPointDisplayEnabled());
 	ui.cb_displayEllipsoids->setChecked(widget->isEllipsoidDisplayEnabled());
@@ -698,4 +703,16 @@ void gmvis::ui::VisualizerWindow::on_btn_adams_scale_clicked()
     ui.spin_dscalemin->setValue(double(min_max_density.first));
     ui.spin_dscalemin->blockSignals(false);
     ui.spin_dscalemax->setValue(double(min_max_density.second));
+}
+
+
+void gmvis::ui::VisualizerWindow::on_cb_actual_x100_to_ui_scaling_toggled(bool checked)
+{
+    auto newScale = checked ? 100 : 1;
+    if (m_scaling_actual2ui != newScale) {
+        m_scaling_actual2ui = newScale;
+        QSettings s;
+        s.setValue("scaling_actual2ui_is_100", checked);
+        QMessageBox::information(this, "setting scaling factor", "Please restart the application to activate the new setting.");
+    }
 }

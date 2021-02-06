@@ -1813,67 +1813,6 @@ QProgressBar::chunk
              </item>
              <item>
               <layout class="QGridLayout" name="gridLayout_3">
-               <item row="0" column="0">
-                <widget class="QLabel" name="label">
-                 <property name="text">
-                  <string>Min:</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QDoubleSpinBox" name="spin_dscalemin">
-                 <property name="alignment">
-                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                 </property>
-                 <property name="decimals">
-                  <number>10</number>
-                 </property>
-                 <property name="minimum">
-                  <double>-10000000000000000905969664.000000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>9999999999999999635896294965248.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.000500000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="2" rowspan="2">
-                <widget class="QPushButton" name="btn_density_lock_symmetry">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>36</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>42</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Lock</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QLabel" name="label_2">
-                 <property name="text">
-                  <string>Max:</string>
-                 </property>
-                </widget>
-               </item>
                <item row="1" column="1">
                 <widget class="QDoubleSpinBox" name="spin_dscalemax">
                  <property name="sizePolicy">
@@ -1905,6 +1844,39 @@ QProgressBar::chunk
                  </property>
                 </widget>
                </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="label_2">
+                 <property name="text">
+                  <string>Max:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="label">
+                 <property name="text">
+                  <string>Min:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QDoubleSpinBox" name="spin_dscalemin">
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="decimals">
+                  <number>10</number>
+                 </property>
+                 <property name="minimum">
+                  <double>-10000000000000000905969664.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>9999999999999999635896294965248.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>0.000500000000000</double>
+                 </property>
+                </widget>
+               </item>
                <item row="2" column="0">
                 <widget class="QLabel" name="label_11">
                  <property name="text">
@@ -1919,10 +1891,31 @@ QProgressBar::chunk
                  </property>
                 </widget>
                </item>
-               <item row="3" column="0" colspan="3">
-                <widget class="QLabel" name="label_12">
+               <item row="0" column="2" rowspan="2">
+                <widget class="QPushButton" name="btn_density_lock_symmetry">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>36</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>42</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
                  <property name="text">
-                  <string>Displayed values are 100 times higher</string>
+                  <string>Lock</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
@@ -1953,6 +1946,13 @@ QProgressBar::chunk
                   </widget>
                  </item>
                 </layout>
+               </item>
+               <item row="3" column="0" colspan="2">
+                <widget class="QCheckBox" name="cb_actual_x100_to_ui_scaling">
+                 <property name="text">
+                  <string>Displayed values are 100 times higher</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </item>
