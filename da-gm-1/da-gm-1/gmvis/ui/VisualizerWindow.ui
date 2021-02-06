@@ -1388,7 +1388,7 @@ QProgressBar::chunk
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -1439,7 +1439,7 @@ QProgressBar::chunk
               <number>10</number>
              </property>
              <property name="minimum">
-              <double>-10.000000000000000</double>
+              <double>-9999999999999999635896294965248.000000000000000</double>
              </property>
              <property name="maximum">
               <double>9999999999999999635896294965248.000000000000000</double>
@@ -1475,6 +1475,9 @@ QProgressBar::chunk
              </property>
              <property name="decimals">
               <number>10</number>
+             </property>
+             <property name="minimum">
+              <double>-9999999999999999635896294965248.000000000000000</double>
              </property>
              <property name="maximum">
               <double>9999999999999999635896294965248.000000000000000</double>
@@ -1901,7 +1904,7 @@ QProgressBar::chunk
                  </property>
                  <property name="minimumSize">
                   <size>
-                   <width>36</width>
+                   <width>92</width>
                    <height>0</height>
                   </size>
                  </property>
