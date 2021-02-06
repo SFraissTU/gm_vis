@@ -53,7 +53,10 @@ namespace gmvis::ui {
 
         void loadPureMixture(const QString& path);
 
-	private:
+    private slots:
+        void on_btn_adams_scale_clicked();
+
+    private:
 		Ui::VisualizerWindowClass ui;
 		std::unique_ptr<core::PointCloud> pointcloud;
 		std::unique_ptr<core::GaussianMixture<DECIMAL_TYPE>> mixture;

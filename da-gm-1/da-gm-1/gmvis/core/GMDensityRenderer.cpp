@@ -91,6 +91,34 @@ void GMDensityRenderer::setSize(int width, int height)
 	//m_raycastRenderer.setSize(width, height);
 }
 
+std::pair<float, float> GMDensityRenderer::find_min_max_density() {
+    if (!m_mixture) {
+        return {-1, 1};
+    }
+
+    GLint screenFbo = 0;
+    m_gl->glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &screenFbo);
+    m_gl->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_fbo_intermediate.getID());
+    int screenWidth = m_fbo_intermediate.getWidth();
+    int screenHeight = m_fbo_intermediate.getHeight();
+
+    if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_PROJECTED) {
+        m_rasterizeRenderer.render(screenWidth, screenHeight);
+    }
+    else {
+        m_raycastRenderer.render(m_fbo_intermediate.getSinglevalueFloatTexture(), screenWidth, screenHeight);
+    }
+
+    //Auto-Density-Scale-Mode
+    m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo_intermediate.getID());
+    std::vector<float> pixels;
+    pixels.resize(size_t(screenWidth * screenHeight));
+    m_gl->glReadPixels(0, 0, screenWidth, screenHeight, GL_RED, GL_FLOAT, pixels.data());
+    auto minmax = std::minmax_element(pixels.begin(), pixels.end());
+    return {*minmax.first, *minmax.second};
+}
+
+
 void GMDensityRenderer::render(GLuint preTexture, bool blend)
 {
 	if (!m_mixture) {
@@ -111,27 +139,15 @@ void GMDensityRenderer::render(GLuint preTexture, bool blend)
 	}
 
 	//Auto-Density-Scale-Mode
-	if (m_sDensityAuto) {
-		m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo_intermediate.getID());
-		int nrpixels = screenWidth * screenHeight;
-		float* pixeldata = new float[nrpixels];
-		m_gl->glReadPixels(0, 0, screenWidth, screenHeight, GL_RED, GL_FLOAT, pixeldata);
-		std::vector<float> pixels = std::vector<float>(pixeldata, pixeldata + nrpixels);
-		std::sort(pixels.begin(), pixels.end());
-		int firstnonzeropixel = 0;
-		for (int i = 0; i < pixels.size(); ++i)
-		{
-			if (pixels[i] != 0)
-			{
-				firstnonzeropixel = i;
-				break;
-			}
-		}
-		m_sDensityMin = 0;
-		m_sDensityMax = pixels[firstnonzeropixel + (pixels.size() - 1 - firstnonzeropixel) * m_sDensityAutoPerc];
-		//qDebug() << pixels[pixels.size() - 1];
-		delete[] pixeldata;
-	}
+    if (m_sDensityAuto) {
+        m_gl->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo_intermediate.getID());
+        std::vector<float> pixels;
+        pixels.resize(size_t(screenWidth * screenHeight));
+        m_gl->glReadPixels(0, 0, screenWidth, screenHeight, GL_RED, GL_FLOAT, pixels.data());
+        auto minmax = std::minmax_element(pixels.begin(), pixels.end());
+        m_sDensityMin = double(*minmax.first);
+        m_sDensityMax = double(*minmax.first);
+    }
 
 	m_program_coloring->bind();
 	m_gl->glActiveTexture(GL_TEXTURE0);

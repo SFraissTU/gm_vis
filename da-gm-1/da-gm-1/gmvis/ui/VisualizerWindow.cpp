@@ -3,6 +3,7 @@
 #include <QDoubleValidator>
 #include <QComboBox>
 #include <QCheckBox>
+#include <QPushButton>
 #include <QDoubleSpinBox>
 #include <QMessageBox>
 #include "GaussianListItem.h"
@@ -104,6 +105,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 
 	(void)connect(ui.openGLWidget, SIGNAL(frameSwapped()), this, SLOT(slotPostRender()));
 
+    connect(ui.btn_density_lock_symmetry, &QPushButton::toggled, this, &VisualizerWindow::slotDensityValuesChanged);
     connect(ui.cb_isoEllipsoidRender, &QCheckBox::stateChanged, this, &VisualizerWindow::slotEllipsoidCovOrIsoChanged);
     connect(ui.spin_isoEllipsoidThreshold, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &VisualizerWindow::slotEllipsoidCovOrIsoChanged);
 }
@@ -344,8 +346,10 @@ void VisualizerWindow::slotDensityValuesChanged()
     auto val_max = ui.spin_dscalemax->value() / m_scaling_actual2ui;
     auto val_min = ui.spin_dscalemin->value() / m_scaling_actual2ui;
     if (ui.btn_density_lock_symmetry->isChecked() && !ui.cb_dlog->isChecked()) {
-        val_min = -val_max;
-        ui.spin_dscalemin->setValue(val_min);
+        val_max = std::max(std::abs(val_min), val_max);
+        val_min = - val_max;
+        ui.spin_dscalemax->setValue(val_max * m_scaling_actual2ui);
+        ui.spin_dscalemin->setValue(val_min * m_scaling_actual2ui);
     }
 
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
@@ -684,4 +688,14 @@ void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMi
 			ui.openGLWidget->update();
 		}
 	}
+}
+
+void gmvis::ui::VisualizerWindow::on_btn_adams_scale_clicked()
+{
+    ui.openGLWidget->makeCurrent();
+    auto min_max_density = ui.openGLWidget->getGMDensityRenderer()->find_min_max_density();
+    ui.spin_dscalemin->blockSignals(true);
+    ui.spin_dscalemin->setValue(double(min_max_density.first));
+    ui.spin_dscalemin->blockSignals(false);
+    ui.spin_dscalemax->setValue(double(min_max_density.second));
 }

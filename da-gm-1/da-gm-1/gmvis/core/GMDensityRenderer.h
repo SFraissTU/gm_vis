@@ -14,6 +14,7 @@ namespace gmvis::core {
 		void updateMixture(); //Call this when having changed the enabled gaussians settings in the mixture!
 		bool hasMixture() const;
 		void setSize(int width, int height);
+        std::pair<float, float> find_min_max_density();
 		void render(GLuint preTexture, bool blend);
 		void updateAccelerationData();
 		void cleanup();
