@@ -17,9 +17,8 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	ui.setupUi(this);
 
     // settings
-    QSettings settings;
-    m_scaling_actual2ui = settings.value("scaling_actual2ui_is_100", true).toBool() ? 100 : 1;
-    ui.cb_actual_x100_to_ui_scaling->setChecked(settings.value("scaling_actual2ui_is_100", true).toBool());
+    m_scaling_actual2ui = config.value("scaling_actual2ui_is_100", true).toBool() ? 100 : 1;
+    ui.cb_actual_x100_to_ui_scaling->setChecked(config.value("scaling_actual2ui_is_100", true).toBool());
 
 	auto widget = ui.openGLWidget;
 	ui.cb_displayPointcloud->setChecked(widget->isPointDisplayEnabled());
@@ -711,8 +710,7 @@ void gmvis::ui::VisualizerWindow::on_cb_actual_x100_to_ui_scaling_toggled(bool c
     auto newScale = checked ? 100 : 1;
     if (m_scaling_actual2ui != newScale) {
         m_scaling_actual2ui = newScale;
-        QSettings s;
-        s.setValue("scaling_actual2ui_is_100", checked);
+        config.setValue("scaling_actual2ui_is_100", checked);
         QMessageBox::information(this, "setting scaling factor", "Please restart the application to activate the new setting.");
     }
 }
