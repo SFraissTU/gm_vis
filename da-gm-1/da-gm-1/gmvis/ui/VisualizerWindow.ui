@@ -1536,6 +1536,11 @@ QProgressBar::chunk
                <string>MedMed</string>
               </property>
              </item>
+             <item>
+              <property name="text">
+               <string>Max(abs(min), abs(max))</string>
+              </property>
+             </item>
             </widget>
            </item>
            <item row="1" column="0">
@@ -1854,6 +1859,9 @@ QProgressBar::chunk
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                  </property>
+                 <property name="accelerated">
+                  <bool>true</bool>
+                 </property>
                  <property name="decimals">
                   <number>10</number>
                  </property>
@@ -1889,6 +1897,9 @@ QProgressBar::chunk
                 <widget class="QDoubleSpinBox" name="spin_dscalemin">
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="accelerated">
+                  <bool>true</bool>
                  </property>
                  <property name="decimals">
                   <number>10</number>

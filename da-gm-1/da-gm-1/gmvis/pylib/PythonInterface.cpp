@@ -43,6 +43,7 @@ PYBIND11_MODULE(pygmvis, m) {
 		.value("RANGE_MANUAL", GMColorRangeMode::RANGE_MANUAL)
 		.value("RANGE_MINMAX", GMColorRangeMode::RANGE_MINMAX)
 		.value("RANGE_MEDMED", GMColorRangeMode::RANGE_MEDMED)
+        .value("RANGE_MAXABSMINMAX", GMColorRangeMode::RANGE_MAXABSMINMAX)
 		.export_values();
 	py::enum_<GMDensityRenderMode>(m, "GMDensityRenderMode")
 		.value("ADDITIVE_EXACT", GMDensityRenderMode::ADDITIVE_EXACT)

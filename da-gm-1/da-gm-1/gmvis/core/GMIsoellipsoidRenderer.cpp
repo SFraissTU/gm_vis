@@ -288,43 +288,59 @@ void GMIsoellipsoidRenderer::updateColors()
 		//Find min and max Values
 		double minVal = m_sEllMin;
 		double maxVal = m_sEllMax;
-		if (m_sRangeMode == GMColorRangeMode::RANGE_MINMAX) {
-			minVal = std::numeric_limits<double>::infinity();
-			maxVal = -minVal;
-			for (int i = 0; i < n; ++i) {
-				const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
-				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
-				if (val < minVal) {
-					minVal = val;
-				}
-				if (val > maxVal) {
-					maxVal = val;
-				}
-			}
-		}
-		else if (m_sRangeMode == GMColorRangeMode::RANGE_MEDMED) {
-			double sum = 0;
-			QVector<double> values;
-			values.resize(n);
-			for (int i = 0; i < n; ++i) {
-				const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
-				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
-				values[i] = val;
-			}
-			qSort(values);
-			double median = values[n / 2];
-			QVector<double> deviations;
-			deviations.resize(n);
-			for (int i = 0; i < n; ++i) {
-				float val = values[i];
-				deviations[i] = abs(val - median);
-			}
-			qSort(deviations);
-			double medmed = deviations[n / 2];
-			//Assign colors
-			minVal = std::max(median - medmed, values[0]);
-			maxVal = std::min(median + medmed, values[n - 1]);
-		}
+        switch (m_sRangeMode) {
+        case GMColorRangeMode::RANGE_MINMAX:
+            minVal = std::numeric_limits<double>::infinity();
+            maxVal = -minVal;
+            for (int i = 0; i < n; ++i) {
+                const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
+                double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
+                if (val < minVal) {
+                    minVal = val;
+                }
+                if (val > maxVal) {
+                    maxVal = val;
+                }
+            }
+            break;
+        case GMColorRangeMode::RANGE_MEDMED:
+            {
+                double sum = 0;
+                QVector<double> values;
+                values.resize(n);
+                for (int i = 0; i < n; ++i) {
+                    const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
+                    double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
+                    values[i] = val;
+                }
+                qSort(values);
+                double median = values[n / 2];
+                QVector<double> deviations;
+                deviations.resize(n);
+                for (int i = 0; i < n; ++i) {
+                    float val = values[i];
+                    deviations[i] = abs(val - median);
+                }
+                qSort(deviations);
+                double medmed = deviations[n / 2];
+                //Assign colors
+                minVal = std::max(median - medmed, values[0]);
+                maxVal = std::min(median + medmed, values[n - 1]);
+            }
+            break;
+        case GMColorRangeMode::RANGE_MANUAL:
+            break;
+        case GMColorRangeMode::RANGE_MAXABSMINMAX:
+            maxVal = -std::numeric_limits<double>::infinity();
+            for (int i = 0; i < n; ++i) {
+                const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
+                double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
+                if (std::abs(val) > maxVal) {
+                    maxVal = std::abs(val);
+                }
+            }
+            minVal = -maxVal;
+        }
 		double range = maxVal - minVal;
 		int i = m_mixture->nextEnabledGaussianIndex(-1);
 		while (i != -1) {

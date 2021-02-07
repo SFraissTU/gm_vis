@@ -331,14 +331,14 @@ void gmvis::ui::VisualizerWindow::slotDensitySliderChanged()
 		if (ui.cb_dlog->isChecked()) {
 			double dlmin = renderer->getSuggestedDensityLogMinLimit();
 			double dlmax = renderer->getSuggestedDensityLogMaxLimit();
-            double newval = (m_scaling_actual2ui * dlmin + (dlmax - dlmin) * (ui.sl_dscalepercentage->value() / 100.0) * m_scaling_actual2ui);
+            double newval = m_scaling_actual2ui * (dlmin + (dlmax - dlmin) * (ui.sl_dscalepercentage->value() / 100.0));
 			if (newval < ui.spin_dscalemax->value()) {
 				ui.spin_dscalemin->setValue(newval);
 			}
 		}
 		else {
 			//this will trigger slotDensityValuesChanged for update of values in renderer
-            double newval = renderer->getSuggestedDensityMaxLimit() * (1.0 - ui.sl_dscalepercentage->value() / 100.) * m_scaling_actual2ui;
+            double newval = m_scaling_actual2ui * renderer->getSuggestedDensityMaxLimit() * (1.0 - ui.sl_dscalepercentage->value() / 100.);
 			if (newval > ui.spin_dscalemin->value()) {
 				ui.spin_dscalemax->setValue(newval);
 			}
@@ -350,12 +350,6 @@ void VisualizerWindow::slotDensityValuesChanged()
 {
     auto val_max = ui.spin_dscalemax->value() / m_scaling_actual2ui;
     auto val_min = ui.spin_dscalemin->value() / m_scaling_actual2ui;
-    if (ui.btn_density_lock_symmetry->isChecked() && !ui.cb_dlog->isChecked()) {
-        val_max = std::max(std::abs(val_min), val_max);
-        val_min = - val_max;
-        ui.spin_dscalemax->setValue(val_max * m_scaling_actual2ui);
-        ui.spin_dscalemin->setValue(val_min * m_scaling_actual2ui);
-    }
 
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
     renderer->setDensityMin(val_min);
@@ -373,13 +367,13 @@ void VisualizerWindow::slotDensityValuesChanged()
 		ui.sl_dscalepercentage->blockSignals(true);
 		double dlmin = renderer->getSuggestedDensityLogMinLimit();
 		double dlmax = renderer->getSuggestedDensityLogMaxLimit();
-        double newpercval = 100 * (ui.spin_dscalemin->value() / m_scaling_actual2ui - dlmin) / (dlmax - dlmin);
-        ui.sl_dscalepercentage->setValue(int(newpercval));   // always 0-100%
+        double newpercval = (val_min - dlmin) / (dlmax - dlmin);
+        ui.sl_dscalepercentage->setValue(int(100. * newpercval));   // always 0-100%
 		ui.sl_dscalepercentage->blockSignals(false);
 	}
 	else {
 		ui.sl_dscalepercentage->blockSignals(true);
-        ui.sl_dscalepercentage->setValue(100 - int((ui.spin_dscalemax->value() / m_scaling_actual2ui) / renderer->getSuggestedDensityMaxLimit()));
+        ui.sl_dscalepercentage->setValue(100 - int(100. * val_max / renderer->getSuggestedDensityMaxLimit()));
 		ui.sl_dscalepercentage->blockSignals(false);
 	}
 	ui.openGLWidget->update();
@@ -699,10 +693,22 @@ void gmvis::ui::VisualizerWindow::on_btn_adams_scale_clicked()
 {
     ui.openGLWidget->makeCurrent();
     auto min_max_density = ui.openGLWidget->getGMDensityRenderer()->find_min_max_density();
-    ui.spin_dscalemin->blockSignals(true);
-    ui.spin_dscalemin->setValue(double(min_max_density.first));
-    ui.spin_dscalemin->blockSignals(false);
-    ui.spin_dscalemax->setValue(double(min_max_density.second));
+    if (ui.btn_density_lock_symmetry->isChecked() && !ui.cb_dlog->isChecked()) {
+        auto val_min = min_max_density.first;
+        auto val_max = min_max_density.second;
+        val_max = std::max(std::abs(val_min), val_max);
+        val_min = - val_max;
+        min_max_density.first = val_min;
+        min_max_density.second = val_max;
+
+        ui.spin_dscalemax->setValue(double(min_max_density.second) * m_scaling_actual2ui);
+    }
+    else {
+        ui.spin_dscalemin->blockSignals(true);
+        ui.spin_dscalemin->setValue(double(min_max_density.first) * m_scaling_actual2ui);
+        ui.spin_dscalemin->blockSignals(false);
+        ui.spin_dscalemax->setValue(double(min_max_density.second) * m_scaling_actual2ui);
+    }
 }
 
 
@@ -721,4 +727,28 @@ void gmvis::ui::VisualizerWindow::on_cb_grey_bg_toggled(bool checked)
 {
     ui.openGLWidget->setGreyBackground(checked);
     ui.openGLWidget->update();
+}
+
+void gmvis::ui::VisualizerWindow::on_btn_density_lock_symmetry_clicked()
+{
+    if (!ui.cb_dlog->isChecked()) {
+        auto val_max = ui.spin_dscalemax->value() / m_scaling_actual2ui;
+        auto val_min = ui.spin_dscalemin->value() / m_scaling_actual2ui;
+        val_max = std::max(std::abs(val_min), val_max);
+        ui.spin_dscalemax->setValue(val_max * m_scaling_actual2ui);
+    }
+}
+
+void gmvis::ui::VisualizerWindow::on_spin_dscalemin_valueChanged(double arg1)
+{
+    if (ui.btn_density_lock_symmetry->isChecked()) {
+        ui.spin_dscalemax->setValue(-arg1);
+    }
+}
+
+void gmvis::ui::VisualizerWindow::on_spin_dscalemax_valueChanged(double arg1)
+{
+    if (ui.btn_density_lock_symmetry->isChecked()) {
+        ui.spin_dscalemin->setValue(-arg1);
+    }
 }

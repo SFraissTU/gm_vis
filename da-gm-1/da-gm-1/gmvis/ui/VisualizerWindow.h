@@ -59,6 +59,12 @@ namespace gmvis::ui {
 
         void on_cb_grey_bg_toggled(bool checked);
 
+        void on_btn_density_lock_symmetry_clicked();
+
+        void on_spin_dscalemin_valueChanged(double arg1);
+
+        void on_spin_dscalemax_valueChanged(double arg1);
+
     private:
 		Ui::VisualizerWindowClass ui;
 		std::unique_ptr<core::PointCloud> pointcloud;

@@ -18,6 +18,7 @@ namespace gmvis::core {
 	enum class GMColorRangeMode {
 		RANGE_MANUAL = 1,
 		RANGE_MINMAX = 2,
-		RANGE_MEDMED = 3
+        RANGE_MEDMED = 3,
+        RANGE_MAXABSMINMAX = 4
 	};
 }
