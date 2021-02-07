@@ -57,6 +57,8 @@ namespace gmvis::ui {
         void on_btn_adams_scale_clicked();
         void on_cb_actual_x100_to_ui_scaling_toggled(bool checked);
 
+        void on_cb_grey_bg_toggled(bool checked);
+
     private:
 		Ui::VisualizerWindowClass ui;
 		std::unique_ptr<core::PointCloud> pointcloud;

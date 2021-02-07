@@ -57,11 +57,14 @@ namespace gmvis::ui {
 		void setMixture(gmvis::core::GaussianMixture<DECIMAL_TYPE>* mixture, bool updateDisplayOptions = true);
 		void updateMixture(); //Call this when having changed the enabled gaussians settings in the mixture!
 
-	public slots:
-		void cleanup();
+        bool getGreyBackground() const;
+        void setGreyBackground(bool greyBackground);
 
-	signals:
-		void gaussianSelected(int index);
+    public slots:
+        void cleanup();
+
+    signals:
+        void gaussianSelected(int index);
 		void cameraMoved(core::Camera* camera);
 
 	protected:
@@ -86,6 +89,7 @@ namespace gmvis::ui {
 		bool m_sDisplayDensity = true;
 		bool m_picking = false;
 		bool m_whiteMode = false;
+        bool m_greyBackground = false;
 		bool m_logFPS = false;
 
 		//Renderers

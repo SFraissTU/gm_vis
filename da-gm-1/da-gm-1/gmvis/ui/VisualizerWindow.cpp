@@ -716,3 +716,9 @@ void gmvis::ui::VisualizerWindow::on_cb_actual_x100_to_ui_scaling_toggled(bool c
         QMessageBox::information(this, "setting scaling factor", "Please restart the application to activate the new setting.");
     }
 }
+
+void gmvis::ui::VisualizerWindow::on_cb_grey_bg_toggled(bool checked)
+{
+    ui.openGLWidget->setGreyBackground(checked);
+    ui.openGLWidget->update();
+}

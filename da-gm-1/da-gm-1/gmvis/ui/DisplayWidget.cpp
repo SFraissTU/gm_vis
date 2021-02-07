@@ -251,7 +251,10 @@ void DisplayWidget::paintGL()
 
 	//Clear intermediate FBO first
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fboIntermediate->getID());
-	if (m_whiteMode) {
+    if (m_greyBackground) {
+        glClearColor(0.65, 0.65, 0.65, 1);
+    }
+    else if (m_whiteMode) {
 		glClearColor(1, 1, 1, 1);
 	}
 	else {
@@ -437,4 +440,14 @@ void DisplayWidget::messageLogged(const QOpenGLDebugMessage& msg) {
 	
 	error += ")";
 	qDebug() << qPrintable(error) << "\n" << qPrintable(msg.message()) << "\n";
+}
+
+bool DisplayWidget::getGreyBackground() const
+{
+    return m_greyBackground;
+}
+
+void DisplayWidget::setGreyBackground(bool greyBackground)
+{
+    m_greyBackground = greyBackground;
 }

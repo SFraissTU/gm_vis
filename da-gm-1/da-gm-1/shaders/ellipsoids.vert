@@ -24,18 +24,18 @@ void main() {
 	gl_Position = projMatrix * viewMatrix  * frag_position;
 	frag_normal = mat3(in_normtrans) * in_normal;
 	frag_normal = vec3(frag_normal.x, frag_normal.z, -frag_normal.y);
-	if (in_color < 0) {
-		frag_color = vec3(1, 0, 1);
-	} else {
-		if (useInColor) {
-			if (whiteMode) {
-				frag_color = texture(transferTex, 0.75 - 0.75*in_color).rgb;
-			} else {
-				frag_color = texture(transferTex, 0.25 + 0.75*in_color).rgb;
-			}
-		} else {
-			frag_color = surfaceColor.rgb;
-		}
-	}
+    if (in_color < 0) {
+        frag_color = vec3(1, 0, 1);
+    } else {
+        if (useInColor) {
+            if (whiteMode) {
+                frag_color = texture(transferTex, 1.0 - in_color).rgb;
+            } else {
+                frag_color = texture(transferTex, in_color).rgb;
+            }
+        } else {
+            frag_color = surfaceColor.rgb;
+        }
+    }
 	frag_index = gl_InstanceID;
 }
