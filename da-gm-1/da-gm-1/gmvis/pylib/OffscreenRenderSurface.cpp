@@ -7,6 +7,8 @@ using namespace gmvis::core;
 
 OffscreenRenderSurface::OffscreenRenderSurface() : 
 	QOffscreenSurface() {
+    if (!isValid())
+        qFatal("QOffscreenSurface is invalid!");
 	QSurfaceFormat format;
 	format.setMajorVersion(4);
 	format.setMinorVersion(5);
