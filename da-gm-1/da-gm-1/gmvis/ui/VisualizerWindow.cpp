@@ -15,7 +15,7 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	: QMainWindow(parent), config("SFraissTU", "GMVis")
 {
 	ui.setupUi(this);
-
+	
     // settings
     m_scaling_actual2ui = config.value("scaling_actual2ui_is_100", true).toBool() ? 100 : 1;
     ui.cb_actual_x100_to_ui_scaling->setChecked(config.value("scaling_actual2ui_is_100", true).toBool());
@@ -564,6 +564,7 @@ void gmvis::ui::VisualizerWindow::slotResetCamera()
 		auto bbmin = pointcloud->getBBMin();
 		auto bbmax = pointcloud->getBBMax();
 		ui.openGLWidget->getCamera()->setPositionByBoundingBox(bbmin, bbmax);
+		ui.openGLWidget->getCamera()->setTranslationSpeedByBoundingBox(bbmin, bbmax);
 		ui.openGLWidget->update();
 	}
 	else if (mixture)
@@ -571,6 +572,7 @@ void gmvis::ui::VisualizerWindow::slotResetCamera()
 		QVector3D min, max;
 		mixture->computePositionsBoundingBox(min, max);
 		ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
+		ui.openGLWidget->getCamera()->setTranslationSpeedByBoundingBox(min, max);
 		ui.openGLWidget->update();
 	}
 	slotCameraMoved(ui.openGLWidget->getCamera());
