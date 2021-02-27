@@ -86,7 +86,6 @@ void gmvis::pylib::OffscreenRenderSurface::setPointcloud(core::PointCloud* point
 std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 	std::vector<std::unique_ptr<Image>> images;
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo->getID());
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	int width = m_fbo->getWidth();
 	int height = m_fbo->getHeight();
 	int index = 0;
@@ -95,7 +94,9 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glDisable(GL_BLEND);
-		glViewport(0, 0, width, height);
+		glViewport(0, 0, width, height); 
+		glClearColor(0.65, 0.65, 0.65, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		m_isoellipsoidRenderer->render();
 		if (m_sDisplayEllipsoids_Points) {
@@ -113,6 +114,8 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 		glEnable(GL_DEPTH_TEST);
 		glDisable(GL_BLEND);
 		glViewport(0, 0, width, height);
+		glClearColor(0.65, 0.65, 0.65, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (m_sDisplayGMPositions_Points) {
 			m_pointcloudRenderer->render(false);
@@ -128,6 +131,8 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 	}
 
 	if (m_sDisplayDensity) {
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_densityRenderer->render(m_fbo->getColorTexture(), false);
 
 		if (m_densityRenderer->getDensityAuto() && m_densityRenderer->getAccelerationThresholdAuto()) {
