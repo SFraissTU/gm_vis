@@ -7,8 +7,8 @@ using namespace gmvis::core;
 
 OffscreenRenderSurface::OffscreenRenderSurface() : 
 	QOffscreenSurface() {
-    if (!isValid())
-        qFatal("QOffscreenSurface is invalid!");
+    /*if (!isValid())
+        qFatal("QOffscreenSurface is invalid!");*/
 	QSurfaceFormat format;
 	format.setMajorVersion(4);
 	format.setMinorVersion(5);
@@ -89,16 +89,26 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 	int width = m_fbo->getWidth();
 	int height = m_fbo->getHeight();
 	int index = 0;
-	if (m_sDisplayEllipsoids) {
+	if (m_sDisplayEllipsoids || m_sDisplayEllipsoids_Points) {
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glDisable(GL_BLEND);
 		glViewport(0, 0, width, height); 
-		glClearColor(0.65, 0.65, 0.65, 1);
+		if (m_sDisplayEllipsoids_Gray)
+		{
+			glClearColor(0.65, 0.65, 0.65, 1);
+		}
+		else
+		{
+			glClearColor(0, 0, 0, 1);
+		}
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		m_isoellipsoidRenderer->render();
+		if (m_sDisplayEllipsoids)
+		{
+			m_isoellipsoidRenderer->render();
+		}
 		if (m_sDisplayEllipsoids_Points) {
 			m_pointcloudRenderer->render(true);
 		}
@@ -179,10 +189,11 @@ GMDensityRenderer* OffscreenRenderSurface::getGMDensityRenderer()
 	return m_densityRenderer.get();
 }
 
-void OffscreenRenderSurface::setEllipsoidDisplayEnabled(bool enabled, bool displayPoints)
+void OffscreenRenderSurface::setEllipsoidPointcloudDisplayEnabled(bool displayEllipsoids, bool displayPoints, bool graybackground)
 {
-	m_sDisplayEllipsoids = enabled;
+	m_sDisplayEllipsoids = displayEllipsoids;
 	m_sDisplayEllipsoids_Points = displayPoints;
+	m_sDisplayEllipsoids_Gray = graybackground;
 }
 
 void gmvis::pylib::OffscreenRenderSurface::setGMPositionsDisplayEnabled(bool enabled, bool displayPoints)
@@ -198,7 +209,7 @@ void OffscreenRenderSurface::setDensityDisplayEnabled(bool enabled)
 
 bool gmvis::pylib::OffscreenRenderSurface::isEllipsoidDisplayEnabled() const
 {
-	return m_sDisplayEllipsoids;
+	return m_sDisplayEllipsoids || m_sDisplayEllipsoids_Points;
 }
 
 bool gmvis::pylib::OffscreenRenderSurface::isGMPositionsDisplayEnabled() const

@@ -26,7 +26,7 @@ Visualizer::Visualizer(bool async, int width, int height)
 		m_surface = std::make_unique<OffscreenRenderSurface>();
 		m_surface->initialize(width, height);
 	});
-	set_ellipsoids_rendering(false, true);
+	set_ellipsoids_pc_rendering(false, false, true);
 	set_ellipsoids_colormode(GMColoringRenderMode::COLOR_UNIFORM);
 	set_ellipsoids_rangemode(GMColorRangeMode::RANGE_MANUAL, 0.0f, 1.0f);
 	set_positions_rendering(false, true);
@@ -94,10 +94,10 @@ void Visualizer::set_camera_auto(bool camauto)
 	});
 }
 
-void Visualizer::set_ellipsoids_rendering(bool ellipsoids, bool pointcloud)
+void Visualizer::set_ellipsoids_pc_rendering(bool ellipsoids, bool pointcloud, bool gray)
 {
-	pushCommand([this, ellipsoids, pointcloud] {
-		m_surface->setEllipsoidDisplayEnabled(ellipsoids, pointcloud);
+	pushCommand([this, ellipsoids, pointcloud, gray] {
+		m_surface->setEllipsoidPointcloudDisplayEnabled(ellipsoids, pointcloud, gray);
 	});
 }
 
@@ -452,15 +452,15 @@ void Visualizer::visThread()
 
 void Visualizer::calculateAutoCameraPosition(int index)
 {
-	if (m_pointclouds.size() > index) {
+	if (m_mixtures.size() > index) {
+		QVector3D min, max;
+		m_mixtures[index]->computePositionsBoundingBox(min, max);
+		m_surface->getCamera()->setPositionByBoundingBox(min, max);
+	}
+	else if (m_pointclouds.size() > index) {
 		PointCloud* pc = m_pointclouds[index].get();
 		QVector3D min = pc->getBBMin();
 		QVector3D max = pc->getBBMax();
-		m_surface->getCamera()->setPositionByBoundingBox(min, max);
-	}
-	else {
-		QVector3D min, max;
-		m_mixtures[index]->computePositionsBoundingBox(min, max);
 		m_surface->getCamera()->setPositionByBoundingBox(min, max);
 	}
 }

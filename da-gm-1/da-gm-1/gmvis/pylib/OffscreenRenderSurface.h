@@ -37,7 +37,7 @@ namespace gmvis::pylib {
 		core::GMPositionsRenderer * getGMPositionsRenderer();
 		core::GMDensityRenderer* getGMDensityRenderer();
 
-		void setEllipsoidDisplayEnabled(bool enabled, bool displayPoints);
+		void setEllipsoidPointcloudDisplayEnabled(bool displayEllipsoids, bool displayPoints, bool graybackground);
 		void setGMPositionsDisplayEnabled(bool enabled, bool displayPoints);
 		void setDensityDisplayEnabled(bool enabled);
 
@@ -58,7 +58,8 @@ namespace gmvis::pylib {
 
 		//Settings
 		bool m_sDisplayEllipsoids = false;
-		bool m_sDisplayEllipsoids_Points = true;
+		bool m_sDisplayEllipsoids_Points = false;
+		bool m_sDisplayEllipsoids_Gray = true;
 		bool m_sDisplayGMPositions = false;
 		bool m_sDisplayGMPositions_Points = true;
 		bool m_sDisplayDensity = false;
