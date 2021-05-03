@@ -131,16 +131,19 @@ void gmvis::core::GaussianMixture<decimal>::computePositionsBoundingBox(QVector3
 	max = QVector3D(-inf, -inf, -inf);
 	for (auto it = gaussians.begin(); it != gaussians.end(); ++it)
 	{
-		EGVector pos = it->getPosition();
-		for (int i = 0; i < 3; ++i)
+		if (it->getNormalizedWeight() > 0)
 		{
-			if (min[i] > pos[i])
+			EGVector pos = it->getPosition();
+			for (int i = 0; i < 3; ++i)
 			{
-				min[i] = pos[i];
-			}
-			if (max[i] < pos[i])
-			{
-				max[i] = pos[i];
+				if (min[i] > pos[i])
+				{
+					min[i] = pos[i];
+				}
+				if (max[i] < pos[i])
+				{
+					max[i] = pos[i];
+				}
 			}
 		}
 	}
