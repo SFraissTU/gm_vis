@@ -83,6 +83,15 @@ void gmvis::pylib::OffscreenRenderSurface::setPointcloud(core::PointCloud* point
 	m_pointcloudRenderer->setPointCloud(pointcloud);
 }
 
+void gmvis::pylib::OffscreenRenderSurface::setWhiteMode(bool white)
+{
+	m_whitemode = white;
+	m_pointcloudRenderer->setWhiteMode(white);
+	m_isoellipsoidRenderer->setWhiteMode(white);
+	m_positionRenderer->setWhiteMode(white);
+	m_densityRenderer->setWhiteMode(white);
+}
+
 std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 	std::vector<std::unique_ptr<Image>> images;
 	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo->getID());
@@ -99,8 +108,10 @@ std::vector<std::unique_ptr<Image>> OffscreenRenderSurface::render() {
 		{
 			glClearColor(0.65, 0.65, 0.65, 1);
 		}
-		else
-		{
+		else if (m_whitemode) {
+			glClearColor(1, 1, 1, 1);
+		}
+		else {
 			glClearColor(0, 0, 0, 1);
 		}
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

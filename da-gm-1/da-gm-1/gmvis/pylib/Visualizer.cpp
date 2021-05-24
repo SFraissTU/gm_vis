@@ -94,6 +94,13 @@ void Visualizer::set_camera_auto(bool camauto)
 	});
 }
 
+void gmvis::pylib::Visualizer::set_whitemode(bool white)
+{
+	pushCommand([this, white]() {
+		m_surface->setWhiteMode(white);
+	});
+}
+
 void Visualizer::set_ellipsoids_pc_rendering(bool ellipsoids, bool pointcloud, bool gray)
 {
 	pushCommand([this, ellipsoids, pointcloud, gray] {

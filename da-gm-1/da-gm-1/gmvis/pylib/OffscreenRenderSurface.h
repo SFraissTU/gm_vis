@@ -25,6 +25,7 @@ namespace gmvis::pylib {
 		void setSize(int width, int height);
 		void setMixture(core::GaussianMixture<DECIMAL_TYPE>* mixture);
 		void setPointcloud(core::PointCloud* pointcloud);
+		void setWhiteMode(bool white);
 		std::vector<std::unique_ptr<Image>> render();
 
 		int getWidth() const;
@@ -63,6 +64,7 @@ namespace gmvis::pylib {
 		bool m_sDisplayGMPositions = false;
 		bool m_sDisplayGMPositions_Points = true;
 		bool m_sDisplayDensity = false;
+		bool m_whitemode = false;
 
 		//Renderers
 		std::unique_ptr<core::PointCloudRenderer> m_pointcloudRenderer;
