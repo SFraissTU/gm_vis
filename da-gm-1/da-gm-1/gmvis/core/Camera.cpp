@@ -94,6 +94,7 @@ void gmvis::core::Camera::setViewMatrix(const QMatrix4x4& matrix)
 {
 	m_view = matrix;
 	m_viewDirty = false;
+	m_position = matrix.inverted().column(3).toVector3D();
 }
 
 void gmvis::core::Camera::setTranslation(QVector3D translation)
