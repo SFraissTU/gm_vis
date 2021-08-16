@@ -75,7 +75,7 @@ float evalGaussian(vec3 rorig, vec3 rdir, Gaussian gauss) {
 	float sig = sqrt(sig2);
 	vec3 pivec = rorig + mu*rdir- gauss.mu_alpha.xyz;
 	float gammak = sqrt2pi * gauss.mu_alpha.w * sig * exp(-0.5*dot(pivec*inv, pivec));
-	return gammak * texture(gaussTex, mu / sig).r;
+	return gammak * texture(gaussTex, (mu / sig) * 0.1 + 0.5).r;
 }
 
 void main() {

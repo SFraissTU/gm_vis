@@ -7,12 +7,12 @@ flat in int gaussIndex;
 
 out float frag_sum;
 
-uniform mat4 viewMatrix;
-uniform mat4 invViewMatrix;
-uniform int width;
-uniform int height;
-uniform float fov;
-uniform sampler1D gaussTex;
+layout(location = 1) uniform mat4 viewMatrix;
+layout(location = 2) uniform mat4 invViewMatrix;
+layout(location = 3) uniform int width;
+layout(location = 4) uniform int height;
+layout(location = 5) uniform float fov;
+layout(location = 6) uniform sampler1D gaussTex;
 
 float sqrt2pi = 2.506628275;
 
@@ -33,7 +33,7 @@ float evalGaussian(vec3 rorig, vec3 rdir, Gaussian gauss) {
 	float sig = sqrt(sig2);
 	vec3 pivec = rorig + mu*rdir - gauss.mu_alpha.xyz;
 	float gammak = sqrt2pi * gauss.mu_alpha.w * sig * exp(-0.5*dot(pivec*inv, pivec));
-	return gammak * texture(gaussTex, mu / sig).r;
+	return gammak * texture(gaussTex, (mu / sig) * 0.1 + 0.5).r;
 }
 
 

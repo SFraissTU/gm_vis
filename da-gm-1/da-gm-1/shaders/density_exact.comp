@@ -55,7 +55,7 @@ void main() {
 		float sig = sqrt(sig2);
 		vec3 pivec = origin + mu*direction - gauss.mu_alpha.xyz;
 		float gammak = sqrt2pi * gauss.mu_alpha.w * sig * exp(-0.5*dot(pivec*inv, pivec));
-		sum += gammak * texture(gaussTex, mu / sig).r;
+		sum += gammak * texture(gaussTex, (mu / sig) * 0.1 + 0.5).r;
 	}
 
 	imageStore(img_output, pixel_coords, vec4(sum));

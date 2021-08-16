@@ -8,8 +8,8 @@ layout(location = 1) in mat4 in_transform;
 
 out int gaussIndex;
 
-uniform mat4 projMatrix;
-uniform mat4 viewMatrix;
+layout(location = 0) uniform mat4 projMatrix;
+layout(location = 1) uniform mat4 viewMatrix;
 
 void main() {
 	//Correct coordinate system
