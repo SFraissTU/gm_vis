@@ -82,7 +82,12 @@ namespace gmvis::core {
 		*/
 		bool getBoundingBox(decimal threshold, QVector3D& min, QVector3D& max) const;
 
+		//Using 1-sigma-Ellipsoids
+		bool getOneSigmaBoundingBox(QVector3D& min, QVector3D& max) const;
+
 		bool isValid() const;
+
+		std::vector<EGVector> sampleRandom(unsigned int N) const;
 		
 	private:
 		/* GPU data */

@@ -1,4 +1,6 @@
 #include "Gaussian.h"
+#include <random>
+
 using namespace gmvis::core;
 
 template <typename decimal>
@@ -145,9 +147,40 @@ bool Gaussian<decimal>::getBoundingBox(decimal threshold, QVector3D& min, QVecto
 }
 
 template<typename decimal>
+bool gmvis::core::Gaussian<decimal>::getOneSigmaBoundingBox(QVector3D& min, QVector3D& max) const
+{
+	QVector3D r0 = QVector3D((float)m_eigenmatrix(0, 0), (float)m_eigenmatrix(0, 1), (float)m_eigenmatrix(0, 2));
+	QVector3D r1 = QVector3D((float)m_eigenmatrix(1, 0), (float)m_eigenmatrix(1, 1), (float)m_eigenmatrix(1, 2));
+	QVector3D r2 = QVector3D((float)m_eigenmatrix(2, 0), (float)m_eigenmatrix(2, 1), (float)m_eigenmatrix(2, 2));
+	QVector3D delta = QVector3D(r0.length(), r1.length(), r2.length());
+	QVector3D muq = QVector3D((float)m_mu.x(), (float)m_mu.y(), (float)m_mu.z());
+	min = muq - delta;
+	max = muq + delta;
+	return true;
+}
+
+template<typename decimal>
 bool gmvis::core::Gaussian<decimal>::isValid() const
 {
 	return m_valid;
+}
+
+template<typename decimal>
+std::vector<EGVector> gmvis::core::Gaussian<decimal>::sampleRandom(unsigned int N) const
+{
+	Eigen::SelfAdjointEigenSolver<EGMatrix> eigenSolver(m_covariancematrix);
+	EGMatrix transform = eigenSolver.eigenvectors() * eigenSolver.eigenvalues().cwiseSqrt().asDiagonal();
+	std::mt19937 gen{ std::random_device{}() };
+	std::normal_distribution<> dist;
+
+	std::vector<EGVector> res(N);
+#pragma omp parallel for
+	for (int i = 0; i < N; ++i)
+	{
+		//res[i] = m_mu + transform * Eigen::VectorXd{ m_mu.size() }.unaryExpr([&](auto x) { return dist(gen); });
+		res[i] = m_mu + transform * EGVector().unaryExpr([&](auto x) { return dist(gen); });
+	}
+	return res;
 }
 
 template <typename decimal>

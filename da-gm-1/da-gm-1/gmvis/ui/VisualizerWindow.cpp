@@ -570,7 +570,7 @@ void gmvis::ui::VisualizerWindow::slotResetCamera()
 	else if (mixture)
 	{
 		QVector3D min, max;
-		mixture->computePositionsBoundingBox(min, max);
+		mixture->computeEllipsoidsBoundingBox(min, max);
 		ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
 		ui.openGLWidget->getCamera()->setTranslationSpeedByBoundingBox(min, max);
 		ui.openGLWidget->update();
@@ -668,7 +668,7 @@ void gmvis::ui::VisualizerWindow::setNewMixture(std::unique_ptr<core::GaussianMi
 		auto densrenderer = ui.openGLWidget->getGMDensityRenderer();
 		if (!ui.openGLWidget->isPointDisplayEnabled() || pointcloud == nullptr) {
 			QVector3D min, max;
-			mixture->computePositionsBoundingBox(min, max);
+			mixture->computeEllipsoidsBoundingBox(min, max);
 			ui.openGLWidget->getCamera()->setPositionByBoundingBox(min, max);
 			ui.openGLWidget->getCamera()->setTranslationSpeedByBoundingBox(min, max);
 			slotCameraMoved(ui.openGLWidget->getCamera());

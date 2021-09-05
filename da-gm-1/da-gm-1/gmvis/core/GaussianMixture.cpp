@@ -123,8 +123,37 @@ int gmvis::core::GaussianMixture<decimal>::enabledGaussIndexFromGaussIndex(int i
 	return -1;
 }
 
+//template<typename decimal>
+//void gmvis::core::GaussianMixture<decimal>::computePositionsBoundingBox(QVector3D& min, QVector3D& max) const
+//{
+//	constexpr float inf = std::numeric_limits<float>::infinity();
+//	min = QVector3D(inf, inf, inf);
+//	max = QVector3D(-inf, -inf, -inf);
+//	for (auto it = gaussians.begin(); it != gaussians.end(); ++it)
+//	{
+//		if (it->getNormalizedWeight() > 0)
+//		{
+//			EGVector pos = it->getPosition();
+//			for (int i = 0; i < 3; ++i)
+//			{
+//				if (min[i] > pos[i])
+//				{
+//					min[i] = pos[i];
+//				}
+//				if (max[i] < pos[i])
+//				{
+//					max[i] = pos[i];
+//				}
+//			}
+//		}
+//	}
+//	QVector3D extend = max - min;
+//	min -= 0.1 * extend;
+//	max += 0.1 * extend;
+//}
+
 template<typename decimal>
-void gmvis::core::GaussianMixture<decimal>::computePositionsBoundingBox(QVector3D& min, QVector3D& max) const
+void gmvis::core::GaussianMixture<decimal>::computeEllipsoidsBoundingBox(QVector3D& min, QVector3D& max) const
 {
 	constexpr float inf = std::numeric_limits<float>::infinity();
 	min = QVector3D(inf, inf, inf);
@@ -133,23 +162,22 @@ void gmvis::core::GaussianMixture<decimal>::computePositionsBoundingBox(QVector3
 	{
 		if (it->getNormalizedWeight() > 0)
 		{
-			EGVector pos = it->getPosition();
+			QVector3D gmin;
+			QVector3D gmax;
+			it->getOneSigmaBoundingBox(gmin, gmax);
 			for (int i = 0; i < 3; ++i)
 			{
-				if (min[i] > pos[i])
+				if (min[i] > gmin[i])
 				{
-					min[i] = pos[i];
+					min[i] = gmin[i];
 				}
-				if (max[i] < pos[i])
+				if (max[i] < gmax[i])
 				{
-					max[i] = pos[i];
+					max[i] = gmax[i];
 				}
 			}
 		}
 	}
-	QVector3D extend = max - min;
-	min -= 0.1 * extend;
-	max += 0.1 * extend;
 }
 
 template <typename decimal>

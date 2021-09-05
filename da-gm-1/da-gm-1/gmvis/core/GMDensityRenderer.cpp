@@ -62,7 +62,7 @@ void GMDensityRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture, bool 
 	if (updateScale)
 	{
 		QVector3D bbmin, bbmax;
-		m_mixture->computePositionsBoundingBox(bbmin, bbmax);
+		m_mixture->computeEllipsoidsBoundingBox(bbmin, bbmax);
 		QVector3D bbextend = bbmax - bbmin;
 		float len = bbextend.lengthSquared();
 		m_sDensitySuggestedMax = 17.77 / len;

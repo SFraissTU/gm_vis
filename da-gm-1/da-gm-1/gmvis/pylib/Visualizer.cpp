@@ -381,6 +381,7 @@ py::array_t<float> Visualizer::processRenderRequest(int epoch)
 				}
 				renderer->setDensityMax(newval);
 			}
+			renderer->updateAccelerationData();
 		}
 		std::vector<std::unique_ptr<Image>> pixeldata = m_surface->render();
 		//Save!
@@ -461,7 +462,7 @@ void Visualizer::calculateAutoCameraPosition(int index)
 {
 	if (m_mixtures.size() > index) {
 		QVector3D min, max;
-		m_mixtures[index]->computePositionsBoundingBox(min, max);
+		m_mixtures[index]->computeEllipsoidsBoundingBox(min, max);
 		m_surface->getCamera()->setPositionByBoundingBox(min, max);
 	}
 	else if (m_pointclouds.size() > index) {

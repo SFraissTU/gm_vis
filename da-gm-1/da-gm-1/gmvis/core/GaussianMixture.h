@@ -72,7 +72,8 @@ namespace gmvis::core {
 		int gaussIndexFromEnabledGaussIndex(int index) const;
 		int enabledGaussIndexFromGaussIndex(int index) const;
 
-		void computePositionsBoundingBox(QVector3D& min, QVector3D& max) const;
+		//void computePositionsBoundingBox(QVector3D& min, QVector3D& max) const; //should not be used
+		void computeEllipsoidsBoundingBox(QVector3D& min, QVector3D& max) const;
 
 		std::shared_ptr<char[]> gpuData(size_t& arrsize, GLuint& numberOfComponents) const;
 		std::shared_ptr<char[]> gpuData(size_t& arrsize, decimal threshold, GLuint& numberOfComponents) const;
