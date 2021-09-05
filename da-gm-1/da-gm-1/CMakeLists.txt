@@ -75,6 +75,8 @@ set(CORE_FILES
     gmvis/core/LineStrip.h
     gmvis/core/LineRenderer.h
     gmvis/core/LineRenderer.cpp
+    gmvis/core/Sampler.h
+    gmvis/core/Sampler.cpp
     shaders.qrc
     res.qrc
 )

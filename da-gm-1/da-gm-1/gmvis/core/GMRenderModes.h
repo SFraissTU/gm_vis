@@ -6,7 +6,8 @@ namespace gmvis::core {
 		ADDITIVE_EXACT = 1,
 		ADDITIVE_ACC_OCTREE = 2,
 		ADDITIVE_ACC_PROJECTED = 3,
-		ADDITIVE_SAMPLING_OCTREE = 4
+		ADDITIVE_SAMPLING_OCTREE = 4,
+		FALLOFF_ACC_PROJECTED = 5
 	};
 
 	enum class GMColoringRenderMode {

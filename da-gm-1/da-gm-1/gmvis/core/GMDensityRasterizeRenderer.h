@@ -21,10 +21,17 @@ namespace gmvis::core {
 		void render(int screenWidth, int screenHeight);
 		void cleanup();
 
+		void setUseFalloff(bool use);
+		void setFalloffOptions(float sigma, float farp);
+
 	private:
 		QOpenGLFunctions_4_5_Core* m_gl;
 		Camera* m_camera;
 		GaussianMixture<DECIMAL_TYPE>* m_mixture = nullptr;
+
+		bool m_useFalloff = true;
+		float m_kappa = 0;//0;
+		float m_far = 100000;
 
 		//Geometry Data per Sphere
 		QVector<QVector3D> m_geoVertices;
@@ -44,11 +51,15 @@ namespace gmvis::core {
 		GLuint m_proj_locFov;
 		GLuint m_proj_locGaussTex;
 		GLuint m_proj_bindingMixture;
+		GLuint m_proj_locKappa;
+		GLuint m_proj_locFar;
 
 		GLuint m_ssboMixture;
 		GLuint m_texGauss;
+		GLuint m_texErf;
 		GLuint m_nrValidMixtureComponents;
 
 		std::unique_ptr<QOpenGLShaderProgram> m_program_projection;
+		std::unique_ptr<QOpenGLShaderProgram> m_program_falloff;
 	};
 }

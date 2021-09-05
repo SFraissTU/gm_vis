@@ -12,8 +12,9 @@ layout(location = 2) uniform mat4 invViewMatrix;
 layout(location = 3) uniform int width;
 layout(location = 4) uniform int height;
 layout(location = 5) uniform float fov;
-layout(location = 6) uniform sampler1D gaussTex;
+layout(location = 6) uniform sampler1D erfTex;
 layout(location = 7) uniform float kappa;
+layout(location = 8) uniform float far;
 
 float sqrt2pi = 2.506628275;
 
@@ -29,45 +30,22 @@ layout(std430, binding=0) buffer GaussianMixture {
 float evalGaussian(vec3 rorig, vec3 rdir, Gaussian gauss) {
 	mat3 inv = mat3(gauss.invsigma);
 	vec3 rs = rdir*inv;
-	float sig2 = 1.0 / dot(rs, rdir);
-	float mu = dot(rs, gauss.mu_alpha.xyz-rorig) * sig2;
-	float sig = sqrt(sig2);
-	vec3 pivec = rorig + mu*rdir - gauss.mu_alpha.xyz;
-	float omega = sqrt2pi * gauss.mu_alpha.w * sig * exp(-0.5*dot(pivec*inv, pivec));
-	//float gammak = sqrt2pi * gauss.mu_alpha.w * sig * exp(-0.5*dot(pivec*inv, pivec));
-	//return gammak * texture(gaussTex, (mu / sig) * 0.1 + 0.5).r;
-	//Homogenous falloff
-	//float gamma = exp(0.5*kappa*(sig2*kappa-2*mu));
-	//return omega * gamma * texture(gaussTex, (mu / sig - sig*kappa) * 0.1 + 0.5).r;
-	//Heterogenous falloff
-	float phi = texture(gaussTex, (mu / sig) * 0.1 + 0.5).r;
-	if (kappa == 0)
-	{
-		return omega * phi;
-	}
-	else
-	{
-		//VARIANTE: kappa(t) = kappa*d
-		//return (1 / kappa) * exp(-kappa*omega)*(1-exp(-kappa*omega*phi));
-		//[OBSOLETE] VARIANTE: kappa(t) = kappa*log(d)
-		//if (kappa == 1)
-		//{
-			//return log(2+phi)-log(2);
-		//}
-		//else
-		//{
-			//return (2*pow(omega, 1-kappa)*(pow(1+phi, 1-kappa)-1))/(1-kappa);
-		//}
-		//VARIANTE: kappa(t) = kappa*log(d+1)
-		if (kappa == 1)
-		{
-			return log(abs(2*omega*(1+phi)-2)) - log(abs(2*omega-2));
-		}
-		else
-		{
-			return (pow(omega + omega*phi + 1, 1-kappa) - pow(omega + 1, 1-kappa))/(1-kappa);
-		}
-	}
+	vec3 xm = rorig - gauss.mu_alpha.xyz;
+
+	float C_3 = dot(rs, (rorig - gauss.mu_alpha.xyz)) + kappa;
+	float C_2 = 0.5 * dot(rs, rdir);
+	float C_1 = 0.5 * dot(xm * inv, xm) - kappa * far;
+	//float C_0 = gauss.mu_alpha.w * exp((C_3 * C_3)/(4*C_2) - C_1);
+	float mu_k = dot(rs, (gauss.mu_alpha.xyz - rorig)) / dot(rs, rdir);
+	vec3 pivec = rorig + mu_k*rdir - gauss.mu_alpha.xyz;
+	//float C_0 = gauss.mu_alpha.w * exp(-0.5*dot(pivec*inv, pivec)) * exp(sigma*far);
+	float C_0 = sqrt2pi * gauss.mu_alpha.w * sqrt(1 / dot(rs, rdir)) * exp(-0.5*dot(pivec*inv, pivec));// * exp(sigma*far);
+
+	float valB = (C_3 + 2*C_2*far) / (2 * sqrt(C_2));
+	float valA = C_3 / (2 * sqrt(C_2));
+	float res = C_0 * (texture(erfTex, valB * 0.1 + 0.5).r  - texture(erfTex, valA * 0.1 + 0.5).r);
+	return res;
+	//return gauss.mu_alpha.w * sqrt(1 / dot(rs, rdir)) * exp(-0.5*dot(pivec*inv, pivec));
 }
 
 

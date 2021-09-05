@@ -64,5 +64,13 @@ namespace gmvis::core {
 		QVector3D getBBMax() const {
 			return max;
 		}
+
+		size_t getNumberOfPoints() const {
+			return pointdata.size();
+		}
+
+		point_item getPoint(size_t index) const {
+			return pointdata[index];
+		}
 	};
 }

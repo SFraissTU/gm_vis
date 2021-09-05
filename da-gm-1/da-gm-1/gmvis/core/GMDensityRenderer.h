@@ -45,6 +45,8 @@ namespace gmvis::core {
 		void setLogarithmic(bool log);
 		void setWhiteMode(bool white);
 
+		void setFalloffOptions(float sigma, float farp);
+		
 
 		static bool isAccelerated(GMDensityRenderMode mode);
 

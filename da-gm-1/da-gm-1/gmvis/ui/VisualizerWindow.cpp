@@ -7,6 +7,7 @@
 #include <QDoubleSpinBox>
 #include <QMessageBox>
 #include "GaussianListItem.h"
+#include "gmvis/core/Sampler.h"
 
 using namespace gmvis::ui;
 using namespace gmvis::core;
@@ -19,6 +20,10 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
     // settings
     m_scaling_actual2ui = config.value("scaling_actual2ui_is_100", true).toBool() ? 100 : 1;
     ui.cb_actual_x100_to_ui_scaling->setChecked(config.value("scaling_actual2ui_is_100", true).toBool());
+
+	//hide isosurface tools
+	ui.cb_displayIsosurface->setVisible(false);
+	ui.tabs_displayoptions->removeTab(2);
 
 	auto widget = ui.openGLWidget;
 	ui.cb_displayPointcloud->setChecked(widget->isPointDisplayEnabled());
@@ -59,6 +64,12 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 	auto fpsbtn = dbgmenu->addAction("Print Render Times");
 	fpsbtn->setCheckable(true);
 	(void)connect(fpsbtn, SIGNAL(triggered()), this, SLOT(slotToggleFPS()));
+	/*auto sample = dbgmenu->addAction("Sample to Dat");
+	(void)connect(sample, SIGNAL(triggered()), this, SLOT(slotSampleToDat()));
+	auto sampleI = dbgmenu->addAction("Sample Cell Integral to Dat");
+	(void)connect(sampleI, SIGNAL(triggered()), this, SLOT(slotSampleCellIntegralToDat()));
+	auto sampleP = dbgmenu->addAction("Pointcloud Cell Integral to Dat");
+	(void)connect(sampleP, SIGNAL(triggered()), this, SLOT(slotPCCellIntegralToDat()));*/
 
 
 	(void)connect(ui.loadPointcloudAction, SIGNAL(triggered()), this, SLOT(slotLoadPointcloud()));
@@ -109,9 +120,12 @@ VisualizerWindow::VisualizerWindow(QWidget *parent)
 
 	(void)connect(ui.openGLWidget, SIGNAL(frameSwapped()), this, SLOT(slotPostRender()));
 
-    connect(ui.btn_density_lock_symmetry, &QPushButton::toggled, this, &VisualizerWindow::slotDensityValuesChanged);
-    connect(ui.cb_isoEllipsoidRender, &QCheckBox::stateChanged, this, &VisualizerWindow::slotEllipsoidCovOrIsoChanged);
-    connect(ui.spin_isoEllipsoidThreshold, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &VisualizerWindow::slotEllipsoidCovOrIsoChanged);
+	(void)connect(ui.btn_density_lock_symmetry, &QPushButton::toggled, this, &VisualizerWindow::slotDensityValuesChanged);
+	(void)connect(ui.cb_isoEllipsoidRender, &QCheckBox::stateChanged, this, &VisualizerWindow::slotEllipsoidCovOrIsoChanged);
+	(void)connect(ui.spin_isoEllipsoidThreshold, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &VisualizerWindow::slotEllipsoidCovOrIsoChanged);
+
+	(void)connect(ui.spin_sigma, SIGNAL(valueChanged(double)), this, SLOT(slotFalloffOptions()));
+	(void)connect(ui.spin_far, SIGNAL(valueChanged(double)), this, SLOT(slotFalloffOptions()));
 }
 
 void VisualizerWindow::slotLoadPointcloud() {
@@ -415,6 +429,7 @@ void VisualizerWindow::slotDensityRenderModeChanged()
 {
 	auto renderer = ui.openGLWidget->getGMDensityRenderer();
 	renderer->setRenderMode(GMDensityRenderMode(ui.co_densrendermode->currentIndex() + 1));
+	slotFalloffOptions();
 	ui.openGLWidget->update();
 }
 
@@ -622,6 +637,57 @@ void gmvis::ui::VisualizerWindow::slotToggleBackground()
 void gmvis::ui::VisualizerWindow::slotToggleFPS()
 {
     ui.openGLWidget->toggleFps();
+}
+
+void gmvis::ui::VisualizerWindow::slotSampleToDat()
+{
+	QString filename = QFileDialog::getSaveFileName(this, "Dat File", "", "dat (*.dat)");
+	if (filename.isEmpty()) return;
+	auto sampled = core::Sampler::sample(mixture.get());
+	QVector3D bbmin, bbmax;
+	mixture->computeEllipsoidsBoundingBox(bbmin, bbmax);
+	QVector3D bbextend = bbmax - bbmin;
+	float len = bbextend.lengthSquared();
+	float sDensitySuggestedMax = 17.77 / len;
+	FILE* fp = NULL;
+	fopen_s(&fp, filename.toStdString().c_str(), "wb");
+	core::Sampler::writeToDat(sampled, *fp, sDensitySuggestedMax);
+}
+
+void gmvis::ui::VisualizerWindow::slotSampleCellIntegralToDat()
+{
+	QString filename = QFileDialog::getSaveFileName(this, "Dat File", "", "dat (*.dat)");
+	if (filename.isEmpty()) return;
+	auto sampled = core::Sampler::sampleCellIntegral(mixture.get());
+	QVector3D bbmin, bbmax;
+	mixture->computeEllipsoidsBoundingBox(bbmin, bbmax);
+	QVector3D bbextend = bbmax - bbmin;
+	float len = bbextend.lengthSquared();
+	float sDensitySuggestedMax = 17.77 / len;
+	FILE* fp = NULL;
+	fopen_s(&fp, filename.toStdString().c_str(), "wb");
+	core::Sampler::writeToDat(sampled, *fp, sDensitySuggestedMax);
+}
+
+void gmvis::ui::VisualizerWindow::slotPCCellIntegralToDat()
+{
+	QString filename = QFileDialog::getSaveFileName(this, "Dat File", "", "dat (*.dat)");
+	if (filename.isEmpty()) return;
+	auto sampled = core::Sampler::cellIntegralFromPointcloud(pointcloud.get());
+	QVector3D bbmin = pointcloud->getBBMin();
+	QVector3D bbmax = pointcloud->getBBMax();
+	QVector3D bbextend = bbmax - bbmin;
+	float len = bbextend.lengthSquared();
+	float sDensitySuggestedMax = 17.77 / len;
+	FILE* fp = NULL;
+	fopen_s(&fp, filename.toStdString().c_str(), "wb");
+	core::Sampler::writeToDat(sampled, *fp, sDensitySuggestedMax);
+}
+
+void gmvis::ui::VisualizerWindow::slotFalloffOptions()
+{
+	ui.openGLWidget->getGMDensityRenderer()->setFalloffOptions(ui.spin_sigma->value(), ui.spin_far->value());
+	ui.openGLWidget->update();
 }
 
 void VisualizerWindow::loadPureMixture(const QString& filename)

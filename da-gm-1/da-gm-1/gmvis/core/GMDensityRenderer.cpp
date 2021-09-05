@@ -102,7 +102,7 @@ std::pair<float, float> GMDensityRenderer::find_min_max_density() {
     int screenWidth = m_fbo_intermediate.getWidth();
     int screenHeight = m_fbo_intermediate.getHeight();
 
-    if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_PROJECTED) {
+    if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_PROJECTED || m_sRenderMode == GMDensityRenderMode::FALLOFF_ACC_PROJECTED) {
         m_rasterizeRenderer.render(screenWidth, screenHeight);
     }
     else {
@@ -131,7 +131,7 @@ void GMDensityRenderer::render(GLuint preTexture, bool blend)
 	int screenWidth = m_fbo_intermediate.getWidth();
 	int screenHeight = m_fbo_intermediate.getHeight();
 
-	if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_PROJECTED) {
+	if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_PROJECTED || m_sRenderMode == GMDensityRenderMode::FALLOFF_ACC_PROJECTED) {
 		m_rasterizeRenderer.render(screenWidth, screenHeight);
 	}
 	else {
@@ -200,6 +200,12 @@ void GMDensityRenderer::setRenderMode(GMDensityRenderMode mode)
 	case GMDensityRenderMode::ADDITIVE_ACC_PROJECTED:
 		m_raycastRenderer.disableAccelerationStructure();
 		m_rasterizeRenderer.updateAccelerationData(getAccelerationThreshold());
+		m_rasterizeRenderer.setUseFalloff(false);
+		break;
+	case GMDensityRenderMode::FALLOFF_ACC_PROJECTED:
+		m_raycastRenderer.disableAccelerationStructure();
+		m_rasterizeRenderer.updateAccelerationData(getAccelerationThreshold());
+		m_rasterizeRenderer.setUseFalloff(true);
 		break;
 	default:
 		qDebug() << "Unsupported Render Mode\n";
@@ -295,6 +301,11 @@ void gmvis::core::GMDensityRenderer::setLogarithmic(bool log)
 void gmvis::core::GMDensityRenderer::setWhiteMode(bool white)
 {
 	m_sWhiteMode = white;
+}
+
+void gmvis::core::GMDensityRenderer::setFalloffOptions(float sigma, float farp)
+{
+	m_rasterizeRenderer.setFalloffOptions(sigma, farp);
 }
 
 const GMDensityRenderMode& GMDensityRenderer::getRenderMode() const

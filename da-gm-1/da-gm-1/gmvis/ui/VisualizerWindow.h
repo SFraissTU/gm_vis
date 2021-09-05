@@ -50,6 +50,10 @@ namespace gmvis::ui {
 		void slotHideInvalidGaussians(bool checked);
 		void slotToggleBackground();
 		void slotToggleFPS();
+		void slotSampleToDat();
+		void slotSampleCellIntegralToDat();
+		void slotPCCellIntegralToDat();
+		void slotFalloffOptions();
 
         void loadPureMixture(const QString& path);
 

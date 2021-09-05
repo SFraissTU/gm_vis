@@ -46,6 +46,7 @@ namespace gmvis::core {
 		bool m_useSampling = false;
 		bool m_validAccelerationStructure = false;
 		bool m_useAccelerationStructure = true;
+		bool m_useFalloff = false;
 
 		std::unique_ptr<QOpenGLShaderProgram> m_program_regular;
 		std::unique_ptr<QOpenGLShaderProgram> m_program_accelerated;
