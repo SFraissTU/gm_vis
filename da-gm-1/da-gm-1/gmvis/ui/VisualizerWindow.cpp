@@ -504,6 +504,7 @@ void gmvis::ui::VisualizerWindow::slotResetDensity()
 		ui.spin_accthreshold->blockSignals(false);
 		slotAccelerationThresholdChanged(false);
 	}
+	densrenderer->updateAccelerationData();
 	ui.openGLWidget->update();
 }
 

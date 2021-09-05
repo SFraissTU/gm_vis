@@ -58,6 +58,7 @@ void GMDensityRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture, bool 
 {
 	m_mixture = mixture;
 	m_rasterizeRenderer.setMixture(mixture, getAccelerationThreshold());
+	m_raycastRenderer.setAccelerationThreshold(getAccelerationThreshold());
 	m_raycastRenderer.setMixture(mixture);
 	if (updateScale)
 	{
@@ -191,10 +192,12 @@ void GMDensityRenderer::setRenderMode(GMDensityRenderMode mode)
 		break;
 	case GMDensityRenderMode::ADDITIVE_SAMPLING_OCTREE:
 		m_raycastRenderer.setSampling(true);
+		m_raycastRenderer.setAccelerationThreshold(getAccelerationThreshold());
 		m_raycastRenderer.enableAccelerationStructure();
 		break;
 	case GMDensityRenderMode::ADDITIVE_ACC_OCTREE:
 		m_raycastRenderer.setSampling(false);
+		m_raycastRenderer.setAccelerationThreshold(getAccelerationThreshold());
 		m_raycastRenderer.enableAccelerationStructure();
 		break;
 	case GMDensityRenderMode::ADDITIVE_ACC_PROJECTED:
@@ -209,6 +212,7 @@ void GMDensityRenderer::setRenderMode(GMDensityRenderMode mode)
 void GMDensityRenderer::updateAccelerationData()
 {
 	if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_OCTREE || m_sRenderMode == GMDensityRenderMode::ADDITIVE_SAMPLING_OCTREE) {
+		m_raycastRenderer.setAccelerationThreshold(getAccelerationThreshold());
 		m_raycastRenderer.rebuildAccelerationStructure();
 	}
 	else if (m_sRenderMode == GMDensityRenderMode::ADDITIVE_ACC_PROJECTED) {
