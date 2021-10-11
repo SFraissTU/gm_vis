@@ -101,6 +101,13 @@ void gmvis::pylib::Visualizer::set_whitemode(bool white)
 	});
 }
 
+void gmvis::pylib::Visualizer::set_point_size(float pointsize)
+{
+	pushCommand([this, pointsize] {
+		m_surface->getPointCloudRenderer()->setPointSize(pointsize);
+		});
+}
+
 void Visualizer::set_ellipsoids_pc_rendering(bool ellipsoids, bool pointcloud, bool gray)
 {
 	pushCommand([this, ellipsoids, pointcloud, gray] {

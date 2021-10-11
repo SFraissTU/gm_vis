@@ -24,6 +24,7 @@ namespace gmvis::pylib {
 		void set_camera_lookat(std::tuple<float, float, float> position, std::tuple<float, float, float> lookAt, std::tuple<float, float, float> up);
 		void set_camera_auto(bool camauto);
 		void set_whitemode(bool white);
+		void set_point_size(float pointsize);
 		void set_ellipsoids_pc_rendering(bool ellipsoids, bool pointcloud=false, bool gray=true);
 		void set_ellipsoids_colormode(core::GMColoringRenderMode colorMode);
 		void set_ellipsoids_rangemode(gmvis::core::GMColorRangeMode rangeMode, float min=1.0, float max=0.0);

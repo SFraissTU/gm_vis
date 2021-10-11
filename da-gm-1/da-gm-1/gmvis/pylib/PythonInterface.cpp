@@ -56,6 +56,7 @@ PYBIND11_MODULE(pygmvis, m) {
 		.def("set_camera_lookat", &Visualizer::set_camera_lookat, "position"_a, "lookat"_a, "up"_a)
 		.def("set_view_matrix", &Visualizer::set_view_matrix, "viewmat"_a)
 		.def("set_whitemode", &Visualizer::set_whitemode, "white"_a)
+		.def("set_point_size", &Visualizer::set_point_size, "pointsize"_a)
 		.def("set_ellipsoids_pc_rendering", &Visualizer::set_ellipsoids_pc_rendering, "ellipsoids"_a, "pointcloud"_a = false, "gray"_a = true)
 		.def("set_ellipsoids_colormode", &Visualizer::set_ellipsoids_colormode, "colorMode"_a = GMColoringRenderMode::COLOR_UNIFORM)
 		.def("set_ellipsoids_rangemode", &Visualizer::set_ellipsoids_rangemode, "rangeMode"_a = GMColorRangeMode::RANGE_MANUAL, "min"_a=1.0f, "max"_a=0.0f)
