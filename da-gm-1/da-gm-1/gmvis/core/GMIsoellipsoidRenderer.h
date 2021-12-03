@@ -61,6 +61,7 @@ namespace gmvis::core {
 		QOpenGLBuffer m_transf_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 		QOpenGLBuffer m_normtr_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 		QOpenGLBuffer m_color_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+		QOpenGLBuffer m_ellindex_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 		GLuint m_texTransfer;
 
 		//Shader

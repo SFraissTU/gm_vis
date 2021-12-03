@@ -2,7 +2,7 @@
 in vec4 frag_position;
 in vec3 frag_normal;
 in vec3 frag_color;
-flat in int frag_index;
+flat in float frag_index;
 
 layout(location = 0) out vec3 out_color;
 layout(location = 1) out float out_index;
@@ -19,7 +19,7 @@ void main() {
 	vec3 r = reflect(-l, normal);
 	float nl = dot(normal, l);
 	out_color = frag_color;
-	if (markedGaussian == frag_index) {
+	if (markedGaussian == round(frag_index)) {
 		out_color = vec3(1, 0, 0);
 	}
 	out_color *= (0.3 + max(nl, 0.0f)*0.8);

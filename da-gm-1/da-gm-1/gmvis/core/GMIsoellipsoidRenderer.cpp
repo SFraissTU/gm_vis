@@ -66,40 +66,49 @@ void GMIsoellipsoidRenderer::initialize()
 	m_gl->glVertexAttribDivisor(2, 1);
 	m_color_vbo.release();
 
+	//Create Index-VBO
+	m_ellindex_vbo.create();
+	m_ellindex_vbo.bind();
+	m_ellindex_vbo.allocate(nullptr, 0);
+	m_gl->glEnableVertexAttribArray(3);
+	m_gl->glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat), 0);	//int would make more sense but for some reason that didn't work
+	m_gl->glVertexAttribDivisor(3, 1);
+	m_ellindex_vbo.release();
+
 	//Create Transformations VBO (one transformation per instance)
 	m_transf_vbo.create();
 	m_transf_vbo.bind();
 	m_transf_vbo.allocate(nullptr, 0);
-	m_gl->glEnableVertexAttribArray(3);
-	m_gl->glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), 0);
 	m_gl->glEnableVertexAttribArray(4);
-	m_gl->glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 4));
+	m_gl->glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), 0);
 	m_gl->glEnableVertexAttribArray(5);
-	m_gl->glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 8));
+	m_gl->glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 4));
 	m_gl->glEnableVertexAttribArray(6);
-	m_gl->glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 12));
-	m_gl->glVertexAttribDivisor(3, 1);
+	m_gl->glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 8));
+	m_gl->glEnableVertexAttribArray(7);
+	m_gl->glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 12));
 	m_gl->glVertexAttribDivisor(4, 1);
 	m_gl->glVertexAttribDivisor(5, 1);
 	m_gl->glVertexAttribDivisor(6, 1);
+	m_gl->glVertexAttribDivisor(7, 1);
 	m_transf_vbo.release();
 
 	//Create Normal-Transformations VBO (one transformation per instance)
 	m_normtr_vbo.create();
 	m_normtr_vbo.bind();
 	m_normtr_vbo.allocate(nullptr, 0);
-	m_gl->glEnableVertexAttribArray(7);
-	m_gl->glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), 0);
 	m_gl->glEnableVertexAttribArray(8);
-	m_gl->glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 4));
+	m_gl->glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), 0);
 	m_gl->glEnableVertexAttribArray(9);
-	m_gl->glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 8));
+	m_gl->glVertexAttribPointer(9, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 4));
 	m_gl->glEnableVertexAttribArray(10);
-	m_gl->glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 12));
-	m_gl->glVertexAttribDivisor(7, 1);
+	m_gl->glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 8));
+	m_gl->glEnableVertexAttribArray(11);
+	m_gl->glVertexAttribPointer(11, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(sizeof(float) * 12));
 	m_gl->glVertexAttribDivisor(8, 1);
 	m_gl->glVertexAttribDivisor(9, 1);
 	m_gl->glVertexAttribDivisor(10, 1);
+	m_gl->glVertexAttribDivisor(11, 1);
 	m_normtr_vbo.release();
 
 	m_gm_vao.release();
@@ -116,14 +125,16 @@ void GMIsoellipsoidRenderer::initialize()
 }
 
 void GMIsoellipsoidRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
-{	
+{
 	m_mixture = mixture;
 	m_markedGaussian = -1;
 	int n = mixture->numberOfGaussians();
 	QVector<QMatrix4x4> transforms;
 	QVector<QMatrix4x4> normalTransfs;
+	QVector<GLfloat> ellindizes;
 	transforms.reserve(n);
 	normalTransfs.reserve(n);
+	ellindizes.reserve(n);
 	int i = m_mixture->nextEnabledGaussianIndex(-1);
 	while (i != -1) {
 		const Gaussian<DECIMAL_TYPE>* gauss = (*mixture)[i];
@@ -132,6 +143,7 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
         if (transform) {
             transforms.push_back(transform.value());
             normalTransfs.push_back(transform->inverted().transposed());
+			ellindizes.push_back(i);
         }
 		i = m_mixture->nextEnabledGaussianIndex(i);
 	}
@@ -144,13 +156,18 @@ void GMIsoellipsoidRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 	m_normtr_vbo.bind();
 	m_normtr_vbo.allocate(normalTransfs.data(), n * sizeof(QMatrix4x4));
 	m_normtr_vbo.release();
+	m_ellindex_vbo.bind();
+	m_ellindex_vbo.allocate(ellindizes.data(), n * sizeof(GLfloat));
+	m_ellindex_vbo.release();
 
 	updateColors();
 }
 
 void gmvis::core::GMIsoellipsoidRenderer::updateMixture()
 {
+	auto marked = m_markedGaussian;
 	setMixture(m_mixture);
+	m_markedGaussian = marked;
 }
 
 void GMIsoellipsoidRenderer::setUniformColor(const QColor& uniformColor)
@@ -247,6 +264,7 @@ void GMIsoellipsoidRenderer::cleanup()
 	m_norm_vbo.destroy();
 	m_transf_vbo.destroy();
 	m_normtr_vbo.destroy();
+	m_ellindex_vbo.destroy();
 	m_program.reset();
 }
 
@@ -345,14 +363,20 @@ void GMIsoellipsoidRenderer::updateColors()
 		int i = m_mixture->nextEnabledGaussianIndex(-1);
 		while (i != -1) {
 			const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
-			if (gauss->isValid()) {
-				double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
-				float t = std::min(1.0f, float((val - minVal) / range));
-				t = std::max(t, 0.0f);
-				colors.push_back(t);
-			}
-			else {
-				colors.push_back(-1);
+
+			//if gaussian has no transformation then we do not render it at all!
+			auto transform = gauss->getTransform(m_isoEllipsoidThreshold, m_drawIsoEllipsoids);
+			if (transform)
+			{
+				if (gauss->isValid()) {
+					double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
+					float t = std::min(1.0f, float((val - minVal) / range));
+					t = std::max(t, 0.0f);
+					colors.push_back(t);
+				}
+				else {
+					colors.push_back(-1);
+				}
 			}
 			i = m_mixture->nextEnabledGaussianIndex(i);
 		}
@@ -363,17 +387,21 @@ void GMIsoellipsoidRenderer::updateColors()
 		int i = m_mixture->nextEnabledGaussianIndex(-1);
 		while (i != -1) {
 			const Gaussian<DECIMAL_TYPE>* gauss = (*m_mixture)[i];
-			if (gauss->isValid()) {
-				colors.push_back(1);
-			}
-			else {
-				colors.push_back(-1);
+			auto transform = gauss->getTransform(m_isoEllipsoidThreshold, m_drawIsoEllipsoids);
+			if (transform)
+			{
+				if (gauss->isValid()) {
+					colors.push_back(1);
+				}
+				else {
+					colors.push_back(-1);
+				}
 			}
 			i = m_mixture->nextEnabledGaussianIndex(i);
 		}
 	}
 
 	m_color_vbo.bind();
-	m_color_vbo.allocate(colors.data(), n * sizeof(float));
+	m_color_vbo.allocate(colors.data(), colors.size() * sizeof(float));
 	m_color_vbo.release();
 }

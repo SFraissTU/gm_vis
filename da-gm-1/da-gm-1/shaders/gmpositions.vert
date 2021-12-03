@@ -1,9 +1,10 @@
 #version 330
 layout(location = 0) in vec4 in_position;
 layout(location = 1) in float in_color;
+layout(location = 2) in float in_index;
 
 out vec3 frag_color;
-flat out int frag_index;
+flat out float frag_index;
 
 uniform bool useInColor;
 uniform mat4 projMatrix;
@@ -30,5 +31,5 @@ void main() {
 		}
 	}
 	//frag_color = vec3(1, -frag_position.z / 5.0, 0);
-	frag_index = gl_VertexID;
+	frag_index = in_index;
 }

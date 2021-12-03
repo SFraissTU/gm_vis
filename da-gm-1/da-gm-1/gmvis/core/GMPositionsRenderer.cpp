@@ -46,6 +46,14 @@ void GMPositionsRenderer::initialize()
 	m_gl->glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat), 0);
 	m_color_vbo.release();
 
+	//Create Index VBO
+	m_gindex_vbo.create();
+	m_gindex_vbo.bind();
+	m_gindex_vbo.allocate(nullptr, 0);
+	m_gl->glEnableVertexAttribArray(2);
+	m_gl->glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat), 0);
+	m_gindex_vbo.release();
+
 	m_gm_vao.release();
 	
 	//Create Transfer Tex
@@ -71,6 +79,18 @@ void GMPositionsRenderer::setMixture(GaussianMixture<DECIMAL_TYPE>* mixture)
 	m_pos_vbo.allocate(data.get(), arrsize);
 	m_pos_vbo.release();
 	m_gm_vao.release();
+
+	QVector<GLfloat> indizes;
+	indizes.reserve(mixture->numberOfGaussians());
+	int i = mixture->nextEnabledGaussianIndex(-1);
+	while (i != -1)
+	{
+		indizes.push_back(i);
+		i = mixture->nextEnabledGaussianIndex(i);
+	}
+	m_gindex_vbo.bind();
+	m_gindex_vbo.allocate(indizes.data(), indizes.size() * sizeof(GLfloat));
+	m_gindex_vbo.release();
 
 	updateColors();
 }
@@ -146,6 +166,7 @@ void GMPositionsRenderer::cleanup()
 {
 	m_pos_vbo.destroy();
 	m_color_vbo.destroy();
+	m_gindex_vbo.destroy();
 	m_gm_vao.destroy();
 	m_program.reset();
 }

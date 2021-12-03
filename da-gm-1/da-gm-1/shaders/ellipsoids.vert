@@ -2,13 +2,14 @@
 layout(location = 0) in vec3 in_vertex;
 layout(location = 1) in vec3 in_normal;
 layout(location = 2) in float in_color;
-layout(location = 3) in mat4 in_transform;
-layout(location = 7) in mat4 in_normtrans;
+layout(location = 3) in float in_index;
+layout(location = 4) in mat4 in_transform;
+layout(location = 8) in mat4 in_normtrans;
 
 out vec4 frag_position;
 out vec3 frag_normal;
 out vec3 frag_color;
-flat out int frag_index;
+flat out float frag_index;
 
 uniform bool useInColor;
 uniform mat4 projMatrix;
@@ -37,5 +38,5 @@ void main() {
             frag_color = surfaceColor.rgb;
         }
     }
-	frag_index = gl_InstanceID;
+	frag_index = in_index;
 }
