@@ -45,6 +45,7 @@ float evalGaussian(vec3 rorig, vec3 rdir, Gaussian gauss) {
 	{
 		return omega * phi;
 	}
+	//everything else is rubbish!
 	else
 	{
 		//VARIANTE: kappa(t) = kappa*d

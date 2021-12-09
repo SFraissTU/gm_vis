@@ -32,7 +32,6 @@ void GMDensityRasterizeRenderer::initialize()
 	m_proj_locGaussTex = m_program_projection->uniformLocation("gaussTex");
 	m_program_falloff->bind();
 	m_proj_locKappa = m_program_falloff->uniformLocation("kappa");
-	m_proj_locFar = m_program_falloff->uniformLocation("far");
 	m_proj_bindingMixture = 0;
 
 	//Create Geometry Data
@@ -94,7 +93,7 @@ void GMDensityRasterizeRenderer::initialize()
 	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, 1001, 0, GL_RED, GL_FLOAT, gaussdata);
 	delete[] gaussdata;
 
-	float* erfdata = new float[1001];
+	/*float* erfdata = new float[1001];
 	erfdata[0] = -1;
 	erfdata[1000] = 1;
 	for (int i = 1; i < 1000; ++i) {
@@ -108,7 +107,7 @@ void GMDensityRasterizeRenderer::initialize()
 	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	m_gl->glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	m_gl->glTexImage1D(GL_TEXTURE_1D, 0, GL_RED, 1001, 0, GL_RED, GL_FLOAT, erfdata);
-	delete[] erfdata;
+	delete[] erfdata;*/
 
 	m_gl->glCreateBuffers(1, &m_ssboMixture);
 }
@@ -171,16 +170,13 @@ void GMDensityRasterizeRenderer::render(int screenWidth, int screenHeight)
 	program->setUniformValue(m_proj_locHeight, screenHeight);
 	program->setUniformValue(m_proj_locFov, qDegreesToRadians(m_camera->getFoV()));
 	m_gl->glActiveTexture(GL_TEXTURE0);
-	m_gl->glBindTexture(GL_TEXTURE_1D, m_useFalloff ? m_texErf : m_texGauss);
+	//m_gl->glBindTexture(GL_TEXTURE_1D, m_useFalloff ? m_texErf : m_texGauss);
+	m_gl->glBindTexture(GL_TEXTURE_1D, m_texGauss);
 	program->setUniformValue(m_proj_locGaussTex, 0);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_ssboMixture);
 	m_gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_proj_bindingMixture, m_ssboMixture);
 	m_gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	program->setUniformValue(m_proj_locKappa, m_kappa);
-	if (m_useFalloff)
-	{
-		program->setUniformValue(m_proj_locFar, m_far);
-	}
 
 	m_gm_vao.bind();
 	m_gl->glDrawElementsInstanced(GL_TRIANGLES, m_geoIndices.count(), GL_UNSIGNED_INT, nullptr, m_nrValidMixtureComponents);
