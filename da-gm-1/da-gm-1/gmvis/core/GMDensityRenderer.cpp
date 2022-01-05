@@ -19,6 +19,7 @@ void GMDensityRenderer::initialize()
 	m_fbo_final.initialize();
 
 	m_fbo_intermediate.attachSinglevalueFloatTexture();
+	m_fbo_intermediate.attachDepthTexture();
 	m_fbo_final.attachColorTexture();
 
 	m_program_coloring = std::make_unique<QOpenGLShaderProgram>();

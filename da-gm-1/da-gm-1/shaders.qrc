@@ -12,6 +12,8 @@
     <file>shaders/gmpositions.vert</file>
     <file>shaders/linestrip.frag</file>
     <file>shaders/linestrip.vert</file>
+	<file>shaders/pre.frag</file>
+	<file>shaders/pre.vert</file>
     <file>shaders/pointcloud.frag</file>
     <file>shaders/pointcloud.vert</file>
 	<file>shaders/isosurface_proj.vert</file>

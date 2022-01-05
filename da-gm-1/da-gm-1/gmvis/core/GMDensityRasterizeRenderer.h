@@ -32,9 +32,11 @@ namespace gmvis::core {
 
 		//Geometry Buffers
 		QOpenGLVertexArrayObject m_gm_vao;
+		QOpenGLVertexArrayObject m_gm_vao_pre;
 		QOpenGLBuffer m_pos_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 		QOpenGLBuffer m_indices_vbo = QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
 		QOpenGLBuffer m_transf_vbo = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+		QOpenGLBuffer m_transf_vbo_2 = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
 
 		GLuint m_proj_locProjMatrix;
 		GLuint m_proj_locViewMatrix;
@@ -50,5 +52,6 @@ namespace gmvis::core {
 		GLuint m_nrValidMixtureComponents;
 
 		std::unique_ptr<QOpenGLShaderProgram> m_program_projection;
+		std::unique_ptr<QOpenGLShaderProgram> m_program_pre;
 	};
 }
