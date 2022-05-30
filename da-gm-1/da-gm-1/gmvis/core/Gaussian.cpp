@@ -171,7 +171,7 @@ std::vector<EGVector> gmvis::core::Gaussian<decimal>::sampleRandom(unsigned int 
 	Eigen::SelfAdjointEigenSolver<EGMatrix> eigenSolver(m_covariancematrix);
 	EGMatrix transform = eigenSolver.eigenvectors() * eigenSolver.eigenvalues().cwiseSqrt().asDiagonal();
 	std::mt19937 gen{ std::random_device{}() };
-	std::normal_distribution<> dist;
+	std::normal_distribution<decimal> dist;
 
 	std::vector<EGVector> res(N);
 #pragma omp parallel for

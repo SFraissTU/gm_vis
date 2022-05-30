@@ -1,6 +1,7 @@
 #pragma once
 #include <QVector>
 #include <QVector3D>
+#include <limits>
 
 namespace gmvis::core {
 
