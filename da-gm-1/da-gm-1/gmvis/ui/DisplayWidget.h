@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <qopenglwidget.h>
+#include <QOpenGLWidget>
 #include <QOpenGLFunctions_4_5_Core>
 #include <qopenglvertexarrayobject.h>
 #include <qopenglbuffer.h>

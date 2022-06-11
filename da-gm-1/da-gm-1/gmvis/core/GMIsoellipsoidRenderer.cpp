@@ -331,7 +331,7 @@ void GMIsoellipsoidRenderer::updateColors()
                     double val = (m_sRenderMode == GMColoringRenderMode::COLOR_WEIGHT) ? gauss->getNormalizedWeight() : gauss->getAmplitude();
                     values[i] = val;
                 }
-                qSort(values);
+                std::sort(values.begin(), values.end());
                 double median = values[n / 2];
                 QVector<double> deviations;
                 deviations.resize(n);
@@ -339,7 +339,7 @@ void GMIsoellipsoidRenderer::updateColors()
                     float val = values[i];
                     deviations[i] = abs(val - median);
                 }
-                qSort(deviations);
+                std::sort(deviations.begin(), deviations.end());
                 double medmed = deviations[n / 2];
                 //Assign colors
                 minVal = std::max(median - medmed, values[0]);

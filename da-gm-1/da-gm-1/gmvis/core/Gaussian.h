@@ -87,7 +87,8 @@ namespace gmvis::core {
 
 		bool isValid() const;
 
-		std::vector<EGVector> sampleRandom(unsigned int N) const;
+		//22-06-11: This function leads to compile errors and is currently not used, so it is removed for now
+		//std::vector<EGVector> sampleRandom(unsigned int N) const;
 		
 	private:
 		/* GPU data */

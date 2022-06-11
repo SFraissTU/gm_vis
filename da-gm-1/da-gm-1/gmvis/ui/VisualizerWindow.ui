@@ -1945,12 +1945,12 @@ QProgressBar::chunk
                  </property>
                  <property name="maximumSize">
                   <size>
-                   <width>42</width>
+                   <width>150</width>
                    <height>16777215</height>
                   </size>
                  </property>
                  <property name="text">
-                  <string>Lock</string>
+                  <string>Symmetric Lock</string>
                  </property>
                  <property name="checkable">
                   <bool>true</bool>
@@ -1962,7 +1962,7 @@ QProgressBar::chunk
                  <item>
                   <widget class="QPushButton" name="btn_lockdspoptions">
                    <property name="text">
-                    <string>Lock Values</string>
+                    <string>Lock values for new mixture</string>
                    </property>
                    <property name="checkable">
                     <bool>true</bool>

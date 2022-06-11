@@ -403,5 +403,5 @@ QByteArray DataLoader::readRessource(const QString& path)
 		f.setFileName(path);
 	}
 
-	return f.open(QIODevice::ReadOnly) ? f.readAll() : "";
+	return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray("");
 }

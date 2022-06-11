@@ -272,8 +272,6 @@ std::shared_ptr<char[]> GaussianMixture<decimal>::buildOctree(decimal threshold,
 {
 	//buildOctree does not ignore invalid or zero Gaussians!
 
-	QTime time;
-	time.start();
 	QVector3D absMin;
 	QVector3D absMax;
 	struct GaussianBoundingBox {
@@ -310,7 +308,7 @@ std::shared_ptr<char[]> GaussianMixture<decimal>::buildOctree(decimal threshold,
 	int maxlevels = 5;
 	QStack<int> stack;	//References to octreelist per indices
 	//While building, we use the gaussianend variable as level
-	octreelist.append({ absMin, absMax, 255, -1, -1, 0 });
+	octreelist.append({ QVector4D(absMin.x(), absMin.y(), absMin.z(), 0), QVector4D(absMax.x(), absMax.y(), absMax.z(), 0), 255, -1, -1, 0 });
 	stack.push(0);
 	//First, we create a complete Octree, then we assign the Gaussians, then we remove empty nodes.
 	while (!stack.isEmpty()) {

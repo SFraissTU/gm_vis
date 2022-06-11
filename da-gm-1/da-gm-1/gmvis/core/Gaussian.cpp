@@ -165,23 +165,25 @@ bool gmvis::core::Gaussian<decimal>::isValid() const
 	return m_valid;
 }
 
-template<typename decimal>
-std::vector<EGVector> gmvis::core::Gaussian<decimal>::sampleRandom(unsigned int N) const
-{
-	Eigen::SelfAdjointEigenSolver<EGMatrix> eigenSolver(m_covariancematrix);
-	EGMatrix transform = eigenSolver.eigenvectors() * eigenSolver.eigenvalues().cwiseSqrt().asDiagonal();
-	std::mt19937 gen{ std::random_device{}() };
-	std::normal_distribution<decimal> dist;
+//22-06-11: This function leads to compile errors and is currently not used, so it is removed for now
 
-	std::vector<EGVector> res(N);
-#pragma omp parallel for
-	for (int i = 0; i < N; ++i)
-	{
-		//res[i] = m_mu + transform * Eigen::VectorXd{ m_mu.size() }.unaryExpr([&](auto x) { return dist(gen); });
-		res[i] = m_mu + transform * EGVector().unaryExpr([&](auto x) { return dist(gen); });
-	}
-	return res;
-}
+//template<typename decimal>
+//std::vector<EGVector> gmvis::core::Gaussian<decimal>::sampleRandom(unsigned int N) const
+//{
+//	Eigen::SelfAdjointEigenSolver<EGMatrix> eigenSolver(m_covariancematrix);
+//	EGMatrix transform = eigenSolver.eigenvectors() * eigenSolver.eigenvalues().cwiseSqrt().asDiagonal();
+//	std::mt19937 gen{ std::random_device{}() };
+//	std::normal_distribution<> dist;
+//
+//	std::vector<EGVector> res(N);
+//#pragma omp parallel for
+//	for (int i = 0; i < N; ++i)
+//	{
+//		//res[i] = m_mu + transform * Eigen::VectorXd{ m_mu.size() }.unaryExpr([&](auto x) { return dist(gen); });
+//		res[i] = m_mu + transform * EGVector().unaryExpr([&](auto x) { return dist(gen); });
+//	}
+//	return res;
+//}
 
 template <typename decimal>
 bool gmvis::core::Gaussian<decimal>::checkValidity() const

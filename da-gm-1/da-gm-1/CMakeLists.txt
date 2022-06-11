@@ -2,21 +2,38 @@ cmake_minimum_required(VERSION 3.1.0)
 
 project(visualizer)
 
+# if Qt cannot be found, try setting the prefix path to the qt dir:
+set(CMAKE_PREFIX_PATH "D:/Programme/Qt/6.2.4/msvc2019_64")
 
-set(ANACONDA3_PATH $ENV{CONDA_PREFIX})
+set(PYBIND11_PATH ${CMAKE_CURRENT_SOURCE_DIR}/pybind11)
+set(USE_QT6 TRUE)
+
+
+#set(ANACONDA3_PATH $ENV{CONDA_PREFIX})
 #execute_process(COMMAND conda info --base OUTPUT_VARIABLE ANACONDA3_PATH) # alternative, maybe it works better for windows
-message(STATUS "ANACONDA3_PATH=${ANACONDA3_PATH}")
+#message(STATUS "ANACONDA3_PATH=${ANACONDA3_PATH}")
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
+if(USE_QT6)
+	find_package(Qt6 REQUIRED COMPONENTS Core Widgets OpenGL OpenGLWidgets)
+else()
+	find_package(Qt5 COMPONENTS Widgets REQUIRED)
+endif()
 find_package(Threads)
 
-set (Python_ROOT_DIR ${ANACONDA3_PATH}/bin)
-set (Python_FIND_STRATEGY LOCATION)
-find_package (Python REQUIRED COMPONENTS Interpreter Development)
+#set (Python_ROOT_DIR "C:/Program Files/Python310")
+#set (Python_FIND_STRATEGY LOCATION)
+#find_package (Python REQUIRED COMPONENTS Interpreter Development)
 
-message("Python_LIBRARIES:${Python_LIBRARIES}")
-message("Python_LIBRARY_DIRS:${Python_LIBRARY_DIRS}")
-message("Python_INCLUDE_DIRS:${Python_INCLUDE_DIRS}")
+#message("Python_LIBRARIES:${Python_LIBRARIES}")
+#message("Python_LIBRARY_DIRS:${Python_LIBRARY_DIRS}")
+#message("Python_INCLUDE_DIRS:${Python_INCLUDE_DIRS}")
+
+set(PYTHON_LIB "C:/Program Files/Python310/libs/python310.lib")
+set(PYTHON_EXECUTABLE "C:/Program Files/Python310/python.exe")
+include_directories("C:/Program Files/Python310/include")
+include_directories("${PYBIND11_PATH}/include")
+message(STATUS "${PYBIND11_PATH}/include")
+#include_directories("D:/Simon/Studium/S-11 (WS19-20)/Diplomarbeit/pybind11/pybind11-2.9.2/include")
 
 set(UI_FILES
     gmvis/ui/VisualizerWindow.ui
@@ -95,7 +112,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     SYSTEM ${Python_INCLUDE_DIRS}
     SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/pybind11/include
+    SYSTEM ${PYBIND11_PATH}/include
 )
 
 add_compile_definitions(DECIMAL_TYPE=float)
@@ -106,24 +123,36 @@ pybind11_add_module(pygmvis
     ${CORE_FILES}
    )
 
+pybind11_add_module(pytest
+    gmvis/pylib/test.cpp
+)
+
 add_executable(visualizer
     ${UI_FILES}
     ${CORE_FILES}
 )
 
-#add_executable(pythontest
-#    ${PY_FILES}
-#    ${CORE_FILES}
-#)
+if(USE_QT6)
+	target_link_libraries(visualizer Qt6::Core Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets ${CMAKE_THREAD_LIBS_INIT})
+	target_link_libraries(pygmvis PRIVATE Qt6::Core Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets ${CMAKE_THREAD_LIBS_INIT})
 
-target_link_libraries(visualizer Qt5::Widgets ${CMAKE_THREAD_LIBS_INIT})
-#target_link_libraries(pythontest Qt5::Widgets ${Python_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(pygmvis PRIVATE Qt5::Widgets ${CMAKE_THREAD_LIBS_INIT})
-#target_compile_definitions(pythontest PUBLIC PY_LIB)
+    add_custom_command(TARGET visualizer POST_BUILD 
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt6::Core> $<TARGET_FILE_DIR:visualizer>
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt6::Gui> $<TARGET_FILE_DIR:visualizer>
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt6::Widgets> $<TARGET_FILE_DIR:visualizer>
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt6::OpenGL> $<TARGET_FILE_DIR:visualizer>
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt6::OpenGLWidgets> $<TARGET_FILE_DIR:visualizer>)
+
+else()
+	target_link_libraries(visualizer Qt5::Widgets ${CMAKE_THREAD_LIBS_INIT})
+	target_link_libraries(pygmvis PRIVATE Qt5::Widgets ${CMAKE_THREAD_LIBS_INIT})
+
+    #ToDo: Add copying of DLLs to target dir
+endif()
+
 target_compile_definitions(pygmvis PUBLIC PY_LIB)
 if(NOT MSVC)
-  #target_compile_options(pythontest PUBLIC -fvisibility=hidden)
-  target_compile_options(pygmvis PUBLIC -fvisibility=hidden)
+ target_compile_options(pygmvis PUBLIC -fvisibility=hidden)
 endif()
                       
 install(TARGETS visualizer pygmvis
