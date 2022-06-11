@@ -5,6 +5,8 @@ Its main features are an ellipsoid visualization and a density visualization of 
 
 Current dependencies are Eigen (included in repo), Anaconda, Qt (5 or 6) and Pybind11 (see CMakeLists.txt).
 
+![Screenshot](da-gm-1/data/GUI-2.png)
+
 ## GUI functionality
 Features of the visualizer in the graphical user interface build (CMake target visualizer):
 * Loading data:
