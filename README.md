@@ -26,8 +26,8 @@ Features of the visualizer in the graphical user interface build (CMake target v
 * Additionally, on the left, buttons are available to reset the camera position, hide zero-weight-Gaussians, invalid Gaussians (e.g. no positive-definite covariance matrix) or to toggle the background color (and color mapping).
 * On the right, a list of Gaussians is available. When selecting one, the corresponding Gaussian is colored red in the ellipsoids or positions rendering. If "Pick Gaussian" is selected, a Gaussian can be picked inside the ellipsoid or positions rendering.
 
-## Python-Library
-Building the CMake target pygmvis creates a python interface. To use this library, place the generated files (on Windows: pygmvis.lib, pygmvis.\*.pyd, Qt\*.dll) in the same folder as your python code. Here is an example code that illustrates the usage:
+## Python-Interface
+Building the CMake target pygmvis creates a python interface. To use this interface, place the generated files (on Windows: pygmvis.lib, pygmvis.\*.pyd, Qt\*.dll) in the same folder as your python code. Here is an example code that illustrates the usage:
 
 ```python
 import pygmvis
