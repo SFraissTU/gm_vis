@@ -381,3 +381,4 @@ da-gm-1/data/chair_0030LR.off
 /visualizer
 /da-gm-1/build/
 CMakeSettings.json
+external/pybind11/
