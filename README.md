@@ -54,5 +54,5 @@ f1.figimage(res)
 plt.show()
 ```
 
-A possible pytorch-wrapper around pygmvis including more detailed documentation of the available functions is available in (pysample/gm_vis_wrapper.py)[pysample/gm_vis_wrapper.py].
+A possible pytorch-wrapper around pygmvis including more detailed documentation of the available functions is available in [pysample/gm_vis_wrapper.py](pysample/gm_vis_wrapper.py).
 
