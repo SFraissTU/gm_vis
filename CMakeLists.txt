@@ -10,7 +10,7 @@ project(visualizer)
 set(USE_QT6 TRUE)
 
 # > if QT cannot be found, try setting the prefix path to the QT dir:
-set(CMAKE_PREFIX_PATH "D:/Programme/Qt/6.2.4/msvc2019_64")
+#set(CMAKE_PREFIX_PATH "D:/Programme/Qt/6.2.4/msvc2019_64")
 
 # -- Python --
 
