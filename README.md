@@ -3,7 +3,7 @@
 This toolkit was written as part of the diploma thesis [Construction and Visualization of Gaussian Mixture Models from Point Clouds for 3D Object Representation](https://www.cg.tuwien.ac.at/research/publications/2022/FRAISS-2022-CGMM/FRAISS-2022-CGMM-thesis.pdf).
 Its main features are an ellipsoid visualization and a density visualization of 3D Gaussian Mixtures. These visualization are provided in both a standalone graphical user interface and a Python interface.
 
-Current dependencies are Eigen (included in repo), Python, Pybind11 (provided as submodule), Qt (5 or 6). See CMakeLists.txt for details.
+Current dependencies are Eigen (included in repo), Python, Pybind11 (provided as submodule - make sure to call ```git submodule update --init```), Qt (5 or 6). See CMakeLists.txt for details.
 
 <p align="center"><img src="data/GUI-2.png" alt="GUI Screenshot" width="600px"/></p>
 <p float="left">
