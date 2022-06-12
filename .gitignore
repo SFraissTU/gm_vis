@@ -8,6 +8,7 @@
 *.userprefs
 
 # Build results
+out/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -379,3 +380,4 @@ da-gm-1/data/chair_0030LR.off
 /shaders/*
 /visualizer
 /da-gm-1/build/
+CMakeSettings.json

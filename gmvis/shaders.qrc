@@ -1,0 +1,21 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>shaders/density_acc_proj.frag</file>
+    <file>shaders/density_acc_proj.vert</file>
+    <file>shaders/density_coloring.comp</file>
+    <file>shaders/density_exact.comp</file>
+    <file>shaders/density_octree.comp</file>
+    <file>shaders/density_sampling.comp</file>
+    <file>shaders/ellipsoids.frag</file>
+    <file>shaders/ellipsoids.vert</file>
+    <file>shaders/gmpositions.frag</file>
+    <file>shaders/gmpositions.vert</file>
+    <file>shaders/linestrip.frag</file>
+    <file>shaders/linestrip.vert</file>
+    <file>shaders/pointcloud.frag</file>
+    <file>shaders/pointcloud.vert</file>
+	<file>shaders/isosurface_proj.vert</file>
+	<file>shaders/isosurface_proj.frag</file>
+	<file>shaders/isosurface_sort_and_render.comp</file>
+</qresource>
+</RCC> 
