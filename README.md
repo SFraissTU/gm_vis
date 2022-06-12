@@ -5,7 +5,7 @@ Its main features are an ellipsoid visualization and a density visualization of 
 
 Current dependencies are Eigen (included in repo), Anaconda, Qt (5 or 6) and Pybind11 (see CMakeLists.txt).
 
-![Screenshot](da-gm-1/data/GUI-2.png)
+![Screenshot](data/GUI-2.png)
 
 ## GUI functionality
 Features of the visualizer in the graphical user interface build (CMake target visualizer):
@@ -22,3 +22,37 @@ Features of the visualizer in the graphical user interface build (CMake target v
     * **Isosurface**: This is an experimental and still buggy isosurface-visualization! The isovalue may be set in the settings. The results are not guaranteed to be correct!
 * Additionally, on the left, buttons are available to reset the camera position, hide zero-weight-Gaussians, invalid Gaussians (e.g. no positive-definite covariance matrix) or to toggle the background color (and color mapping).
 * On the right, a list of Gaussians is available. When selecting one, the corresponding Gaussian is colored red in the ellipsoids or positions rendering. If "Pick Gaussian" is selected, a Gaussian can be picked inside the ellipsoid or positions rendering.
+
+## Python-Library
+Building the CMake target pygmvis creates a python interface. To use this library, place the generated files (on Windows: pygmvis.lib, pygmvis.\*.pyd, Qt\*.dll) in the same folder as your python code. Here is an example code that illustrates the usage:
+
+```python
+import pygmvis
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.use('TkAgg') # Backend Qt5Agg creates problems when using GMVis, so rather use TkAgg or something else
+
+# Create the visualizer. Parameters: 1) Use asynchronous rendering (result returned by callback), 2) width, 3) height
+vis = pygmvis.create_visualizer(False, 500, 500)
+
+# The vis-object provides access to all functions shown in gmvis/pylib/Visualizer.cpp
+# Set camera position automatically to given mixture model
+vis.set_camera_auto(True)
+# Enable density rendering
+vis.set_density_rendering(True)
+# Pass Mixture from path. Second parameter states that the weights are given as amplitudes rather than prior weights that sum to one
+vis.set_gaussian_mixtures_from_paths(["data/bed_0001.gma.ply"], False)
+# Render the result. Parameter is a number used to identify render calls in asynchronous mode. The result is an array of shape (b, r, h, w, 4),
+# where b is the number of mixtures, r the number of enabled visualizations, h the height, w the width, and 4 is the number of color channels.
+res = vis.render(0)[0, 0]
+# When a visualizer is not required anymore, finish should be called to properly shutdown!
+vis.finish()
+
+# Plot result
+f1 = plt.figure("Rendering")
+f1.figimage(res)
+plt.show()
+```
+
+A possible pytorch-wrapper around pygmvis including more detailed documentation of the available functions is available in [pysample/gm_vis_wrapper.py](pysample/gm_vis_wrapper.py).
+
