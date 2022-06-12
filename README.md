@@ -11,8 +11,8 @@ Current dependencies are Eigen (included in repo), Anaconda, Qt (5 or 6) and Pyb
 Features of the visualizer in the graphical user interface build (CMake target visualizer):
 * Loading data:
     * *File->Load Pointcloud*: Loads a pointcloud in the OFF-format (see data-folder for examples)
-    * *File->Load Mixture Model*: Loads a Gaussian mixture model in the PLY-format. The given prior weights will be divided by the their sum during loading.
-    * *File->Load Mixture with Amplitudes*: Loads a Gaussian mixture where Gaussian amplitudes are given instead of prior weights (the amplitude is the highest value of the Gaussian, e.g. priorweight / sqrt((2pi)^3 |Sigma|) )
+    * *File->Load Mixture Model*: Loads a Gaussian mixture model in the PLY-format. The given prior weights will be divided by the their sum during loading. See .gmm.ply-files in data folder for examples.
+    * *File->Load Mixture with Amplitudes*: Loads a Gaussian mixture where Gaussian amplitudes are given instead of prior weights (the amplitude is the highest value of the Gaussian, e.g. priorweight / sqrt((2pi)^3 |Sigma|) ). See .gma.ply-files in data folder for examples.
     * *File->Load Line*: An experimental feature to display lines, e.g. for visualizing paths of moving Gaussians.
 * In the *Display*-section on the left, the available visualization techniques can be enabled/disabled. In the setting section on the bottom of the window, the visualization parameters may be changed. The following visualizations are available:
     * **Pointcloud**: Displays the loaded point cloud (if any)
@@ -54,5 +54,5 @@ f1.figimage(res)
 plt.show()
 ```
 
-A possible pytorch-wrapper around pygmvis including more detailed documentation of the available functions is available in [pysample/gm_vis_wrapper.py](pysample/gm_vis_wrapper.py).
+A possible pytorch-wrapper around pygmvis including more detailed documentation of the available functions is available in [doc/gm_vis_wrapper.py](doc/gm_vis_wrapper.py).
 
