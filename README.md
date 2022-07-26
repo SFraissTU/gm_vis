@@ -6,8 +6,8 @@ Its main features are an ellipsoid visualization and a density visualization of 
 Current dependencies are Eigen (included in repo), Python, Pybind11 (provided as submodule - make sure to call ```git submodule update --init```), Qt (5 or 6). See CMakeLists.txt for details.
 
 <p align="center"><img src="data/GUI-2.png" alt="GUI Screenshot" width="600px"/></p>
-<p float="left">
-<img src="data/ex-density-b.png" alt="Density White on Black" width="250px"/><img src="data/ex-density-w.png" alt="Density Black on White" width="250px"/><img src="data/ex-ell.png" alt="Ellipsoids" width="250px"/><img src="data/ex-pc.png" alt="Pointcloud" width="250px"/>
+<p align="center">
+<img src="data/ex-density-b.png" alt="Density White on Black" width="180px"/><img src="data/ex-density-w.png" alt="Density Black on White" width="180px"/><img src="data/ex-ell.png" alt="Ellipsoids" width="180px"/><img src="data/ex-pc.png" alt="Pointcloud" width="180px"/>
 </p>
 
 ## GUI functionality
